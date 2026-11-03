@@ -9,6 +9,7 @@ import com.bricktools.purchase.PurchaseService;
 import com.bricktools.rebrickable.RebrickableService;
 import com.bricktools.setimg.SetImageBackfill;
 import com.bricktools.setimg.SetImageService;
+import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,10 +39,11 @@ public class ApiController {
   private final NotificationService notifications;
   private final SetImageService setImages;
   private final SetImageBackfill backfill;
+  private final ThemeImageService themeImages;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
-                       SetImageBackfill backfill) {
+                       SetImageBackfill backfill, ThemeImageService themeImages) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickOwl = brickOwl;
@@ -49,6 +51,7 @@ public class ApiController {
     this.notifications = notifications;
     this.setImages = setImages;
     this.backfill = backfill;
+    this.themeImages = themeImages;
   }
 
   @PostMapping("/setimg/backfill")
@@ -71,6 +74,17 @@ public class ApiController {
     return ResponseEntity.ok()
         .contentType(MediaType.parseMediaType(setImages.contentType(image.get())))
         .body(setImages.resource(image.get()));
+  }
+
+  @GetMapping("/themeimg/{imageName:.+}")
+  public ResponseEntity<Resource> themeImage(@PathVariable String imageName) throws IOException {
+    Optional<Path> image = themeImages.find(imageName);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(themeImages.contentType(image.get())))
+        .body(themeImages.resource(image.get()));
   }
 
   @GetMapping("/notifications")

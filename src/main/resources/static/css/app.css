@@ -89,6 +89,12 @@ table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--
 table.fit { table-layout: fixed; }
 table.fit th, table.fit td { padding: 6px 5px; white-space: normal; overflow-wrap: anywhere; }
 .set-img { display: block; width: 80px; height: 80px; object-fit: contain; }
+.theme-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  max-width: 100%; max-height: 80px; padding: 4px;
+  background-color: #fff; border-radius: 6px; box-sizing: border-box;
+}
+.theme-img { display: block; max-width: 72px; height: 72px; object-fit: contain; }
 .tag {
   display: inline-block; padding: 2px 8px; border-radius: 999px;
   font-size: .8rem; font-weight: 600; white-space: nowrap;

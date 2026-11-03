@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
@@ -139,6 +140,23 @@ class ApiControllerTest {
   @Test
   void unknownSetImageIsNotFound() throws Exception {
     mvc.perform(get("/api/setimg/88888")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void storedThemeImageIsServedWithItsContentType() throws Exception {
+    byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes(StandardCharsets.UTF_8);
+    Files.createDirectories(dataDir.resolve("le/themes"));
+    Files.write(dataDir.resolve("le/themes/technic.svg"), svg);
+
+    mvc.perform(get("/api/themeimg/technic.svg"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("image/svg+xml"))
+        .andExpect(content().bytes(svg));
+  }
+
+  @Test
+  void unknownThemeImageIsNotFound() throws Exception {
+    mvc.perform(get("/api/themeimg/unknown.svg")).andExpect(status().isNotFound());
   }
 
   @Test

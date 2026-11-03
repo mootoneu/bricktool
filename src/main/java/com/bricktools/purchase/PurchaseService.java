@@ -3,6 +3,7 @@ package com.bricktools.purchase;
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.csv.Csv;
 import com.bricktools.setimg.SetImageService;
+import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,22 +27,27 @@ public class PurchaseService {
       "Reason");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
   private static final Pattern SET_NUMBER = Pattern.compile("[A-Za-z0-9-]+");
+  private static final Pattern COLOR = Pattern.compile("#[0-9A-Fa-f]{3,8}");
 
   private static final Logger log = LoggerFactory.getLogger(PurchaseService.class);
 
   private final Path purchasesFile;
   private final Path setsFile;
   private final Path themesFile;
+  private final Path themeDetailsFile;
   private final Path pricesFile;
   private final SetImageService setImages;
+  private final ThemeImageService themeImages;
 
-  public PurchaseService(BrickToolsProperties props, SetImageService setImages) {
+  public PurchaseService(BrickToolsProperties props, SetImageService setImages, ThemeImageService themeImages) {
     Path data = props.dataPath();
     this.purchasesFile = data.resolve("bt/purchased_sets.csv");
     this.setsFile = data.resolve("re/sets.csv");
     this.themesFile = data.resolve("re/themes.csv");
+    this.themeDetailsFile = data.resolve("bt/themes.csv");
     this.pricesFile = data.resolve("bw/setprices.csv");
     this.setImages = setImages;
+    this.themeImages = themeImages;
   }
 
   public synchronized List<Map<String, Object>> list() throws IOException {
@@ -54,6 +60,11 @@ public class PurchaseService {
     for (Map<String, String> theme : Csv.read(themesFile)) {
       themes.put(theme.get("id"), theme.get("name"));
     }
+    Map<String, Map<String, String>> themeDetails = new HashMap<>();
+    for (Map<String, String> theme : Csv.read(themeDetailsFile)) {
+      themeDetails.put(theme.get("id"), theme);
+    }
+    Set<String> availableThemeImages = themeImages.available();
     Map<String, String> prices = new HashMap<>();
     for (Map<String, String> price : Csv.read(pricesFile)) {
       prices.put(price.get("SetNumber"), price.get("LegoPrice"));
@@ -67,6 +78,9 @@ public class PurchaseService {
       int missing = Objects.requireNonNullElse(toInt(purchase.get("PartMissings")), 0);
       Double price = toDouble(purchase.get("PurchasePrice"));
       Double official = toDouble(prices.get(setNumber));
+      Map<String, String> theme = themeDetails.getOrDefault(clean(set.get("theme_id")), Map.of());
+      String themeImage = clean(theme.get("image"));
+      String themeColor = clean(theme.get("color_primary"));
 
       Map<String, Object> row = new LinkedHashMap<>();
       row.put("id", toInt(purchase.get("Id")));
@@ -75,6 +89,9 @@ public class PurchaseService {
       row.put("numParts", numParts);
       row.put("year", toInt(set.get("year")));
       row.put("theme", themes.get(set.get("theme_id")));
+      row.put("themeImageUrl",
+          !themeImage.isEmpty() && availableThemeImages.contains(themeImage) ? "/api/themeimg/" + themeImage : null);
+      row.put("themeColor", COLOR.matcher(themeColor).matches() ? themeColor : null);
       row.put("officialPrice", official);
       row.put("price", price);
       row.put("promo", price != null && official != null && official > 0 ? price / official * 100 : null);

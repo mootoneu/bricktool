@@ -7,9 +7,11 @@ import static org.assertj.core.api.Assertions.within;
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.support.TestHttpServer;
+import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,6 +36,12 @@ class PurchaseServiceTest {
   void setUp() throws IOException {
     Files.createDirectories(dir.resolve("re"));
     Files.createDirectories(dir.resolve("bw"));
+    Files.createDirectories(dir.resolve("bt"));
+    Files.createDirectories(dir.resolve("le/themes"));
+    Files.writeString(dir.resolve("bt/themes.csv"),
+        "id,name,parent_id,parent_name,theme_uid,color_primary,color_secondary,image\n"
+            + "171,Star Wars,,,star-wars,#141414,#3d3d3d,star-wars.svg\n");
+    Files.writeString(dir.resolve("le/themes/star-wars.svg"), "<svg/>", StandardCharsets.UTF_8);
     server = new TestHttpServer();
     server.handle("/img/75192-1.jpg", exchange -> {
       imageRequests.incrementAndGet();
@@ -54,7 +62,7 @@ class PurchaseServiceTest {
         new BrickToolsProperties.Rebrickable(""),
         new BrickToolsProperties.BrickWatch("", 0),
         new BrickToolsProperties.BrickOwl("", ""));
-    service = new PurchaseService(props, new SetImageService(props));
+    service = new PurchaseService(props, new SetImageService(props), new ThemeImageService(props));
   }
 
   @AfterEach
@@ -154,6 +162,28 @@ class PurchaseServiceTest {
   }
 
   @Test
+  void themeImageAndColorComeFromBrickToolsThemeData() throws IOException {
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+
+    Map<String, Object> row = service.list().get(0);
+
+    assertThat(row).containsEntry("theme", "Star Wars")
+        .containsEntry("themeImageUrl", "/api/themeimg/star-wars.svg")
+        .containsEntry("themeColor", "#141414");
+  }
+
+  @Test
+  void missingThemeImageFileLeavesThemeImageUrlEmpty() throws IOException {
+    Files.delete(dir.resolve("le/themes/star-wars.svg"));
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+
+    Map<String, Object> row = service.list().get(0);
+
+    assertThat(row.get("themeImageUrl")).isNull();
+    assertThat(row).containsEntry("themeColor", "#141414");
+  }
+
+  @Test
   void promoIsPriceRelativeToOfficialPriceInPercent() throws IOException {
     service.create(request("75192", "700.00", "2024/05/01", 0));
 
@@ -178,6 +208,8 @@ class PurchaseServiceTest {
     assertThat(row.get("name")).isNull();
     assertThat(row.get("promo")).isNull();
     assertThat(row.get("complete")).isNull();
+    assertThat(row.get("themeImageUrl")).isNull();
+    assertThat(row.get("themeColor")).isNull();
     assertThat(row).containsEntry("partsMissing", 0);
   }
 

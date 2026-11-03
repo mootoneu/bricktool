@@ -12,7 +12,7 @@ $(function () {
     { key: 'name', label: 'Name', width: 7.5 },
     { key: 'numParts', label: 'Total parts', fmt: fmt.number, width: 5 },
     { key: 'year', label: 'Year', width: 3.5 },
-    { key: 'theme', label: 'Theme', width: 5.5 },
+    { key: 'theme', label: 'Theme', theme: true, width: 5.5 },
     { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, width: 5.5 },
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
     { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
@@ -187,6 +187,20 @@ $(function () {
           }
         } else if (c.key === 'owned') {
           $td.append($('<input type="checkbox" disabled>').prop('checked', !!value));
+        } else if (c.theme) {
+          if (p.themeImageUrl) {
+            const $badge = $('<span class="theme-badge"></span>');
+            if (p.themeColor) {
+              $badge.css('background-color', p.themeColor);
+            }
+            $badge.append($('<img class="theme-img" loading="lazy">')
+              .attr('src', p.themeImageUrl)
+              .attr('alt', value || '')
+              .attr('title', value || ''));
+            $td.append($badge);
+          } else {
+            $td.text(value == null ? '' : value);
+          }
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));
         } else {
