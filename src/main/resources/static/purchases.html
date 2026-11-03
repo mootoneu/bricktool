@@ -17,7 +17,7 @@
     <p id="purchases-msg" class="warning"></p>
 
     <div class="table-wrap">
-      <table class="data" id="purchases">
+      <table class="data fit" id="purchases">
         <thead><tr></tr></thead>
         <tbody></tbody>
       </table>
@@ -31,11 +31,15 @@
       <label>Set number <input id="f-setNumber" required></label>
       <label>Price (€) <input id="f-purchasePrice" type="number" step="0.01" min="0" required></label>
       <label>Purchase date (yyyy/MM/dd) <input id="f-purchaseDate" pattern="\d{4}/\d{2}/\d{2}" required></label>
-      <label>Vendor <input id="f-vendor"></label>
-      <label>Brought by <input id="f-broughtBy"></label>
-      <label>Owner <input id="f-owner"></label>
+      <label>Vendor <input id="f-vendor" list="vendor-options" autocomplete="off"></label>
+      <label>Buyer <input id="f-broughtBy" list="buyer-options" autocomplete="off"></label>
+      <label>Owner <input id="f-owner" list="owner-options" autocomplete="off"></label>
+      <datalist id="vendor-options"></datalist>
+      <datalist id="buyer-options"></datalist>
+      <datalist id="owner-options"></datalist>
       <label>Parts missing <input id="f-partMissings" type="number" min="0" value="0"></label>
       <label><span><input type="checkbox" id="f-owned"> Owned</span></label>
+      <label>Reason <input id="f-reason"></label>
       <p id="form-msg" class="warning"></p>
       <div class="form-actions">
         <button type="button" id="cancel-form" class="btn secondary">Cancel</button>

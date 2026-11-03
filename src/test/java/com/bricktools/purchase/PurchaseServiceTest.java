@@ -38,8 +38,13 @@ class PurchaseServiceTest {
         new BrickToolsProperties.BrickOwl("", "")));
   }
 
-  private static PurchaseRequest request(String setNumber, String price, String date, Integer missing) {
-    return new PurchaseRequest(setNumber, new BigDecimal(price), date, "Amazon", "Me", "Me", missing, true);
+  private PurchaseRequest request(String setNumber, String price, String date, Integer missing) {
+    return new PurchaseRequest(setNumber, new BigDecimal(price), date, "Amazon", "Me", "Me", missing, true, "Noel");
+  }
+
+  private void writePurchases(String... lines) throws IOException {
+    Files.createDirectories(dir.resolve("bt"));
+    Files.writeString(dir.resolve("bt/purchased_sets.csv"), String.join("\n", lines) + "\n");
   }
 
   @Test
@@ -63,7 +68,8 @@ class PurchaseServiceTest {
         .containsEntry("price", 700.0)
         .containsEntry("purchaseDate", "2024/05/01")
         .containsEntry("owned", true)
-        .containsEntry("partsMissing", 0);
+        .containsEntry("partsMissing", 0)
+        .containsEntry("reason", "Noel");
   }
 
   @Test
@@ -99,7 +105,7 @@ class PurchaseServiceTest {
     service.create(request("75192", "700.00", "2024/05/01", 0));
 
     service.update(1, new PurchaseRequest("75192", new BigDecimal("650"), "2024/06/02",
-        "Shop", "Other", "Me", 3, false));
+        "Shop", "Other", "Me", 3, false, "Anniversaire"));
 
     Map<String, Object> row = service.list().get(0);
     assertThat(row).containsEntry("price", 650.0)
@@ -107,7 +113,8 @@ class PurchaseServiceTest {
         .containsEntry("vendor", "Shop")
         .containsEntry("broughtBy", "Other")
         .containsEntry("owned", false)
-        .containsEntry("partsMissing", 3);
+        .containsEntry("partsMissing", 3)
+        .containsEntry("reason", "Anniversaire");
   }
 
   @Test
@@ -132,10 +139,13 @@ class PurchaseServiceTest {
   }
 
   @Test
-  void ownedDefaultsToTrueWhenNotProvided() throws IOException {
-    service.create(new PurchaseRequest("75192", BigDecimal.TEN, "2024/01/01", null, null, null, null, null));
+  void ownedDefaultsToTrueAndReasonIsOptional() throws IOException {
+    service.create(new PurchaseRequest("75192", BigDecimal.TEN, "2024/01/01", null, null, null, null, null, null));
 
-    assertThat(service.list().get(0)).containsEntry("owned", true).containsEntry("partsMissing", 0);
+    assertThat(service.list().get(0))
+        .containsEntry("owned", true)
+        .containsEntry("partsMissing", 0)
+        .containsEntry("reason", "");
   }
 
   @Test
@@ -147,5 +157,50 @@ class PurchaseServiceTest {
 
     assertThat(rows).hasSize(2);
     assertThat(rows.get(1)).containsEntry("id", 2);
+  }
+
+  @Test
+  void legacyRowsWithPaddedDatesAreTrimmedAndReasonIsKeptOnSave() throws IOException {
+    writePurchases(
+        "Id,SetNumber,PurchasePrice,PurchaseDate,Vendor,BroughtBy,Owner,PartMissings,Owned,Reason",
+        "1,75192,700.00,  2024/05/01,Amazon,Duncan,Valerian,,true,Noel",
+        "2,75192,650.00,2024/05/02,Lego Store,Eglantine,,,false,");
+
+    service.create(request("75192", "600", "2024/06/01", 0));
+
+    List<Map<String, Object>> rows = service.list();
+    assertThat(rows.get(0)).containsEntry("purchaseDate", "2024/05/01").containsEntry("reason", "Noel");
+    assertThat(rows.get(1)).containsEntry("owner", "").containsEntry("reason", "").containsEntry("owned", false);
+    assertThat(Files.readString(dir.resolve("bt/purchased_sets.csv")).lines().findFirst().orElseThrow())
+        .endsWith(",Reason");
+    assertThat(Files.readString(dir.resolve("bt/purchased_sets.csv"))).contains("1,75192,700.00,2024/05/01,Amazon,Duncan,Valerian,,true,Noel");
+  }
+
+  @Test
+  void optionsListExistingValuesDistinctSortedAndWithoutBlanks() throws IOException {
+    writePurchases(
+        "Id,SetNumber,PurchasePrice,PurchaseDate,Vendor,BroughtBy,Owner,PartMissings,Owned,Reason",
+        "1,75192,1,2024/01/01,Lego,Duncan,Valerian,,true,",
+        "2,75192,1,2024/01/02,Amazon,Eglantine,,,true,Noel",
+        "3,75192,1,2024/01/03,Lego,Duncan,Duncan,,true,",
+        "4,75192,1,2024/01/04,  Vinted  ,Autre,Valerian,,true,");
+
+    Map<String, List<String>> options = service.options();
+
+    assertThat(options.get("vendors")).containsExactly("Amazon", "Lego", "Vinted");
+    assertThat(options.get("buyers")).containsExactly("Autre", "Duncan", "Eglantine");
+    assertThat(options.get("owners")).containsExactly("Duncan", "Valerian");
+  }
+
+  @Test
+  void newValueBecomesAnExistingOptionOnceSaved() throws IOException {
+    service.create(new PurchaseRequest("75192", BigDecimal.ONE, "2024/01/01",
+        "Brand New Shop", "New Buyer", "New Owner", 0, true, ""));
+
+    Map<String, List<String>> options = service.options();
+
+    assertThat(options.get("vendors")).contains("Brand New Shop");
+    assertThat(options.get("buyers")).contains("New Buyer");
+    assertThat(options.get("owners")).contains("New Owner");
   }
 }

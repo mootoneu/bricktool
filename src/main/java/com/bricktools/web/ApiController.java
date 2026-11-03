@@ -84,6 +84,11 @@ public class ApiController {
     return purchases.list();
   }
 
+  @GetMapping("/purchases/options")
+  public Map<String, List<String>> purchaseOptions() throws IOException {
+    return purchases.options();
+  }
+
   @PostMapping("/purchases")
   @ResponseStatus(HttpStatus.CREATED)
   public Map<String, Integer> createPurchase(@RequestBody PurchaseRequest request) throws IOException {

@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,8 @@ import org.springframework.stereotype.Service;
 public class PurchaseService {
 
   private static final List<String> HEADERS = List.of(
-      "Id", "SetNumber", "PurchasePrice", "PurchaseDate", "Vendor", "BroughtBy", "Owner", "PartMissings", "Owned");
+      "Id", "SetNumber", "PurchasePrice", "PurchaseDate", "Vendor", "BroughtBy", "Owner", "PartMissings", "Owned",
+      "Reason");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
 
   private final Path purchasesFile;
@@ -49,7 +52,7 @@ public class PurchaseService {
 
     List<Map<String, Object>> result = new ArrayList<>();
     for (Map<String, String> purchase : Csv.read(purchasesFile)) {
-      String setNumber = purchase.get("SetNumber");
+      String setNumber = clean(purchase.get("SetNumber"));
       Map<String, String> set = sets.getOrDefault(setNumber + "-1", Map.of());
       Integer numParts = toInt(set.get("num_parts"));
       int missing = Objects.requireNonNullElse(toInt(purchase.get("PartMissings")), 0);
@@ -66,20 +69,30 @@ public class PurchaseService {
       row.put("officialPrice", official);
       row.put("price", price);
       row.put("promo", price != null && official != null && official > 0 ? price / official * 100 : null);
-      row.put("purchaseDate", purchase.get("PurchaseDate"));
-      row.put("vendor", purchase.get("Vendor"));
-      row.put("broughtBy", purchase.get("BroughtBy"));
-      row.put("owner", purchase.get("Owner"));
+      row.put("purchaseDate", clean(purchase.get("PurchaseDate")));
+      row.put("vendor", clean(purchase.get("Vendor")));
+      row.put("broughtBy", clean(purchase.get("BroughtBy")));
+      row.put("owner", clean(purchase.get("Owner")));
       row.put("partsMissing", missing);
       row.put("complete", numParts != null && numParts > 0 ? (1.0 - (double) missing / numParts) * 100 : null);
-      row.put("owned", Boolean.parseBoolean(purchase.get("Owned")));
+      row.put("owned", Boolean.parseBoolean(clean(purchase.get("Owned"))));
+      row.put("reason", clean(purchase.get("Reason")));
       result.add(row);
     }
     return result;
   }
 
+  public synchronized Map<String, List<String>> options() throws IOException {
+    List<Map<String, String>> purchases = Csv.read(purchasesFile);
+    Map<String, List<String>> options = new LinkedHashMap<>();
+    options.put("vendors", distinct(purchases, "Vendor"));
+    options.put("buyers", distinct(purchases, "BroughtBy"));
+    options.put("owners", distinct(purchases, "Owner"));
+    return options;
+  }
+
   public synchronized int create(PurchaseRequest request) throws IOException {
-    List<Map<String, String>> rows = new ArrayList<>(Csv.read(purchasesFile));
+    List<Map<String, String>> rows = loadForWrite();
     int id = rows.stream()
         .map(r -> toInt(r.get("Id")))
         .filter(Objects::nonNull)
@@ -91,9 +104,9 @@ public class PurchaseService {
   }
 
   public synchronized void update(int id, PurchaseRequest request) throws IOException {
-    List<Map<String, String>> rows = new ArrayList<>(Csv.read(purchasesFile));
+    List<Map<String, String>> rows = loadForWrite();
     for (int i = 0; i < rows.size(); i++) {
-      if (String.valueOf(id).equals(rows.get(i).get("Id"))) {
+      if (String.valueOf(id).equals(clean(rows.get(i).get("Id")))) {
         rows.set(i, toRow(id, request));
         Csv.write(purchasesFile, HEADERS, rows);
         return;
@@ -102,27 +115,51 @@ public class PurchaseService {
     throw new IllegalArgumentException("Unknown purchase id " + id);
   }
 
+  private List<Map<String, String>> loadForWrite() throws IOException {
+    List<Map<String, String>> rows = new ArrayList<>();
+    for (Map<String, String> row : Csv.read(purchasesFile)) {
+      Map<String, String> cleaned = new LinkedHashMap<>();
+      row.forEach((column, value) -> cleaned.put(column, clean(value)));
+      rows.add(cleaned);
+    }
+    return rows;
+  }
+
   private static Map<String, String> toRow(int id, PurchaseRequest request) {
-    if (request.setNumber() == null || request.setNumber().isBlank()) {
+    String setNumber = clean(request.setNumber());
+    String date = clean(request.purchaseDate());
+    if (setNumber.isEmpty()) {
       throw new IllegalArgumentException("Set number is required");
     }
-    if (request.purchaseDate() == null || !DATE.matcher(request.purchaseDate()).matches()) {
+    if (!DATE.matcher(date).matches()) {
       throw new IllegalArgumentException("Purchase date must use the yyyy/MM/dd format");
     }
     Map<String, String> row = new LinkedHashMap<>();
     row.put("Id", String.valueOf(id));
-    row.put("SetNumber", request.setNumber().trim());
+    row.put("SetNumber", setNumber);
     row.put("PurchasePrice", request.purchasePrice() == null ? "0" : request.purchasePrice().toPlainString());
-    row.put("PurchaseDate", request.purchaseDate());
-    row.put("Vendor", trimOrEmpty(request.vendor()));
-    row.put("BroughtBy", trimOrEmpty(request.broughtBy()));
-    row.put("Owner", trimOrEmpty(request.owner()));
+    row.put("PurchaseDate", date);
+    row.put("Vendor", clean(request.vendor()));
+    row.put("BroughtBy", clean(request.broughtBy()));
+    row.put("Owner", clean(request.owner()));
     row.put("PartMissings", String.valueOf(request.partMissings() == null ? 0 : request.partMissings()));
     row.put("Owned", String.valueOf(request.owned() == null || request.owned()));
+    row.put("Reason", clean(request.reason()));
     return row;
   }
 
-  private static String trimOrEmpty(String value) {
+  private static List<String> distinct(List<Map<String, String>> rows, String column) {
+    Set<String> values = new TreeSet<>();
+    for (Map<String, String> row : rows) {
+      String value = clean(row.get(column));
+      if (!value.isEmpty()) {
+        values.add(value);
+      }
+    }
+    return List.copyOf(values);
+  }
+
+  private static String clean(String value) {
     return value == null ? "" : value.trim();
   }
 

@@ -10,4 +10,5 @@ public record PurchaseRequest(
     String broughtBy,
     String owner,
     Integer partMissings,
-    Boolean owned) {}
+    Boolean owned,
+    String reason) {}

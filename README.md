@@ -112,12 +112,15 @@ The columns are:
 | Price | data.bt.PurchasedSet.PurchasePrice | € |
 | Promo | data.bt.PurchasedSet.PurchasePrice/data.bw.SetPrice.LegoPrice| % |
 | Date | data.bt.PurchasedSet.PurchaseDate  | yyyy/MM/dd |
-| Vendor | data.bt.PurchasedSet.Vendor | |
-| Buyer | data.bt.PurchasedSet.BroughtBy | |
-| Owner | data.bt.PurchasedSet.Owner | |
+| Vendor | data.bt.PurchasedSet.Vendor | colored label (enumeration) |
+| Buyer | data.bt.PurchasedSet.BroughtBy | colored label (enumeration) |
+| Owner | data.bt.PurchasedSet.Owner | colored label (enumeration) |
 | Parts missing | data.bt.PurchasedSet.PartMissings | |
 | Complete | 1 - (data.bt.PurchasedSet.PartMissings / data.re.sets.num_parts) | % |
 | Owned ? | data.bt.PurchasedSet.Owned | checkbox |
+| Reason | data.bt.PurchasedSet.Reason | |
+
+Vendor, Buyer and Owner are enumerations (see [./doc/DataModel.md](./doc/DataModel.md#enumerations)). The add/edit form proposes the existing values and accepts new ones.
 
 To join data:
 

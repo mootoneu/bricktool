@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,6 +23,7 @@ public class BrickWatchService {
   private static final String USER_AGENT = "Mozilla/5.0 (compatible; BrickTools/0.1)";
   private static final String TABLE_MARKER = "Information sur le prix";
   private static final String PRICE_LABEL = "Lego prix conseill";
+  private static final int MAX_ATTEMPTS = 3;
   private static final List<String> HEADERS = List.of("SetNumber", "LegoPrice");
 
   private final BrickToolsProperties props;
@@ -61,23 +64,39 @@ public class BrickWatchService {
 
   private BigDecimal scrape(String setNumber) throws IOException, InterruptedException {
     throttle();
-    Document doc = Jsoup.connect(props.brickwatch().baseUrl() + setNumber)
-        .userAgent(USER_AGENT)
-        .timeout(15_000)
-        .get();
-
-    for (Element table : doc.select("table")) {
-      if (!table.text().contains(TABLE_MARKER)) {
-        continue;
-      }
-      for (Element row : table.select("tr")) {
-        Elements cells = row.select("td, th");
-        if (cells.size() > 1 && cells.first().text().trim().startsWith(PRICE_LABEL)) {
-          return parsePrice(cells.last().text());
-        }
+    Document doc = fetch(props.brickwatch().baseUrl() + setNumber);
+    if (doc.getElementsContainingOwnText(TABLE_MARKER).isEmpty()) {
+      return null;
+    }
+    for (Element row : doc.select("tr")) {
+      Elements cells = row.select("td, th");
+      if (cells.size() > 1 && cells.first().text().trim().startsWith(PRICE_LABEL)) {
+        return parsePrice(cells.last().text());
       }
     }
     return null;
+  }
+
+  /**
+   * BrickWatch answers the first visit with a JavaScript verification page that sets session cookies and then
+   * redirects to the real page. Jsoup does not run JavaScript, so the cookies are kept and the request is repeated.
+   */
+  private Document fetch(String url) throws IOException {
+    Map<String, String> cookies = new HashMap<>();
+    Document doc = null;
+    for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      Connection.Response response = Jsoup.connect(url)
+          .userAgent(USER_AGENT)
+          .timeout(15_000)
+          .cookies(cookies)
+          .execute();
+      cookies.putAll(response.cookies());
+      doc = response.parse();
+      if (!doc.getElementsContainingOwnText(TABLE_MARKER).isEmpty()) {
+        return doc;
+      }
+    }
+    return doc;
   }
 
   private void throttle() throws InterruptedException {

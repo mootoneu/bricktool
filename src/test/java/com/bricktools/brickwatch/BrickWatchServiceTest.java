@@ -7,7 +7,9 @@ import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.csv.Csv;
 import com.bricktools.support.TestHttpServer;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -86,6 +88,50 @@ class BrickWatchServiceTest {
 
     String stored = Files.readString(dir.resolve("bw/setprices.csv"));
     assertThat(stored).contains("75192,849.99");
+  }
+
+  private static final String LIVE_PAGE = """
+      <html><head><meta charset="UTF-8"></head><body>
+      <h4>Information sur le prix</h4>
+      <table class="table">
+        <tr><td>Prix actuel</td><td><h5 id="price">69,89 &euro;</h5></td></tr>
+        <tr><td class="text-bg-warning">Lego prix conseill&eacute;</td>
+          <td><small>9,31 ct/brique</small></td>
+          <td><b class="float-end">99,99 &euro;</b></td></tr>
+      </table>
+      </body></html>
+      """;
+
+  @Test
+  void scrapesPriceWhenHeadingSitsOutsideTheTable() throws IOException, InterruptedException {
+    server.respond("/fr-FR/set/31387", "text/html; charset=UTF-8", LIVE_PAGE);
+
+    assertThat((BigDecimal) service(0).price("31387").get("legoPrice")).isEqualByComparingTo("99.99");
+  }
+
+  @Test
+  void followsVerificationPageThatSetsCookiesBeforeRealPage() throws IOException, InterruptedException {
+    String verification = "<html><head><title>Check</title></head><body><script>"
+        + "window.location.replace('/fr-FR/set/31387');</script></body></html>";
+    server.handle("/fr-FR/set/31387", exchange -> {
+      boolean verified = exchange.getRequestHeaders().getFirst("Cookie") != null
+          && exchange.getRequestHeaders().getFirst("Cookie").contains("bwg=ok");
+      String body = verified ? LIVE_PAGE : verification;
+      if (!verified) {
+        exchange.getResponseHeaders().add("Set-Cookie", "bwg=ok; Path=/");
+      }
+      byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+      exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+      exchange.sendResponseHeaders(200, bytes.length);
+      try (OutputStream out = exchange.getResponseBody()) {
+        out.write(bytes);
+      }
+    });
+
+    Map<String, Object> result = service(0).price("31387");
+
+    assertThat(result).containsEntry("source", "brickwatch");
+    assertThat((BigDecimal) result.get("legoPrice")).isEqualByComparingTo("99.99");
   }
 
   @Test

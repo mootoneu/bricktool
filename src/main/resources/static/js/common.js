@@ -20,6 +20,25 @@
     return $('<span>').text(value == null ? '' : String(value)).html();
   }
 
+  function hue(value) {
+    let hash = 0;
+    for (const ch of value) {
+      hash = (hash * 31 + ch.codePointAt(0)) % 360;
+    }
+    return hash;
+  }
+
+  function tag(value) {
+    if (!value) {
+      return null;
+    }
+    const h = hue(value);
+    return $('<span class="tag"></span>').text(value).css({
+      background: 'hsl(' + h + ' 75% 88%)',
+      color: 'hsl(' + h + ' 60% 25%)'
+    });
+  }
+
   function errorOf(xhr) {
     return (xhr.responseJSON && xhr.responseJSON.error) || xhr.statusText || 'Request failed';
   }
@@ -87,5 +106,5 @@
     });
   }
 
-  window.BrickTools = { api, errorOf, esc, fmt, initHeader, initTabs };
+  window.BrickTools = { api, errorOf, esc, fmt, tag, initHeader, initTabs };
 })(window, jQuery);

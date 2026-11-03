@@ -1,6 +1,7 @@
 package com.bricktools.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -87,6 +88,24 @@ class ApiControllerTest {
 
     mvc.perform(get("/api/purchases"))
         .andExpect(jsonPath("$[0].price").value(650.0));
+  }
+
+  @Test
+  void purchaseOptionsProposeValuesCreatedThroughTheApi() throws Exception {
+    String body = "{\"setNumber\":\"10281\",\"purchasePrice\":34.99,\"purchaseDate\":\"2024/05/02\","
+        + "\"vendor\":\"Brand New Shop\",\"broughtBy\":\"Christine\",\"owner\":\"Valerian\","
+        + "\"partMissings\":0,\"owned\":true,\"reason\":\"Anniversaire\"}";
+    mvc.perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isCreated());
+
+    mvc.perform(get("/api/purchases/options"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.vendors", hasItem("Brand New Shop")))
+        .andExpect(jsonPath("$.buyers", hasItem("Christine")))
+        .andExpect(jsonPath("$.owners", hasItem("Valerian")));
+
+    mvc.perform(get("/api/purchases"))
+        .andExpect(jsonPath("$[*].reason", hasItem("Anniversaire")));
   }
 
   @Test

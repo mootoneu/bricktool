@@ -1,5 +1,6 @@
 package com.bricktools.support;
 
+import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,6 +32,10 @@ public final class TestHttpServer implements AutoCloseable {
 
   public void respond(String path, String contentType, String body) {
     respond(path, contentType, body.getBytes(StandardCharsets.UTF_8));
+  }
+
+  public void handle(String path, HttpHandler handler) {
+    server.createContext(path, handler);
   }
 
   public String baseUrl() {

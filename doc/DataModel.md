@@ -231,7 +231,7 @@ The data.bw.SetPrice represent the price of each set. It has the following field
 
 ## Purchased Set data
 
-The data.bt.PurchasedSet represent a Lego set that was purchased. It has the following fields:
+The data.bt.PurchasedSet represent a Lego set that was purchased. It is stored in data/bt/purchased_sets.csv and has the following fields:
 
 | Field Name | Type | Description |
 | :--- | :--- | :--- |
@@ -239,11 +239,21 @@ The data.bt.PurchasedSet represent a Lego set that was purchased. It has the fol
 | SetNumber | String | Lego set number (FK) |
 | Purchase Price | Number | Price paid |
 | Purchase Date | Date | Date (yyyy/MM/dd) the set was purchased |
-| Vendor | String | Company that sold the set |
-| BroughtBy | String | Name of the person having brought the set |
-| Owner | String | Name of the person owning the set |
+| Vendor | Enumeration | Company that sold the set (see Enumerations) |
+| BroughtBy | Enumeration | Name of the person having brought the set (see Enumerations) |
+| Owner | Enumeration | Name of the person owning the set (see Enumerations) |
 | PartMissings | Integer | Amount of part that are missing from the set. This number is 0 (default) for a complete set. |
 | Owned | Boolean | true (default) if the set is still in the collection |
+| Reason | String | Why the set was bought, free text (e.g. Noel, Anniversaire, Soldes). Optional. |
+
+### Enumerations
+
+Vendor, BroughtBy and Owner are enumerations: their values are not fixed in advance.
+
+- The values proposed when adding or editing a purchase are the distinct values already used in data.bt.PurchasedSet.
+- A new value can be typed freely; it becomes a proposed value as soon as the purchase is saved.
+- Values are compared as written, after removing leading and trailing spaces. Empty values are not proposed.
+- In the Sets Purchase view each value is displayed as a colored label. The color is derived from the value text, so the same value always gets the same color.
 
 ## BrickOwl data
 

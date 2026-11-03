@@ -2,6 +2,7 @@ package com.bricktools.brickowl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -137,7 +138,7 @@ class BrickOwlServiceTest {
     MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
     BrickOwlService service = new BrickOwlService(props("KEY"), builder);
 
-    server.expect(requestTo("https://api.brickowl.com/v1/order/list?key=KEY"))
+    server.expect(requestTo("https://api.brickowl.com/v1/order/list?key=KEY&list_type=customer"))
         .andRespond(withSuccess("[{\"order_id\": 101}, {\"order_id\": 102}]", MediaType.APPLICATION_JSON));
     server.expect(requestTo("https://api.brickowl.com/v1/order/view?key=KEY&order_id=101"))
         .andRespond(withSuccess("""
@@ -179,7 +180,10 @@ class BrickOwlServiceTest {
 
     RestClient.Builder secondBuilder = RestClient.builder();
     MockRestServiceServer secondServer = MockRestServiceServer.bindTo(secondBuilder).build();
-    secondServer.expect(requestTo(containsString("/order/list?key=KEY&order_time=")))
+    secondServer.expect(requestTo(allOf(
+            containsString("/order/list?key=KEY"),
+            containsString("list_type=customer"),
+            containsString("order_time="))))
         .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
 
     assertThat(new BrickOwlService(props("KEY"), secondBuilder).update()).containsEntry("added", 0);

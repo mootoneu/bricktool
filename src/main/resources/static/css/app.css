@@ -49,7 +49,7 @@ body {
 .notification { display: block; padding: 8px; border-radius: 6px; color: var(--primary); text-decoration: none; }
 .notification:hover { background: #eff6ff; }
 
-.container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+.container { max-width: none; margin: 24px auto; padding: 0 16px; }
 .lead, .muted { color: var(--muted); }
 .warning { color: var(--warn); font-weight: 600; }
 .message { min-height: 1.2em; }
@@ -83,9 +83,15 @@ input, select { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px
 .table-wrap { overflow-x: auto; }
 table.data {
   width: 100%; border-collapse: collapse; background: #fff;
-  border: 1px solid var(--border); font-size: .9rem;
+  border: 1px solid var(--border); font-size: .85rem;
 }
-table.data th, table.data td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+table.fit { table-layout: fixed; }
+table.fit th, table.fit td { padding: 6px 5px; white-space: normal; overflow-wrap: anywhere; }
+.tag {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: .8rem; font-weight: 600; white-space: nowrap;
+}
 table.data th { background: #f9fafb; }
 table.data th.sortable { cursor: pointer; user-select: none; }
 table.data th.sort-asc::after { content: " ▲"; }
