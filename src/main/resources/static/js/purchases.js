@@ -32,9 +32,113 @@ $(function () {
     { list: 'owner-options', key: 'owners' }
   ];
 
+  const FILTERS = {
+    name: '#filter-name',
+    number: '#filter-number',
+    reason: '#filter-reason',
+    yearMin: '#filter-year-min',
+    yearMax: '#filter-year-max',
+    dateMin: '#filter-date-min',
+    dateMax: '#filter-date-max',
+    partsMin: '#filter-parts-min',
+    partsMax: '#filter-parts-max',
+    theme: '#filter-theme',
+    vendor: '#filter-vendor',
+    buyer: '#filter-buyer',
+    owner: '#filter-owner',
+    owned: '#filter-owned'
+  };
+
   let purchases = [];
   let sortKey = 'purchaseDate';
   let sortDir = -1;
+
+  function filterValue(key) {
+    const $el = $(FILTERS[key]);
+    return $el.is(':checkbox') ? $el.is(':checked') : $.trim($el.val() || '');
+  }
+
+  function normalizeDate(value) {
+    return value.replace(/-/g, '/');
+  }
+
+  function distinct(key) {
+    const values = new Set();
+    purchases.forEach(function (p) {
+      if (p[key] != null && p[key] !== '') {
+        values.add(p[key]);
+      }
+    });
+    return Array.from(values).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  }
+
+  function applyFilters() {
+    const name = filterValue('name').toLowerCase();
+    const number = filterValue('number').toLowerCase();
+    const reason = filterValue('reason').toLowerCase();
+    const yearMin = filterValue('yearMin') === '' ? null : Number(filterValue('yearMin'));
+    const yearMax = filterValue('yearMax') === '' ? null : Number(filterValue('yearMax'));
+    const dateMin = normalizeDate(filterValue('dateMin'));
+    const dateMax = normalizeDate(filterValue('dateMax'));
+    const partsMin = filterValue('partsMin') === '' ? null : Number(filterValue('partsMin'));
+    const partsMax = filterValue('partsMax') === '' ? null : Number(filterValue('partsMax'));
+    const theme = filterValue('theme');
+    const vendor = filterValue('vendor');
+    const buyer = filterValue('buyer');
+    const owner = filterValue('owner');
+    const ownedOnly = filterValue('owned');
+
+    return purchases.filter(function (p) {
+      if (name && !String(p.name || '').toLowerCase().includes(name)) return false;
+      if (number && !String(p.setNumber || '').toLowerCase().includes(number)) return false;
+      if (reason && !String(p.reason || '').toLowerCase().includes(reason)) return false;
+      if (yearMin != null && (p.year == null || p.year < yearMin)) return false;
+      if (yearMax != null && (p.year == null || p.year > yearMax)) return false;
+      if (dateMin || dateMax) {
+        const date = normalizeDate(String(p.purchaseDate || ''));
+        if (!date) return false;
+        if (dateMin && date < dateMin) return false;
+        if (dateMax && date > dateMax) return false;
+      }
+      if (partsMin != null && (p.numParts == null || p.numParts < partsMin)) return false;
+      if (partsMax != null && (p.numParts == null || p.numParts > partsMax)) return false;
+      if (theme && p.theme !== theme) return false;
+      if (vendor && p.vendor !== vendor) return false;
+      if (buyer && p.broughtBy !== buyer) return false;
+      if (owner && p.owner !== owner) return false;
+      if (ownedOnly && !p.owned) return false;
+      return true;
+    });
+  }
+
+  function populateFilterOptions() {
+    [
+      { id: 'theme', key: 'theme' },
+      { id: 'vendor', key: 'vendor' },
+      { id: 'buyer', key: 'broughtBy' },
+      { id: 'owner', key: 'owner' }
+    ].forEach(function (s) {
+      const $select = $('#filter-' + s.id);
+      const current = $select.val() || '';
+      const values = distinct(s.key);
+      $select.find('option:not(:first)').remove();
+      values.forEach(v => $select.append($('<option></option>').val(v).text(v)));
+      if (current && values.includes(current)) {
+        $select.val(current);
+      }
+    });
+  }
+
+  function resetFilters() {
+    $('#purchases-filters').find('input, select').each(function () {
+      if (this.type === 'checkbox') {
+        this.checked = false;
+      } else {
+        this.value = '';
+      }
+    });
+    render();
+  }
 
   function buildHeader() {
     const $colgroup = $('<colgroup></colgroup>');
@@ -68,7 +172,11 @@ $(function () {
       .addClass(sortDir > 0 ? 'sort-asc' : 'sort-desc');
 
     const $tbody = $('#purchases tbody').empty();
-    purchases.slice().sort(compare).forEach(function (p) {
+    const rows = applyFilters().sort(compare);
+    if (rows.length === 0) {
+      $tbody.append('<tr><td colspan="' + (COLUMNS.length + 1) + '" class="muted">No purchases match the filters.</td></tr>');
+    }
+    rows.forEach(function (p) {
       const $tr = $('<tr></tr>');
       COLUMNS.forEach(function (c) {
         const $td = $('<td></td>');
@@ -91,6 +199,7 @@ $(function () {
       ));
       $tbody.append($tr);
     });
+    $('#filter-summary').text(rows.length + ' of ' + purchases.length + ' purchases');
   }
 
   function load() {
@@ -98,6 +207,7 @@ $(function () {
       .done(function (list) {
         purchases = list;
         $('#purchases-msg').text('');
+        populateFilterOptions();
         render();
       })
       .fail(function (xhr) { $('#purchases-msg').text(BrickTools.errorOf(xhr)); });
@@ -138,6 +248,8 @@ $(function () {
 
   $('#add-purchase').on('click', () => openForm(null));
   $('#cancel-form').on('click', () => $('#purchase-modal').prop('hidden', true));
+  $('#purchases-filters').on('input change', 'input, select', render);
+  $('#filter-reset').on('click', resetFilters);
 
   $('#purchase-form').on('submit', function (e) {
     e.preventDefault();

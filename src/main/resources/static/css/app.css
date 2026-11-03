@@ -102,6 +102,19 @@ table.data tbody tr.clickable { cursor: pointer; }
 
 .toolbar { display: flex; justify-content: space-between; align-items: center; }
 
+.filters {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px; align-items: end;
+  padding: 12px; margin-bottom: 8px;
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+}
+.filters label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.filters input, .filters select { width: 100%; padding: 6px 8px; font-size: .85rem; }
+.filters .filter-check { display: flex; align-items: center; }
+.filters .filter-check span { display: flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--text); }
+.filters .filter-check input { width: auto; }
+.filters .filter-actions { display: flex; gap: 8px; }
+
 .chart { width: 100%; height: auto; }
 .chart-title { font-size: 12px; font-weight: 600; fill: var(--text); }
 .axis text { font-size: 10px; }
