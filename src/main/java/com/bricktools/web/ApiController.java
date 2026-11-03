@@ -4,6 +4,7 @@ import com.bricktools.brickowl.BrickOwlService;
 import com.bricktools.brickwatch.BrickWatchService;
 import com.bricktools.notification.NotificationService;
 import com.bricktools.notification.NotificationService.Notification;
+import com.bricktools.other.OtherImageService;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
 import com.bricktools.rebrickable.RebrickableService;
@@ -40,10 +41,11 @@ public class ApiController {
   private final SetImageService setImages;
   private final SetImageBackfill backfill;
   private final ThemeImageService themeImages;
+  private final OtherImageService otherImages;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
-                       SetImageBackfill backfill, ThemeImageService themeImages) {
+                       SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickOwl = brickOwl;
@@ -52,6 +54,7 @@ public class ApiController {
     this.setImages = setImages;
     this.backfill = backfill;
     this.themeImages = themeImages;
+    this.otherImages = otherImages;
   }
 
   @PostMapping("/setimg/backfill")
@@ -85,6 +88,26 @@ public class ApiController {
     return ResponseEntity.ok()
         .contentType(MediaType.parseMediaType(themeImages.contentType(image.get())))
         .body(themeImages.resource(image.get()));
+  }
+
+  @GetMapping("/vendorimg/{imageName:.+}")
+  public ResponseEntity<Resource> vendorImage(@PathVariable String imageName) throws IOException {
+    return otherImage("vendor", imageName);
+  }
+
+  @GetMapping("/peopleimg/{imageName:.+}")
+  public ResponseEntity<Resource> peopleImage(@PathVariable String imageName) throws IOException {
+    return otherImage("people", imageName);
+  }
+
+  private ResponseEntity<Resource> otherImage(String category, String imageName) {
+    Optional<Path> image = otherImages.find(category, imageName);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(otherImages.contentType(image.get())))
+        .body(otherImages.resource(image.get()));
   }
 
   @GetMapping("/notifications")

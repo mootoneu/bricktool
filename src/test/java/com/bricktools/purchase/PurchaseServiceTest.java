@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import com.bricktools.config.BrickToolsProperties;
+import com.bricktools.other.OtherImageService;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.support.TestHttpServer;
 import com.bricktools.theme.ThemeImageService;
@@ -38,10 +39,16 @@ class PurchaseServiceTest {
     Files.createDirectories(dir.resolve("bw"));
     Files.createDirectories(dir.resolve("bt"));
     Files.createDirectories(dir.resolve("le/themes"));
+    Files.createDirectories(dir.resolve("other/vendor"));
+    Files.createDirectories(dir.resolve("other/people"));
     Files.writeString(dir.resolve("bt/themes.csv"),
         "id,name,parent_id,parent_name,theme_uid,color_primary,color_secondary,image\n"
             + "171,Star Wars,,,star-wars,#141414,#3d3d3d,star-wars.svg\n");
     Files.writeString(dir.resolve("le/themes/star-wars.svg"), "<svg/>", StandardCharsets.UTF_8);
+    Files.writeString(dir.resolve("other/vendor/vendors.csv"), "name,image\nAmazon,amazon.svg\n");
+    Files.writeString(dir.resolve("other/people/people.csv"), "name,image\nMe,me.webp\n");
+    Files.writeString(dir.resolve("other/vendor/amazon.svg"), "<svg/>", StandardCharsets.UTF_8);
+    Files.writeString(dir.resolve("other/people/me.webp"), "webp", StandardCharsets.UTF_8);
     server = new TestHttpServer();
     server.handle("/img/75192-1.jpg", exchange -> {
       imageRequests.incrementAndGet();
@@ -62,7 +69,8 @@ class PurchaseServiceTest {
         new BrickToolsProperties.Rebrickable(""),
         new BrickToolsProperties.BrickWatch("", 0),
         new BrickToolsProperties.BrickOwl("", ""));
-    service = new PurchaseService(props, new SetImageService(props), new ThemeImageService(props));
+    service = new PurchaseService(props, new SetImageService(props), new ThemeImageService(props),
+        new OtherImageService(props));
   }
 
   @AfterEach
@@ -181,6 +189,42 @@ class PurchaseServiceTest {
 
     assertThat(row.get("themeImageUrl")).isNull();
     assertThat(row).containsEntry("themeColor", "#141414");
+  }
+
+  @Test
+  void vendorAndPeopleImagesComeFromOtherData() throws IOException {
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+
+    Map<String, Object> row = service.list().get(0);
+
+    assertThat(row).containsEntry("vendorImageUrl", "/api/vendorimg/amazon.svg")
+        .containsEntry("broughtByImageUrl", "/api/peopleimg/me.webp")
+        .containsEntry("ownerImageUrl", "/api/peopleimg/me.webp");
+  }
+
+  @Test
+  void namesWithoutImageMappingHaveNoImageUrl() throws IOException {
+    service.create(new PurchaseRequest("75192", new BigDecimal("700"), "2024/05/01",
+        "Unknown Shop", "Nobody", "Nobody", 0, true, "Noel"));
+
+    Map<String, Object> row = service.list().get(0);
+
+    assertThat(row.get("vendorImageUrl")).isNull();
+    assertThat(row.get("broughtByImageUrl")).isNull();
+    assertThat(row.get("ownerImageUrl")).isNull();
+  }
+
+  @Test
+  void missingOtherImageFileLeavesImageUrlEmpty() throws IOException {
+    Files.delete(dir.resolve("other/vendor/amazon.svg"));
+    Files.delete(dir.resolve("other/people/me.webp"));
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+
+    Map<String, Object> row = service.list().get(0);
+
+    assertThat(row.get("vendorImageUrl")).isNull();
+    assertThat(row.get("broughtByImageUrl")).isNull();
+    assertThat(row.get("ownerImageUrl")).isNull();
   }
 
   @Test

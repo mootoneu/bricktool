@@ -160,6 +160,36 @@ class ApiControllerTest {
   }
 
   @Test
+  void storedVendorImageIsServedWithItsContentType() throws Exception {
+    byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes(StandardCharsets.UTF_8);
+    Files.createDirectories(dataDir.resolve("other/vendor"));
+    Files.write(dataDir.resolve("other/vendor/amazon.svg"), svg);
+
+    mvc.perform(get("/api/vendorimg/amazon.svg"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("image/svg+xml"))
+        .andExpect(content().bytes(svg));
+  }
+
+  @Test
+  void storedPeopleImageIsServedWithItsContentType() throws Exception {
+    byte[] webp = {'R', 'I', 'F', 'F', 1, 2, 3, 4};
+    Files.createDirectories(dataDir.resolve("other/people"));
+    Files.write(dataDir.resolve("other/people/Duncan.webp"), webp);
+
+    mvc.perform(get("/api/peopleimg/Duncan.webp"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("image/webp"))
+        .andExpect(content().bytes(webp));
+  }
+
+  @Test
+  void unknownOtherImagesAreNotFound() throws Exception {
+    mvc.perform(get("/api/vendorimg/unknown.svg")).andExpect(status().isNotFound());
+    mvc.perform(get("/api/peopleimg/unknown.webp")).andExpect(status().isNotFound());
+  }
+
+  @Test
   void brickOwlUpdateWithoutApiKeyIsBadRequest() throws Exception {
     mvc.perform(post("/api/brickowl/update"))
         .andExpect(status().isBadRequest())

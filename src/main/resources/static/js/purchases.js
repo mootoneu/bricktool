@@ -17,9 +17,9 @@ $(function () {
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
     { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
     { key: 'purchaseDate', label: 'Date', width: 7.5 },
-    { key: 'vendor', label: 'Vendor', tag: true, width: 6 },
-    { key: 'broughtBy', label: 'Buyer', tag: true, width: 5 },
-    { key: 'owner', label: 'Owner', tag: true, width: 5 },
+    { key: 'vendor', label: 'Vendor', logo: true, width: 6 },
+    { key: 'broughtBy', label: 'Buyer', avatar: true, width: 5 },
+    { key: 'owner', label: 'Owner', avatar: true, width: 5 },
     { key: 'partsMissing', label: 'Parts missing', fmt: fmt.number, width: 5 },
     { key: 'complete', label: 'Complete', fmt: fmt.percent, width: 5 },
     { key: 'owned', label: 'Owned ?', width: 3.5 },
@@ -200,6 +200,17 @@ $(function () {
             $td.append($badge);
           } else {
             $td.text(value == null ? '' : value);
+          }
+        } else if (c.logo || c.avatar) {
+          const imageUrl = p[c.key + 'ImageUrl'];
+          if (imageUrl) {
+            $td.append($('<img loading="lazy">')
+              .addClass(c.logo ? 'vendor-img' : 'person-img')
+              .attr('src', imageUrl)
+              .attr('alt', value || '')
+              .attr('title', value || ''));
+          } else {
+            $td.append(BrickTools.tag(value));
           }
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));

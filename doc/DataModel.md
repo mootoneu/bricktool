@@ -249,6 +249,18 @@ The data.bt.themes model describes Lego themes enriched with their parent theme 
 Relationships:
 - data.re.themes.id → data.bt.themes.parent_id
 
+### Vendor and people images
+
+Vendor logos are stored in data/other/vendor/ and mapped in data/other/vendor/vendors.csv.
+People pictures are stored in data/other/people/ and mapped in data/other/people/people.csv.
+
+Both mapping files have the following fields:
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| name | String | Vendor or person name, as used in data.bt.purchased_sets.csv. Matching is case-insensitive. |
+| image | String | Image file name in the corresponding folder |
+
 ### Purchased Set data
 
 The data.bt.PurchasedSet represent a Lego set that was purchased. It is stored in data/bt/purchased_sets.csv and has the following fields:
@@ -273,7 +285,7 @@ Vendor, BroughtBy and Owner are enumerations: their values are not fixed in adva
 - The values proposed when adding or editing a purchase are the distinct values already used in data.bt.PurchasedSet.
 - A new value can be typed freely; it becomes a proposed value as soon as the purchase is saved.
 - Values are compared as written, after removing leading and trailing spaces. Empty values are not proposed.
-- In the Sets Purchase view each value is displayed as a colored label. The color is derived from the value text, so the same value always gets the same color.
+- In the Sets Purchase view each value is displayed as a colored label. When an image is mapped in data/other/vendor/vendors.csv or data/other/people/people.csv, the image is displayed instead and the value is used as its tooltip. Otherwise the colored label is shown. The color is derived from the value text, so the same value always gets the same color.
 
 ### Set images
 
