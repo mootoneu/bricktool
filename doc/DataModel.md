@@ -229,7 +229,27 @@ The data.bw.SetPrice represent the price of each set. It has the following field
 | SetNumber | String | Lego set number (FK) |
 | LegoPrice | Number | Lego official price |
 
-## Purchased Set data
+## BrickTool data
+
+### Themes data
+
+The data.bt.themes model describes Lego themes enriched with their parent theme name and a display color. It is derived from data.re.themes and stored in data/bt/themes.csv. It has the following fields:
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| id | Integer | (PK) Theme identifier (from data.re.themes.id) |
+| name | String | Theme name (from data.re.themes.name) |
+| parent_id | Integer | Parent theme identifier (from data.re.themes.parent_id) |
+| parent_name | String | Name of the parent theme, obtained by joining data.re.themes on data.re.themes.id = data.re.themes.parent_id |
+| theme_uid | String | Theme identifier matching an image in data/le/themes/ |
+| color_primary | String | Primary display color in hexadecimal format |
+| color_secondary | String | Secondary display color in hexadecimal format |
+| image | String | Image file name in data/le/themes/ |
+
+Relationships:
+- data.re.themes.id → data.bt.themes.parent_id
+
+### Purchased Set data
 
 The data.bt.PurchasedSet represent a Lego set that was purchased. It is stored in data/bt/purchased_sets.csv and has the following fields:
 
@@ -264,6 +284,27 @@ Pictures of purchased sets are stored in data/bt/setsimg/ with the SetNumber as 
 - If the download fails, the purchase is still saved and the download is retried on the next add or edit of that set.
 - The Sets Purchase view displays the stored image, not the picture hosted by Rebrickable.
 - One-off backfill: the Administration page has a "Download missing images" button. It goes through every distinct SetNumber of data.bt.PurchasedSet, skips sets that already have an image, and downloads the others. One download is made per second to avoid being banned by Rebrickable. The run happens in the background and its progress is shown on the page.
+
+### Part Color
+
+The data.bt.Color
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| LegoId | String | Lego color Id |
+| ReId | String | Rebrickable color Id |
+| BLId | String | BrickLink color Id |
+| BOId | String | BrickOwl color Id |
+| LDId | String | LDraw color Id |
+| LegoName | String | Lego name |
+| ReName | String | Rebrickable name |
+| BLName | String | BrickLink name |
+| BOName | String | BrickLink name |
+| Family | String | LegoName of the Color describing this familly |
+| FamilyId | String | LegoId of the Color describing this familly |
+| ColorHex | String | The hexadecimal representation of the color |
+| ContrastColorHex | String | Represents a contrasting color of ColorHex to be used as foreground color when ColorHex is used as a background color |
+| Tags | String | Comma separated list of tag in [Chrome, Speckle, Milky, Metallic, Glitter, Transparent, Pearl, Opal] |
 
 ## BrickOwl data
 
@@ -308,28 +349,4 @@ The data.bo.OrderItem represent an order from a store in BrickOwl. It is sourced
 | Quantity | Decimal | ordered_quantity - refunded_quantity | |
 | ItemPrice | String | base_price | |
 | TotalPrice | String | base_price * (ordered_quantity - refunded_quantity) | |
-
-## BrickTool data
-
-### Part Color
-
-The data.bt.Color
-
-| Field Name | Type | Description |
-| :--- | :--- | :--- |
-| LegoId | String | Lego color Id |
-| ReId | String | Rebrickable color Id |
-| BLId | String | BrickLink color Id |
-| BOId | String | BrickOwl color Id |
-| LDId | String | LDraw color Id |
-| LegoName | String | Lego name |
-| ReName | String | Rebrickable name |
-| BLName | String | BrickLink name |
-| BOName | String | BrickLink name |
-| Family | String | LegoName of the Color describing this familly |
-| FamilyId | String | LegoId of the Color describing this familly |
-| ColorHex | String | The hexadecimal representation of the color |
-| ContrastColorHex | String | Represents a contrasting color of ColorHex to be used as foreground color when ColorHex is used as a background color |
-| Tags | String | Comma separated list of tag in [Chrome, Speckle, Milky, Metallic, Glitter, Transparent, Pearl, Opal] |
-
 
