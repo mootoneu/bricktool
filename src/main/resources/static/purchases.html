@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools - Sets Purchase</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <div class="toolbar">
+      <h1>Sets purchases</h1>
+      <button id="add-purchase" class="btn" type="button">Add purchase</button>
+    </div>
+    <p id="purchases-msg" class="warning"></p>
+
+    <div class="table-wrap">
+      <table class="data" id="purchases">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="purchase-modal" class="modal" hidden>
+    <form id="purchase-form">
+      <h2 id="purchase-title">Add purchase</h2>
+      <input type="hidden" id="purchase-id">
+      <label>Set number <input id="f-setNumber" required></label>
+      <label>Price (€) <input id="f-purchasePrice" type="number" step="0.01" min="0" required></label>
+      <label>Purchase date (yyyy/MM/dd) <input id="f-purchaseDate" pattern="\d{4}/\d{2}/\d{2}" required></label>
+      <label>Vendor <input id="f-vendor"></label>
+      <label>Brought by <input id="f-broughtBy"></label>
+      <label>Owner <input id="f-owner"></label>
+      <label>Parts missing <input id="f-partMissings" type="number" min="0" value="0"></label>
+      <label><span><input type="checkbox" id="f-owned"> Owned</span></label>
+      <p id="form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="cancel-form" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/purchases.js"></script>
+</body>
+</html>

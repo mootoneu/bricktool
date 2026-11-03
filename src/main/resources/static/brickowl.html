@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools - BrickOwl</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <h1>BrickOwl orders</h1>
+
+    <nav class="tabs">
+      <button type="button" data-tab="stats" class="active">Statistics</button>
+      <button type="button" data-tab="update">Update</button>
+      <button type="button" data-tab="orders">Orders</button>
+      <button type="button" data-tab="items">Order items</button>
+    </nav>
+
+    <section data-panel="stats">
+      <p id="bo-stats-msg" class="warning"></p>
+      <div class="grid" id="bo-totals"></div>
+      <div id="bo-averages"></div>
+      <div id="bo-histograms"></div>
+    </section>
+
+    <section data-panel="update" hidden>
+      <section class="card">
+        <h2>Update order data from BrickOwl</h2>
+        <p class="muted">Fetches the orders more recent than the last stored one, with their items.</p>
+        <button id="bo-update" class="btn" type="button">Update from BrickOwl</button>
+        <p id="bo-update-msg" class="message"></p>
+      </section>
+    </section>
+
+    <section data-panel="orders" hidden>
+      <div class="table-wrap">
+        <table class="data" id="bo-orders">
+          <thead>
+            <tr>
+              <th>Order Id</th><th>Order time</th><th>Store</th><th>Weight (kg)</th>
+              <th>Parts</th><th>Lots</th><th>Paid</th><th>Refund</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-panel="items" hidden>
+      <p>
+        <label>Order
+          <select id="bo-order-select"></select>
+        </label>
+      </p>
+      <div class="table-wrap">
+        <table class="data" id="bo-items">
+          <thead>
+            <tr>
+              <th>Type</th><th>Name</th><th>Color</th><th>Design ids</th><th>Item numbers</th>
+              <th>Condition</th><th>Quantity</th><th>Unit price</th><th>Total price</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/brickowl.js"></script>
+</body>
+</html>

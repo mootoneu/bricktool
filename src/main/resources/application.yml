@@ -1,0 +1,13 @@
+server:
+  port: 8780
+
+bricktools:
+  data-dir: ./data
+  rebrickable:
+    download-url: https://cdn.rebrickable.com/media/downloads/all_downloads.zip
+  brickwatch:
+    base-url: https://www.brickwatch.net/fr-FR/set/
+    min-delay-ms: 1000
+  brickowl:
+    base-url: https://api.brickowl.com/v1
+    api-key: cdf4a99905abb474c20d2d3693bcbdb2e8f3e39fd12b1b2add524d3e296d14b9

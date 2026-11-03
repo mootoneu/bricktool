@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools - Administration</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <h1>Administration</h1>
+
+    <section class="card" id="rebrickable">
+      <h2>Rebrickable update</h2>
+      <p>Last download: <strong id="rb-last">never</strong></p>
+      <p id="rb-stale" class="warning" hidden>The Rebrickable data is older than a month. Please update it.</p>
+      <button id="rb-update" class="btn" type="button">Update data</button>
+      <p id="rb-msg" class="message"></p>
+    </section>
+
+    <section class="card" id="brickwatch">
+      <h2>BrickWatch official price</h2>
+      <form id="bw-form">
+        <input id="bw-set" placeholder="Set number, e.g. 75192" required>
+        <button class="btn" type="submit">Fetch official price</button>
+      </form>
+      <p id="bw-result" class="message"></p>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

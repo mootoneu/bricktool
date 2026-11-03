@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <h1>Brick Tools</h1>
+    <p class="lead">Tools to help you manage your Lego collection.</p>
+
+    <div class="cards">
+      <a class="feature-card" href="admin.html">
+        <h2>Administration</h2>
+        <p>Update Rebrickable data and fetch official set prices from BrickWatch.</p>
+      </a>
+      <a class="feature-card" href="brickowl.html">
+        <h2>BrickOwl</h2>
+        <p>Statistics and history of your BrickOwl orders and their items.</p>
+      </a>
+      <a class="feature-card" href="purchases.html">
+        <h2>Sets Purchase</h2>
+        <p>Your set purchases with official price, promo, completeness and ownership.</p>
+      </a>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/common.js"></script>
+  <script>BrickTools.initHeader(null);</script>
+</body>
+</html>
