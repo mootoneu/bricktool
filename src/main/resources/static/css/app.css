@@ -88,6 +88,7 @@ table.data {
 table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 table.fit { table-layout: fixed; }
 table.fit th, table.fit td { padding: 6px 5px; white-space: normal; overflow-wrap: anywhere; }
+.set-img { display: block; width: 80px; height: 80px; object-fit: contain; }
 .tag {
   display: inline-block; padding: 2px 8px; border-radius: 999px;
   font-size: .8rem; font-weight: 600; white-space: nowrap;

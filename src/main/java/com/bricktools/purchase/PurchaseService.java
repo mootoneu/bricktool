@@ -2,6 +2,7 @@ package com.bricktools.purchase;
 
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.csv.Csv;
+import com.bricktools.setimg.SetImageService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -13,6 +14,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,21 +25,27 @@ public class PurchaseService {
       "Id", "SetNumber", "PurchasePrice", "PurchaseDate", "Vendor", "BroughtBy", "Owner", "PartMissings", "Owned",
       "Reason");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
+  private static final Pattern SET_NUMBER = Pattern.compile("[A-Za-z0-9-]+");
+
+  private static final Logger log = LoggerFactory.getLogger(PurchaseService.class);
 
   private final Path purchasesFile;
   private final Path setsFile;
   private final Path themesFile;
   private final Path pricesFile;
+  private final SetImageService setImages;
 
-  public PurchaseService(BrickToolsProperties props) {
+  public PurchaseService(BrickToolsProperties props, SetImageService setImages) {
     Path data = props.dataPath();
     this.purchasesFile = data.resolve("bt/purchased_sets.csv");
     this.setsFile = data.resolve("re/sets.csv");
     this.themesFile = data.resolve("re/themes.csv");
     this.pricesFile = data.resolve("bw/setprices.csv");
+    this.setImages = setImages;
   }
 
   public synchronized List<Map<String, Object>> list() throws IOException {
+    Set<String> images = setImages.available();
     Map<String, Map<String, String>> sets = new HashMap<>();
     for (Map<String, String> set : Csv.read(setsFile)) {
       sets.put(set.get("set_num"), set);
@@ -77,9 +86,21 @@ public class PurchaseService {
       row.put("complete", numParts != null && numParts > 0 ? (1.0 - (double) missing / numParts) * 100 : null);
       row.put("owned", Boolean.parseBoolean(clean(purchase.get("Owned"))));
       row.put("reason", clean(purchase.get("Reason")));
+      row.put("imageUrl", images.contains(setNumber) ? "/api/setimg/" + setNumber : null);
       result.add(row);
     }
     return result;
+  }
+
+  public synchronized List<String> setNumbers() throws IOException {
+    Set<String> numbers = new TreeSet<>();
+    for (Map<String, String> purchase : Csv.read(purchasesFile)) {
+      String setNumber = clean(purchase.get("SetNumber"));
+      if (!setNumber.isEmpty()) {
+        numbers.add(setNumber);
+      }
+    }
+    return List.copyOf(numbers);
   }
 
   public synchronized Map<String, List<String>> options() throws IOException {
@@ -100,6 +121,7 @@ public class PurchaseService {
         .orElse(0) + 1;
     rows.add(toRow(id, request));
     Csv.write(purchasesFile, HEADERS, rows);
+    fetchImage(clean(request.setNumber()));
     return id;
   }
 
@@ -109,10 +131,22 @@ public class PurchaseService {
       if (String.valueOf(id).equals(clean(rows.get(i).get("Id")))) {
         rows.set(i, toRow(id, request));
         Csv.write(purchasesFile, HEADERS, rows);
+        fetchImage(clean(request.setNumber()));
         return;
       }
     }
     throw new IllegalArgumentException("Unknown purchase id " + id);
+  }
+
+  private void fetchImage(String setNumber) {
+    try {
+      setImages.ensure(setNumber);
+    } catch (IOException e) {
+      log.warn("Could not fetch the image of set {}: {}", setNumber, e.getMessage());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.warn("Interrupted while fetching the image of set {}", setNumber);
+    }
   }
 
   private List<Map<String, String>> loadForWrite() throws IOException {
@@ -130,6 +164,9 @@ public class PurchaseService {
     String date = clean(request.purchaseDate());
     if (setNumber.isEmpty()) {
       throw new IllegalArgumentException("Set number is required");
+    }
+    if (!SET_NUMBER.matcher(setNumber).matches()) {
+      throw new IllegalArgumentException("Set number may only contain letters, digits and dashes");
     }
     if (!DATE.matcher(date).matches()) {
       throw new IllegalArgumentException("Purchase date must use the yyyy/MM/dd format");

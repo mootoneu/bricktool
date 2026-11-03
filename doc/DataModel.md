@@ -255,6 +255,16 @@ Vendor, BroughtBy and Owner are enumerations: their values are not fixed in adva
 - Values are compared as written, after removing leading and trailing spaces. Empty values are not proposed.
 - In the Sets Purchase view each value is displayed as a colored label. The color is derived from the value text, so the same value always gets the same color.
 
+### Set images
+
+Pictures of purchased sets are stored in data/bt/setsimg/ with the SetNumber as file name, and the extension of the source image (e.g. data/bt/setsimg/75192.jpg).
+
+- When a purchase is added or edited, if no image is stored yet for its SetNumber, the image is downloaded once from data.re.sets.img_url (the row whose set_num is SetNumber + "-1").
+- An existing image is never downloaded again.
+- If the download fails, the purchase is still saved and the download is retried on the next add or edit of that set.
+- The Sets Purchase view displays the stored image, not the picture hosted by Rebrickable.
+- One-off backfill: the Administration page has a "Download missing images" button. It goes through every distinct SetNumber of data.bt.PurchasedSet, skips sets that already have an image, and downloads the others. One download is made per second to avoid being banned by Rebrickable. The run happens in the background and its progress is shown on the page.
+
 ## BrickOwl data
 
 BrickOwl provide a public API at <https://www.brickowl.com/api_docs>

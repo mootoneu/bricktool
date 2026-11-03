@@ -34,7 +34,39 @@ $(function () {
       .fail(function (xhr) { $('#bw-result').text(BrickTools.errorOf(xhr)); });
   });
 
+  function renderBackfill(p) {
+    let text = 'No purchased sets to check';
+    if (p.total) {
+      const state = p.running ? 'Running: ' + p.processed + ' of ' + p.total + ' sets checked' : 'Finished';
+      text = state + ' - ' + p.downloaded + ' downloaded, ' + p.skipped + ' already stored, ' +
+        p.noImage + ' without picture, ' + p.failed + ' failed' +
+        (p.lastError ? ' (last error: ' + p.lastError + ')' : '');
+    }
+    $('#img-status').text(text);
+    $('#img-backfill').prop('disabled', p.running);
+    if (p.running) {
+      setTimeout(pollBackfill, 2000);
+    }
+  }
+
+  function pollBackfill() {
+    BrickTools.api('GET', '/setimg/backfill').done(renderBackfill);
+  }
+
+  $('#img-backfill').on('click', function () {
+    BrickTools.api('POST', '/setimg/backfill')
+      .done(renderBackfill)
+      .fail(function (xhr) {
+        if (xhr.responseJSON && 'running' in xhr.responseJSON) {
+          renderBackfill(xhr.responseJSON);
+        } else {
+          $('#img-status').text(BrickTools.errorOf(xhr));
+        }
+      });
+  });
+
   refreshRebrickable().fail(function (xhr) {
     $('#rb-msg').text(BrickTools.errorOf(xhr));
   });
+  pollBackfill();
 });

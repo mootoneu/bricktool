@@ -119,6 +119,7 @@ The columns are:
 | Complete | 1 - (data.bt.PurchasedSet.PartMissings / data.re.sets.num_parts) | % |
 | Owned ? | data.bt.PurchasedSet.Owned | checkbox |
 | Reason | data.bt.PurchasedSet.Reason | |
+| Image | data/bt/setsimg/$SetNumber.$Ext, downloaded once from data.re.sets.img_url | image |
 
 Vendor, Buyer and Owner are enumerations (see [./doc/DataModel.md](./doc/DataModel.md#enumerations)). The add/edit form proposes the existing values and accepts new ones.
 

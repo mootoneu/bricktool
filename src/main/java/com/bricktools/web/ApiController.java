@@ -7,10 +7,17 @@ import com.bricktools.notification.NotificationService.Notification;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
 import com.bricktools.rebrickable.RebrickableService;
+import com.bricktools.setimg.SetImageBackfill;
+import com.bricktools.setimg.SetImageService;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,14 +36,41 @@ public class ApiController {
   private final BrickOwlService brickOwl;
   private final PurchaseService purchases;
   private final NotificationService notifications;
+  private final SetImageService setImages;
+  private final SetImageBackfill backfill;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch, BrickOwlService brickOwl,
-                       PurchaseService purchases, NotificationService notifications) {
+                       PurchaseService purchases, NotificationService notifications, SetImageService setImages,
+                       SetImageBackfill backfill) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickOwl = brickOwl;
     this.purchases = purchases;
     this.notifications = notifications;
+    this.setImages = setImages;
+    this.backfill = backfill;
+  }
+
+  @PostMapping("/setimg/backfill")
+  public ResponseEntity<SetImageBackfill.Progress> startSetImageBackfill() throws IOException {
+    HttpStatus status = backfill.start() ? HttpStatus.ACCEPTED : HttpStatus.CONFLICT;
+    return ResponseEntity.status(status).body(backfill.progress());
+  }
+
+  @GetMapping("/setimg/backfill")
+  public SetImageBackfill.Progress setImageBackfillStatus() {
+    return backfill.progress();
+  }
+
+  @GetMapping("/setimg/{setNumber}")
+  public ResponseEntity<Resource> setImage(@PathVariable String setNumber) throws IOException {
+    Optional<Path> image = setImages.find(setNumber);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(setImages.contentType(image.get())))
+        .body(setImages.resource(image.get()));
   }
 
   @GetMapping("/notifications")

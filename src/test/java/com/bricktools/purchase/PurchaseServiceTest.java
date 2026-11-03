@@ -5,12 +5,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import com.bricktools.config.BrickToolsProperties;
+import com.bricktools.setimg.SetImageService;
+import com.bricktools.support.TestHttpServer;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,21 +27,96 @@ class PurchaseServiceTest {
   Path dir;
 
   private PurchaseService service;
+  private TestHttpServer server;
+  private final AtomicInteger imageRequests = new AtomicInteger();
 
   @BeforeEach
   void setUp() throws IOException {
     Files.createDirectories(dir.resolve("re"));
     Files.createDirectories(dir.resolve("bw"));
+    server = new TestHttpServer();
+    server.handle("/img/75192-1.jpg", exchange -> {
+      imageRequests.incrementAndGet();
+      byte[] bytes = {(byte) 0xFF, (byte) 0xD8, 1, 2, 3};
+      exchange.sendResponseHeaders(200, bytes.length);
+      try (OutputStream out = exchange.getResponseBody()) {
+        out.write(bytes);
+      }
+    });
     Files.writeString(dir.resolve("re/sets.csv"),
-        "set_num,name,year,theme_id,num_parts\n75192-1,Millennium Falcon,2017,171,7541\n");
+        "set_num,name,year,theme_id,num_parts,img_url\n"
+            + "75192-1,Millennium Falcon,2017,171,7541," + server.baseUrl() + "/img/75192-1.jpg\n");
     Files.writeString(dir.resolve("re/themes.csv"), "id,name,parent_id\n171,Star Wars,\n");
     Files.writeString(dir.resolve("bw/setprices.csv"), "SetNumber,LegoPrice\n75192,849.99\n");
 
-    service = new PurchaseService(new BrickToolsProperties(
+    BrickToolsProperties props = new BrickToolsProperties(
         dir.toString(),
         new BrickToolsProperties.Rebrickable(""),
         new BrickToolsProperties.BrickWatch("", 0),
-        new BrickToolsProperties.BrickOwl("", "")));
+        new BrickToolsProperties.BrickOwl("", ""));
+    service = new PurchaseService(props, new SetImageService(props));
+  }
+
+  @AfterEach
+  void tearDown() {
+    server.close();
+  }
+
+  @Test
+  void addingPurchaseFetchesSetImageOnce() throws IOException {
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+    service.update(1, request("75192", "650.00", "2024/05/02", 0));
+    service.create(request("75192", "600.00", "2024/05/03", 0));
+
+    assertThat(Files.readAllBytes(dir.resolve("bt/setsimg/75192.jpg")))
+        .startsWith((byte) 0xFF, (byte) 0xD8);
+    assertThat(imageRequests.get()).isEqualTo(1);
+  }
+
+  @Test
+  void listExposesImageUrlOnlyWhenImageIsStored() throws IOException {
+    assertThat(service.list()).isEmpty();
+    service.create(request("75192", "700.00", "2024/05/01", 0));
+    service.create(request("99999", "10", "2024/05/01", 0));
+
+    List<Map<String, Object>> rows = service.list();
+
+    assertThat(rows.get(0)).containsEntry("imageUrl", "/api/setimg/75192");
+    assertThat(rows.get(1).get("imageUrl")).isNull();
+  }
+
+  @Test
+  void failedImageDownloadDoesNotBlockSaving() throws IOException {
+    server.handle("/img/broken.jpg", exchange -> {
+      exchange.sendResponseHeaders(404, -1);
+      exchange.close();
+    });
+    Files.writeString(dir.resolve("re/sets.csv"),
+        "set_num,name,year,theme_id,num_parts,img_url\n"
+            + "75192-1,Millennium Falcon,2017,171,7541," + server.baseUrl() + "/img/broken.jpg\n");
+
+    int id = service.create(request("75192", "700.00", "2024/05/01", 0));
+
+    assertThat(id).isEqualTo(1);
+    assertThat(service.list().get(0).get("imageUrl")).isNull();
+    assertThat(storedImages()).isZero();
+  }
+
+  private long storedImages() throws IOException {
+    Path images = dir.resolve("bt/setsimg");
+    if (!Files.isDirectory(images)) {
+      return 0;
+    }
+    try (Stream<Path> files = Files.list(images)) {
+      return files.count();
+    }
+  }
+
+  @Test
+  void rejectsSetNumbersThatAreNotSafeFileNames() {
+    assertThatThrownBy(() -> service.create(request("../75192", "1", "2024/01/01", 0)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("letters, digits and dashes");
   }
 
   private PurchaseRequest request(String setNumber, String price, String date, Integer missing) {

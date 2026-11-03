@@ -6,23 +6,24 @@ $(function () {
   const fmt = BrickTools.fmt;
 
   const COLUMNS = [
+    { key: 'imageUrl', label: 'Image', image: true, width: 6 },
     { key: 'id', label: 'Purchase Id', width: 5 },
     { key: 'setNumber', label: 'Set Number', width: 6 },
-    { key: 'name', label: 'Name', width: 9 },
+    { key: 'name', label: 'Name', width: 7.5 },
     { key: 'numParts', label: 'Total parts', fmt: fmt.number, width: 5 },
     { key: 'year', label: 'Year', width: 3.5 },
-    { key: 'theme', label: 'Theme', width: 6.5 },
-    { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, width: 6 },
+    { key: 'theme', label: 'Theme', width: 5.5 },
+    { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, width: 5.5 },
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
     { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
     { key: 'purchaseDate', label: 'Date', width: 7.5 },
-    { key: 'vendor', label: 'Vendor', tag: true, width: 6.5 },
-    { key: 'broughtBy', label: 'Buyer', tag: true, width: 5.5 },
-    { key: 'owner', label: 'Owner', tag: true, width: 5.5 },
+    { key: 'vendor', label: 'Vendor', tag: true, width: 6 },
+    { key: 'broughtBy', label: 'Buyer', tag: true, width: 5 },
+    { key: 'owner', label: 'Owner', tag: true, width: 5 },
     { key: 'partsMissing', label: 'Parts missing', fmt: fmt.number, width: 5 },
     { key: 'complete', label: 'Complete', fmt: fmt.percent, width: 5 },
     { key: 'owned', label: 'Owned ?', width: 3.5 },
-    { key: 'reason', label: 'Reason', width: 6 }
+    { key: 'reason', label: 'Reason', width: 5 }
   ];
 
   const OPTION_LISTS = [
@@ -72,7 +73,11 @@ $(function () {
       COLUMNS.forEach(function (c) {
         const $td = $('<td></td>');
         const value = p[c.key];
-        if (c.key === 'owned') {
+        if (c.image) {
+          if (value) {
+            $td.append($('<img class="set-img" alt="" loading="lazy">').attr('src', value));
+          }
+        } else if (c.key === 'owned') {
           $td.append($('<input type="checkbox" disabled>').prop('checked', !!value));
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -121,6 +122,23 @@ class ApiControllerTest {
     mvc.perform(put("/api/purchases/999").contentType(MediaType.APPLICATION_JSON).content(PURCHASE))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error").value("Unknown purchase id 999"));
+  }
+
+  @Test
+  void storedSetImageIsServedWithItsContentType() throws Exception {
+    byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, 1, 2, 3};
+    Files.createDirectories(dataDir.resolve("bt/setsimg"));
+    Files.write(dataDir.resolve("bt/setsimg/55555.jpg"), jpeg);
+
+    mvc.perform(get("/api/setimg/55555"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("image/jpeg"))
+        .andExpect(content().bytes(jpeg));
+  }
+
+  @Test
+  void unknownSetImageIsNotFound() throws Exception {
+    mvc.perform(get("/api/setimg/88888")).andExpect(status().isNotFound());
   }
 
   @Test
