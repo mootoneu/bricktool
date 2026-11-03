@@ -16,33 +16,80 @@
     </div>
     <p id="purchases-msg" class="warning"></p>
 
-    <div id="purchases-filters" class="filters">
-      <label>Name <input id="filter-name" type="search" placeholder="Contains…" autocomplete="off"></label>
-      <label>Number <input id="filter-number" type="search" placeholder="Contains…" autocomplete="off"></label>
-      <label>Reason <input id="filter-reason" type="search" placeholder="Contains…" autocomplete="off"></label>
-      <label>Year from <input id="filter-year-min" type="number" min="0" placeholder="Min"></label>
-      <label>Year to <input id="filter-year-max" type="number" min="0" placeholder="Max"></label>
-      <label>Date from <input id="filter-date-min" type="date"></label>
-      <label>Date to <input id="filter-date-max" type="date"></label>
-      <label>Total parts min <input id="filter-parts-min" type="number" min="0" placeholder="Min"></label>
-      <label>Total parts max <input id="filter-parts-max" type="number" min="0" placeholder="Max"></label>
-      <label>Theme <select id="filter-theme"><option value="">All</option></select></label>
-      <label>Vendor <select id="filter-vendor"><option value="">All</option></select></label>
-      <label>Buyer <select id="filter-buyer"><option value="">All</option></select></label>
-      <label>Owner <select id="filter-owner"><option value="">All</option></select></label>
-      <label class="filter-check"><span><input type="checkbox" id="filter-owned"> Hide not owned</span></label>
-      <div class="filter-actions">
-        <button type="button" id="filter-reset" class="btn secondary">Reset filters</button>
-      </div>
-    </div>
-    <p id="filter-summary" class="muted"></p>
+    <nav class="tabs">
+      <button type="button" data-tab="statistics" class="active">Statistics</button>
+      <button type="button" data-tab="list">Purchases</button>
+    </nav>
 
-    <div class="table-wrap">
-      <table class="data fit" id="purchases">
-        <thead><tr></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
+    <section data-panel="statistics">
+      <div class="grid">
+        <div class="stat"><h3>Owned sets</h3><div class="value" id="stat-count">—</div></div>
+        <div class="stat"><h3>Total price</h3><div class="value" id="stat-price">—</div></div>
+        <div class="stat"><h3>Total parts</h3><div class="value" id="stat-parts">—</div></div>
+        <div class="stat">
+          <h3>Not owned sets</h3>
+          <div class="value" id="stat-not-owned-count">—</div>
+          <div class="stat-sub">Total price: <span id="stat-not-owned-price"></span></div>
+        </div>
+      </div>
+
+      <div class="stats-charts">
+        <section class="card">
+          <h2>Sets per theme</h2>
+          <div id="stat-theme-count"></div>
+        </section>
+        <section class="card">
+          <h2>Price per theme</h2>
+          <div id="stat-theme-price"></div>
+        </section>
+        <section class="card">
+          <h2>Parts per theme</h2>
+          <div id="stat-theme-parts"></div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="chart-head">
+          <h2>Per purchase year</h2>
+          <div class="chart-filters" id="stat-filters">
+            <label>Theme <select id="stat-theme"><option value="">All</option></select></label>
+            <label>Buyer <select id="stat-buyer"><option value="">All</option></select></label>
+            <label>Owner <select id="stat-owner"><option value="">All</option></select></label>
+          </div>
+        </div>
+        <div id="stat-year"></div>
+      </section>
+    </section>
+
+    <section data-panel="list" hidden>
+      <div id="purchases-filters" class="filters">
+        <label>Name <input id="filter-name" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Number <input id="filter-number" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Reason <input id="filter-reason" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Year from <input id="filter-year-min" type="number" min="0" placeholder="Min"></label>
+        <label>Year to <input id="filter-year-max" type="number" min="0" placeholder="Max"></label>
+        <label>Date from <input id="filter-date-min" type="date"></label>
+        <label>Date to <input id="filter-date-max" type="date"></label>
+        <label>Total parts min <input id="filter-parts-min" type="number" min="0" placeholder="Min"></label>
+        <label>Total parts max <input id="filter-parts-max" type="number" min="0" placeholder="Max"></label>
+        <label>Theme <select id="filter-theme"><option value="">All</option></select></label>
+        <label>Vendor <select id="filter-vendor"><option value="">All</option></select></label>
+        <label>Buyer <select id="filter-buyer"><option value="">All</option></select></label>
+        <label>Owner <select id="filter-owner"><option value="">All</option></select></label>
+        <label class="filter-check"><span><input type="checkbox" id="filter-owned"> Hide not owned</span></label>
+        <div class="filter-actions">
+          <button type="button" id="filter-reset" class="btn secondary">Reset filters</button>
+        </div>
+      </div>
+      <p id="filter-summary" class="muted"></p>
+
+      <div class="table-wrap">
+        <table class="data fit" id="purchases">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <div id="purchase-modal" class="modal" hidden>
@@ -70,6 +117,7 @@
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="js/common.js"></script>
   <script src="js/purchases.js"></script>
 </body>

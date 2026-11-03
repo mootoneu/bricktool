@@ -64,6 +64,7 @@ body {
 .feature-card h2 { margin-top: 0; color: var(--primary); }
 .stat h3 { margin: 0 0 8px; font-size: .9rem; color: var(--muted); font-weight: 500; }
 .stat .value { font-size: 1.4rem; font-weight: 600; }
+.stat-sub { margin-top: 4px; font-size: .9rem; color: var(--muted); }
 
 .btn {
   background: var(--primary); color: #fff; border: 0; border-radius: 6px;
@@ -126,6 +127,24 @@ table.data tbody tr.clickable { cursor: pointer; }
 .chart { width: 100%; height: auto; }
 .chart-title { font-size: 12px; font-weight: 600; fill: var(--text); }
 .axis text { font-size: 10px; }
+
+.stats-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.stats-charts .card { margin-bottom: 0; }
+.stats-charts h2 { margin: 0 0 12px; font-size: 1rem; }
+.donut-wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.donut-svg { width: 160px; height: 160px; flex: none; }
+.donut-total { font-size: 12px; font-weight: 600; fill: var(--text); }
+.donut-legend { flex: 1; min-width: 150px; margin: 0; padding: 0; list-style: none; font-size: .85rem; }
+.donut-legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.donut-legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.donut-legend .legend-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.donut-legend .legend-value { color: var(--muted); white-space: nowrap; }
+.chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.chart-head h2 { margin: 0; font-size: 1rem; }
+.chart-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+.chart-filters label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.chart-filters select { padding: 6px 8px; font-size: .85rem; }
+.year-chart + .year-chart { margin-top: 4px; }
 
 .modal {
   position: fixed; inset: 0; z-index: 20;
