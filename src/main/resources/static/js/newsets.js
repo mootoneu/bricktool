@@ -39,6 +39,7 @@ $(function () {
   let renderedSetCount = 0;
   let setObserver = null;
   let forceSetReset = false;
+  let rootFilter = '';
 
   function report(selector, text) {
     $(selector).text(text || '');
@@ -180,12 +181,14 @@ $(function () {
 
   function renderThemes() {
     const $host = $('#theme-cards').empty();
-    if (catalog.themes.length === 0) {
+    const grouped = $('#theme-root-group').is(':checked');
+    const themes = grouped ? catalog.rootThemes : catalog.themes;
+    if (themes.length === 0) {
       $host.append('<p class="muted">No new sets found for this period.</p>');
       return;
     }
     const fragment = document.createDocumentFragment();
-    catalog.themes.forEach(function (theme) {
+    themes.forEach(function (theme) {
       const color = theme.color || '#e5e7eb';
       const $card = $('<button type="button" class="theme-card"></button>')
         .css({ 'background-color': color, color: readableText(color) })
@@ -195,7 +198,8 @@ $(function () {
       }
       $card.append($('<span class="theme-card-name"></span>').text(theme.name));
       $card.on('click', function () {
-        $('#ns-theme').val(theme.name);
+        rootFilter = grouped ? theme.name : '';
+        $('#ns-theme').val(grouped ? '' : theme.name);
         forceSetReset = true;
         $('[data-tab="sets"]').trigger('click');
       });
@@ -231,6 +235,9 @@ $(function () {
       if (theme && set.theme !== theme) {
         return false;
       }
+      if (rootFilter && set.rootTheme !== rootFilter) {
+        return false;
+      }
       if (!priceMatches(set.officialPrice, min, max)) {
         return false;
       }
@@ -243,7 +250,8 @@ $(function () {
     const catalogTotal = catalog.sets.length;
     const label = total === catalogTotal ? 'sets' : (total === 1 ? 'matching set' : 'matching sets');
     const suffix = total === catalogTotal ? '' : ' (' + catalogTotal + ' in catalogue)';
-    report('#set-summary', 'Showing ' + renderedSetCount + ' of ' + total + ' ' + label + suffix);
+    const root = rootFilter ? 'Root theme ' + rootFilter + ': ' : '';
+    report('#set-summary', root + 'Showing ' + renderedSetCount + ' of ' + total + ' ' + label + suffix);
   }
 
   function updateSetLoader() {
@@ -478,12 +486,15 @@ $(function () {
 
   $('#set-filters').on('input', 'input[type="search"]', debounce(function () { renderSets(); }, 250));
   $('#set-filters').on('change', 'select, input[type="number"], input[type="checkbox"]', function () { renderSets(); });
+  $('#ns-theme').on('change', function () { rootFilter = ''; });
   $('#ns-reset').on('click', function () {
     $('#set-filters').find('input[type="search"], input[type="number"]').val('');
     $('#ns-theme').val('');
     $('#ns-wishlisted').prop('checked', false);
+    rootFilter = '';
     renderSets();
   });
+  $('#theme-root-group').on('change', renderThemes);
 
   $('#set-cards').on('click', '.set-card', function (e) {
     if ($(e.target).closest('button, a, input, select, label, textarea').length) {

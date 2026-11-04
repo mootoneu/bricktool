@@ -119,6 +119,23 @@ class NewSetServiceTest {
   }
 
   @Test
+  void childThemesAreGroupedUnderTheirRootTheme() throws IOException {
+    Files.writeString(dir.resolve("re/themes.csv"),
+        "id,name,parent_id\n171,Star Wars,\n172,City,\n173,Gear,\n174,Coast Guard,172\n175,Sub Coast,174\n");
+    Files.writeString(dir.resolve("re/sets.csv"),
+        "set_num,name,year,theme_id,num_parts,img_url\n"
+            + "60000-1,Boat," + currentYear + ",175,100,https://cdn.example/60000-1.jpg\n");
+
+    Map<String, Object> catalog = service.catalog();
+
+    assertThat(list(catalog, "sets").get(0))
+        .containsEntry("theme", "Sub Coast")
+        .containsEntry("rootTheme", "City");
+    assertThat(list(catalog, "rootThemes")).extracting(row -> row.get("name")).containsExactly("City");
+    assertThat(list(catalog, "rootThemes").get(0)).containsEntry("color", "#003290");
+  }
+
+  @Test
   void detailsReturnsOnlyKnownSets() throws IOException {
     Map<String, Map<String, Object>> details = service.details(List.of("75192", "unknown"));
 

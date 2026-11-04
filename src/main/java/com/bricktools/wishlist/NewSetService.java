@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +60,7 @@ public class NewSetService {
 
     List<Map<String, Object>> sets = new ArrayList<>();
     Map<String, Map<String, Object>> themes = new TreeMap<>(TEXT_ORDER);
+    Map<String, Map<String, Object>> rootThemes = new TreeMap<>(TEXT_ORDER);
     for (Map<String, String> set : context.setsByNumber().values()) {
       Integer year = toInt(set.get("year"));
       if (year == null || year < fromYear || year > toYear || isHidden(set.get("theme_id"), context)) {
@@ -66,10 +68,15 @@ public class NewSetService {
       }
       Map<String, Object> card = card(set, context);
       sets.add(card);
+      String themeId = clean(set.get("theme_id"));
       Object themeName = card.get("theme");
       if (themeName != null && !String.valueOf(themeName).isBlank()) {
-        themes.computeIfAbsent(String.valueOf(themeName),
-            name -> theme(clean(set.get("theme_id")), name, context));
+        themes.computeIfAbsent(String.valueOf(themeName), name -> theme(themeId, name, context));
+      }
+      Object rootName = card.get("rootTheme");
+      if (rootName != null && !String.valueOf(rootName).isBlank()) {
+        rootThemes.computeIfAbsent(String.valueOf(rootName),
+            name -> theme(rootOf(themeId, context), name, context));
       }
     }
     sets.sort(Comparator
@@ -81,6 +88,7 @@ public class NewSetService {
     result.put("toYear", toYear);
     result.put("sets", sets);
     result.put("themes", List.copyOf(themes.values()));
+    result.put("rootThemes", List.copyOf(rootThemes.values()));
     return result;
   }
 
@@ -115,8 +123,10 @@ public class NewSetService {
       }
     }
     Map<String, String> themes = new HashMap<>();
+    Map<String, String> parents = new HashMap<>();
     for (Map<String, String> theme : Csv.read(themesFile)) {
       themes.put(clean(theme.get("id")), clean(theme.get("name")));
+      parents.put(clean(theme.get("id")), clean(theme.get("parent_id")));
     }
     Map<String, Map<String, String>> themeDetails = new HashMap<>();
     for (Map<String, String> theme : Csv.read(themeDetailsFile)) {
@@ -126,7 +136,21 @@ public class NewSetService {
     for (Map<String, String> price : Csv.read(pricesFile)) {
       prices.put(clean(price.get("SetNumber")), clean(price.get("LegoPrice")));
     }
-    return new Context(setsByNumber, themes, themeDetails, themeImages.available(), setImages.available(), prices);
+    return new Context(setsByNumber, themes, parents, themeDetails, themeImages.available(), setImages.available(),
+        prices);
+  }
+
+  private static String rootOf(String themeId, Context context) {
+    String current = clean(themeId);
+    Set<String> visited = new HashSet<>();
+    while (visited.add(current)) {
+      String parent = context.parents().getOrDefault(current, "");
+      if (parent.isEmpty()) {
+        break;
+      }
+      current = parent;
+    }
+    return current;
   }
 
   private static Map<String, Object> card(Map<String, String> set, Context context) {
@@ -146,6 +170,8 @@ public class NewSetService {
     card.put("year", toInt(set.get("year")));
     card.put("numParts", toInt(set.get("num_parts")));
     card.put("theme", context.themes().get(themeId));
+    String rootName = context.themes().get(rootOf(themeId, context));
+    card.put("rootTheme", rootName != null ? rootName : context.themes().get(themeId));
     card.put("themeImageUrl",
         !themeImage.isEmpty() && context.themeImages().contains(themeImage) ? "/api/themeimg/" + themeImage : null);
     card.put("themeColor", COLOR.matcher(themeColor).matches() ? themeColor : null);
@@ -193,6 +219,6 @@ public class NewSetService {
   }
 
   private record Context(Map<String, Map<String, String>> setsByNumber, Map<String, String> themes,
-                         Map<String, Map<String, String>> themeDetails, Set<String> themeImages,
-                         Set<String> storedImages, Map<String, String> prices) {}
+                         Map<String, String> parents, Map<String, Map<String, String>> themeDetails,
+                         Set<String> themeImages, Set<String> storedImages, Map<String, String> prices) {}
 }
