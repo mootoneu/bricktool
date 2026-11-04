@@ -151,9 +151,11 @@ $(function () {
       return;
     }
     orders.forEach(function (o) {
-      const cells = [o.Id, o.OrderTime, o.StoreName, o.Weight, o.TotalParts, o.TotalLots,
+      const cells = [o.OrderTime, o.StoreName, o.Weight, o.TotalParts, o.TotalLots,
         fmt.money(o.PaidTotal), fmt.money(o.RefundTotal), fmt.money(o.Total)];
+      const url = 'https://www.brickowl.com/user/934717/orders/' + encodeURIComponent(o.Id);
       $tbody.append('<tr class="clickable" data-id="' + esc(o.Id) + '">' +
+        '<td><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(o.Id) + '</a></td>' +
         cells.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>');
     });
   }
@@ -189,7 +191,10 @@ $(function () {
       .fail(function (xhr) { report('#bo-update-msg', BrickTools.errorOf(xhr)); });
   }
 
-  $('#bo-orders').on('click', 'tbody tr[data-id]', function () {
+  $('#bo-orders').on('click', 'tbody tr[data-id]', function (e) {
+    if ($(e.target).closest('a').length) {
+      return;
+    }
     const id = $(this).attr('data-id');
     $('#bo-order-select').val(id);
     $('[data-tab="items"]').trigger('click');
