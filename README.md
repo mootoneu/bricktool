@@ -119,9 +119,12 @@ The columns are:
 | Complete | 1 - (data.bt.PurchasedSet.PartMissings / data.re.sets.num_parts) | % |
 | Owned ? | data.bt.PurchasedSet.Owned | checkbox |
 | Reason | data.bt.PurchasedSet.Reason | |
+| Sites | | Open button showing the external websites for the set |
 | Image | data/bt/setsimg/$SetNumber.$Ext, downloaded once from data.re.sets.img_url | image |
 
 Vendor, Buyer and Owner are enumerations (see [./doc/DataModel.md](./doc/DataModel.md#enumerations)). The add/edit form proposes the existing values and accepts new ones.
+
+The Open button in the Sites column opens a modal listing the websites that document the set: Lego, Lego instructions, Rebrickable, BrickLink, BrickOwl, BrickWatch, Amazon, Fnac and CDiscount. Each website is a clickable image that opens the set page in a new tab.
 
 To join data:
 
@@ -138,7 +141,7 @@ Themes whose `hidden` column is true in data/bt/themes.csv are excluded from the
 The page has three tabs:
 
 - **Themes**: all themes having sets in the period, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.
-- **Sets**: all sets of the period as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and restricted to wishlisted sets.
+- **Sets**: all sets of the period as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and restricted to wishlisted sets. Clicking a card (outside its wishlist button) opens the same external websites modal as the Sets Purchase list.
 - **Wishlist**: the wishlisted sets in a table with name, year, total parts, theme image, official price, member, priority and wishlist date. The table can be filtered by name, theme, member, priority and official price. Each row can be edited, deleted, or bought: Buy records the set as a purchase using its official price, today's date and the wishlist member as owner, then removes it from the wishlist and opens the Sets Purchase list.
 
 The wishlist data model is described in [./doc/DataModel.md](./doc/DataModel.md#wishlist-data). Official prices come from data.bw.SetPrice; a set without a stored official price shows a dash until its price is fetched from the Administration page.

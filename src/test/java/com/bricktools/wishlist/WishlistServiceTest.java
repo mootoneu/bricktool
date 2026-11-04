@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bricktools.config.BrickToolsProperties;
+import com.bricktools.other.PeopleService;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
@@ -31,6 +32,12 @@ class WishlistServiceTest {
     Files.createDirectories(dir.resolve("bt"));
     Files.createDirectories(dir.resolve("bw"));
     Files.createDirectories(dir.resolve("le/themes"));
+    Files.createDirectories(dir.resolve("other/people"));
+    Files.writeString(dir.resolve("other/people/people.csv"),
+        "name,image,color\n"
+            + "Duncan,Duncan.webp,#2563eb\n"
+            + "Eglantine,Eglantine.webp,#db2777\n"
+            + "Alice,Default.webp,#059669\n");
     Files.writeString(dir.resolve("re/sets.csv"),
         "set_num,name,year,theme_id,num_parts,img_url\n"
             + "75192-1,Millennium Falcon," + currentYear + ",171,7541,https://cdn.example/75192-1.jpg\n");
@@ -47,7 +54,7 @@ class WishlistServiceTest {
 
     BrickToolsProperties props = props();
     NewSetService newSets = new NewSetService(props, new SetImageService(props), new ThemeImageService(props));
-    service = new WishlistService(props, newSets);
+    service = new WishlistService(props, newSets, new PeopleService(props));
   }
 
   @Test
@@ -107,10 +114,10 @@ class WishlistServiceTest {
   }
 
   @Test
-  void optionsUsePurchaseOwnersAndThePriorityList() throws IOException {
+  void optionsUsePeopleFileAndThePriorityList() throws IOException {
     Map<String, Object> options = service.options();
 
-    assertThat(strings(options.get("members"))).containsExactly("Duncan", "Eglantine");
+    assertThat(strings(options.get("members"))).containsExactly("Alice", "Duncan", "Eglantine");
     assertThat(strings(options.get("priorities")))
         .containsExactly("Favorite", "High", "Medium", "Low");
   }

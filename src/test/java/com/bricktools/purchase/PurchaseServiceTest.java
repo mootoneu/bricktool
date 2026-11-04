@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.within;
 
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.other.OtherImageService;
+import com.bricktools.other.PeopleService;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.support.TestHttpServer;
 import com.bricktools.theme.ThemeImageService;
@@ -46,7 +47,7 @@ class PurchaseServiceTest {
             + "171,Star Wars,,,star-wars,#141414,#3d3d3d,star-wars.svg\n");
     Files.writeString(dir.resolve("le/themes/star-wars.svg"), "<svg/>", StandardCharsets.UTF_8);
     Files.writeString(dir.resolve("other/vendor/vendors.csv"), "name,image\nAmazon,amazon.svg\n");
-    Files.writeString(dir.resolve("other/people/people.csv"), "name,image\nMe,me.webp\n");
+    Files.writeString(dir.resolve("other/people/people.csv"), "name,image,color\nMe,me.webp,#2563eb\n");
     Files.writeString(dir.resolve("other/vendor/amazon.svg"), "<svg/>", StandardCharsets.UTF_8);
     Files.writeString(dir.resolve("other/people/me.webp"), "webp", StandardCharsets.UTF_8);
     server = new TestHttpServer();
@@ -70,7 +71,7 @@ class PurchaseServiceTest {
         new BrickToolsProperties.BrickWatch("", 0),
         new BrickToolsProperties.BrickOwl("", ""));
     service = new PurchaseService(props, new SetImageService(props), new ThemeImageService(props),
-        new OtherImageService(props));
+        new OtherImageService(props), new PeopleService(props));
   }
 
   @AfterEach
@@ -199,7 +200,9 @@ class PurchaseServiceTest {
 
     assertThat(row).containsEntry("vendorImageUrl", "/api/vendorimg/amazon.svg")
         .containsEntry("broughtByImageUrl", "/api/peopleimg/me.webp")
-        .containsEntry("ownerImageUrl", "/api/peopleimg/me.webp");
+        .containsEntry("ownerImageUrl", "/api/peopleimg/me.webp")
+        .containsEntry("broughtByColor", "#2563eb")
+        .containsEntry("ownerColor", "#2563eb");
   }
 
   @Test

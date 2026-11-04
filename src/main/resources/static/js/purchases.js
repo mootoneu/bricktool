@@ -6,24 +6,25 @@ $(function () {
   const fmt = BrickTools.fmt;
 
   const COLUMNS = [
-    { key: 'imageUrl', label: 'Image', image: true, width: 6 },
-    { key: 'id', label: 'Purchase Id', width: 5 },
-    { key: 'setNumber', label: 'Set Number', width: 6 },
-    { key: 'name', label: 'Name', width: 7.5 },
+    { key: 'imageUrl', label: 'Image', image: true, width: 5 },
+    { key: 'id', label: 'Purchase Id', width: 4 },
+    { key: 'setNumber', label: 'Set Number', width: 5.5 },
+    { key: 'name', label: 'Name', width: 6 },
     { key: 'numParts', label: 'Total parts', fmt: fmt.number, width: 5 },
-    { key: 'year', label: 'Year', width: 3.5 },
+    { key: 'year', label: 'Year', width: 3 },
     { key: 'theme', label: 'Theme', theme: true, width: 5.5 },
     { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, width: 5.5 },
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
     { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
-    { key: 'purchaseDate', label: 'Date', width: 7.5 },
-    { key: 'vendor', label: 'Vendor', logo: true, width: 6 },
+    { key: 'purchaseDate', label: 'Date', width: 7 },
+    { key: 'vendor', label: 'Vendor', logo: true, width: 5.5 },
     { key: 'broughtBy', label: 'Buyer', avatar: true, width: 5 },
     { key: 'owner', label: 'Owner', avatar: true, width: 5 },
     { key: 'partsMissing', label: 'Parts missing', fmt: fmt.number, width: 5 },
     { key: 'complete', label: 'Complete', fmt: fmt.percent, width: 5 },
     { key: 'owned', label: 'Owned ?', width: 3.5 },
-    { key: 'reason', label: 'Reason', width: 5 }
+    { key: 'reason', label: 'Reason', width: 4 },
+    { key: 'links', label: 'Sites', links: true, width: 5 }
   ];
 
   const OPTION_LISTS = [
@@ -337,11 +338,17 @@ $(function () {
   function buildHeader() {
     const $colgroup = $('<colgroup></colgroup>');
     COLUMNS.forEach(c => $colgroup.append($('<col>').css('width', c.width + '%')));
-    $colgroup.append($('<col>').css('width', '4%'));
+    $colgroup.append($('<col>').css('width', '5%'));
     $('#purchases').prepend($colgroup);
 
     const $row = $('#purchases thead tr').empty();
-    COLUMNS.forEach(c => $row.append($('<th class="sortable"></th>').attr('data-key', c.key).text(c.label)));
+    COLUMNS.forEach(function (c) {
+      if (c.links) {
+        $row.append($('<th></th>').text(c.label));
+      } else {
+        $row.append($('<th class="sortable"></th>').attr('data-key', c.key).text(c.label));
+      }
+    });
     $row.append('<th></th>');
     $('#purchases thead').on('click', 'th[data-key]', function () {
       const key = $(this).attr('data-key');
@@ -375,7 +382,11 @@ $(function () {
       COLUMNS.forEach(function (c) {
         const $td = $('<td></td>');
         const value = p[c.key];
-        if (c.image) {
+        if (c.links) {
+          $td.append($('<button type="button" class="btn secondary">Open</button>')
+            .attr('title', 'Open set ' + (p.setNumber || '') + ' on external websites')
+            .on('click', function () { BrickTools.openSetSites(p.setNumber); }));
+        } else if (c.image) {
           if (value) {
             $td.append($('<img class="set-img" alt="" loading="lazy">').attr('src', value));
           }
@@ -400,14 +411,23 @@ $(function () {
           $td.append($cell);
         } else if (c.logo || c.avatar) {
           const imageUrl = p[c.key + 'ImageUrl'];
+          const color = p[c.key + 'Color'];
           if (imageUrl) {
-            $td.append($('<img loading="lazy">')
+            const $image = $('<img loading="lazy">')
               .addClass(c.logo ? 'vendor-img' : 'person-img')
               .attr('src', imageUrl)
               .attr('alt', value || '')
-              .attr('title', value || ''));
+              .attr('title', value || '');
+            if (c.avatar && color) {
+              $image.css('border-color', color);
+            }
+            $td.append($image);
           } else {
-            $td.append(BrickTools.tag(value));
+            const $tag = BrickTools.tag(value);
+            if (c.avatar && color && $tag) {
+              $tag.css('border', '2px solid ' + color);
+            }
+            $td.append($tag);
           }
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));

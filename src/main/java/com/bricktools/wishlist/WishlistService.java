@@ -2,6 +2,7 @@ package com.bricktools.wishlist;
 
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.csv.Csv;
+import com.bricktools.other.PeopleService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -11,8 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
@@ -26,13 +25,13 @@ public class WishlistService {
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
   private final Path wishlistFile;
-  private final Path purchasesFile;
   private final NewSetService newSets;
+  private final PeopleService people;
 
-  public WishlistService(BrickToolsProperties props, NewSetService newSets) {
+  public WishlistService(BrickToolsProperties props, NewSetService newSets, PeopleService people) {
     this.wishlistFile = props.dataPath().resolve("bt/wishlist.csv");
-    this.purchasesFile = props.dataPath().resolve("bt/purchased_sets.csv");
     this.newSets = newSets;
+    this.people = people;
   }
 
   public synchronized List<Map<String, Object>> list() throws IOException {
@@ -61,22 +60,8 @@ public class WishlistService {
   }
 
   public synchronized Map<String, Object> options() throws IOException {
-    Set<String> members = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    for (Map<String, String> purchase : Csv.read(purchasesFile)) {
-      String owner = clean(purchase.get("Owner"));
-      if (!owner.isEmpty()) {
-        members.add(owner);
-      }
-    }
-    for (Map<String, String> row : load()) {
-      String member = clean(row.get("Member"));
-      if (!member.isEmpty()) {
-        members.add(member);
-      }
-    }
-
     Map<String, Object> options = new LinkedHashMap<>();
-    options.put("members", List.copyOf(members));
+    options.put("members", people.names());
     options.put("priorities", PRIORITIES);
     return options;
   }

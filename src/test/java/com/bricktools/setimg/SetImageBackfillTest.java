@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.other.OtherImageService;
+import com.bricktools.other.PeopleService;
 import com.bricktools.purchase.PurchaseService;
 import com.bricktools.support.TestHttpServer;
 import com.bricktools.theme.ThemeImageService;
@@ -78,7 +79,7 @@ class SetImageBackfillTest {
         new BrickToolsProperties.BrickOwl("", ""));
     SetImageService images = new SetImageService(props);
     return new SetImageBackfill(images, new PurchaseService(props, images, new ThemeImageService(props),
-        new OtherImageService(props)));
+        new OtherImageService(props), new PeopleService(props)));
   }
 
   private static SetImageBackfill.Progress awaitFinished(SetImageBackfill backfill) throws InterruptedException {

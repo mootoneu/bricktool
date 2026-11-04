@@ -3,6 +3,7 @@ package com.bricktools.purchase;
 import com.bricktools.config.BrickToolsProperties;
 import com.bricktools.csv.Csv;
 import com.bricktools.other.OtherImageService;
+import com.bricktools.other.PeopleService;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
@@ -45,9 +46,10 @@ public class PurchaseService {
   private final SetImageService setImages;
   private final ThemeImageService themeImages;
   private final OtherImageService otherImages;
+  private final PeopleService people;
 
   public PurchaseService(BrickToolsProperties props, SetImageService setImages, ThemeImageService themeImages,
-                         OtherImageService otherImages) {
+                         OtherImageService otherImages, PeopleService people) {
     Path data = props.dataPath();
     this.purchasesFile = data.resolve("bt/purchased_sets.csv");
     this.setsFile = data.resolve("re/sets.csv");
@@ -59,6 +61,7 @@ public class PurchaseService {
     this.setImages = setImages;
     this.themeImages = themeImages;
     this.otherImages = otherImages;
+    this.people = people;
   }
 
   public synchronized List<Map<String, Object>> list() throws IOException {
@@ -78,6 +81,7 @@ public class PurchaseService {
     Set<String> availableThemeImages = themeImages.available();
     Map<String, String> vendorImages = imageUrls(vendorImagesFile, otherImages.available("vendor"), VENDOR_IMAGE_BASE);
     Map<String, String> peopleImages = imageUrls(peopleImagesFile, otherImages.available("people"), PEOPLE_IMAGE_BASE);
+    Map<String, String> peopleColors = people.colors();
     Map<String, String> prices = new HashMap<>();
     for (Map<String, String> price : Csv.read(pricesFile)) {
       prices.put(price.get("SetNumber"), price.get("LegoPrice"));
@@ -110,7 +114,9 @@ public class PurchaseService {
       row.put("themeColor", COLOR.matcher(themeColor).matches() ? themeColor : null);
       row.put("vendorImageUrl", vendorImages.get(key(vendor)));
       row.put("broughtByImageUrl", peopleImages.get(key(broughtBy)));
+      row.put("broughtByColor", peopleColors.get(key(broughtBy)));
       row.put("ownerImageUrl", peopleImages.get(key(owner)));
+      row.put("ownerColor", peopleColors.get(key(owner)));
       row.put("officialPrice", official);
       row.put("price", price);
       row.put("promo", price != null && official != null && official > 0 ? price / official * 100 : null);

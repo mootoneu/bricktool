@@ -252,7 +252,7 @@ $(function () {
 
   function setCard(set) {
     const entry = wishlistBySet.get(set.setNumber);
-    const $card = $('<article class="set-card"></article>');
+    const $card = $('<article class="set-card"></article>').attr('data-set-number', set.setNumber);
 
     const $image = $('<div class="set-card-image"></div>');
     if (set.imageUrl) {
@@ -460,7 +460,7 @@ $(function () {
     const hasMember = (options.members || []).length > 0;
     $('#wishlist-form button[type="submit"]').prop('disabled', !hasMember);
     if (!hasMember) {
-      report('#wishlist-form-msg', 'No family member is available. Set the Owner of a purchase first.');
+      report('#wishlist-form-msg', 'No family member is available. Add people to data/other/people/people.csv first.');
     }
     $('#wishlist-modal').prop('hidden', false);
   }
@@ -476,6 +476,13 @@ $(function () {
     $('#ns-theme').val('');
     $('#ns-wishlisted').prop('checked', false);
     renderSets();
+  });
+
+  $('#set-cards').on('click', '.set-card', function (e) {
+    if ($(e.target).closest('button, a, input, select, label, textarea').length) {
+      return;
+    }
+    BrickTools.openSetSites($(this).attr('data-set-number'));
   });
 
   $('#set-cards').on('click', '.wishlist-toggle', function () {

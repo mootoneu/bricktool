@@ -250,7 +250,7 @@ The data.bt.themes model describes Lego themes enriched with their parent theme 
 Relationships:
 - data.re.themes.id → data.bt.themes.parent_id
 
-### Vendor and people images
+### Vendor and people metadata
 
 Vendor logos are stored in data/other/vendor/ and mapped in data/other/vendor/vendors.csv.
 People pictures are stored in data/other/people/ and mapped in data/other/people/people.csv.
@@ -261,6 +261,7 @@ Both mapping files have the following fields:
 | :--- | :--- | :--- |
 | name | String | Vendor or person name, as used in data.bt.purchased_sets.csv. Matching is case-insensitive. |
 | image | String | Image file name in the corresponding folder |
+| color | String | (People only) Display color in hexadecimal format, used as the border of the Buyer and Owner avatars. Optional. |
 
 ### Purchased Set data
 
@@ -286,7 +287,7 @@ Vendor, BroughtBy and Owner are enumerations: their values are not fixed in adva
 - The values proposed when adding or editing a purchase are the distinct values already used in data.bt.PurchasedSet.
 - A new value can be typed freely; it becomes a proposed value as soon as the purchase is saved.
 - Values are compared as written, after removing leading and trailing spaces. Empty values are not proposed.
-- In the Sets Purchase view each value is displayed as a colored label. When an image is mapped in data/other/vendor/vendors.csv or data/other/people/people.csv, the image is displayed instead and the value is used as its tooltip. Otherwise the colored label is shown. The color is derived from the value text, so the same value always gets the same color.
+- In the Sets Purchase view each value is displayed as a colored label. When an image is mapped in data/other/vendor/vendors.csv or data/other/people/people.csv, the image is displayed instead and the value is used as its tooltip. Otherwise the colored label is shown. The color is derived from the value text, so the same value always gets the same color. For Buyer and Owner, the person's color from people.csv is used as the avatar border when available.
 
 ### Set images
 
@@ -307,7 +308,7 @@ The data.bt.Wishlist represent a set the user would like to buy. It is stored in
 | Id | Integer | (PK) |
 | SetNumber | String | Lego set number (FK). A set can only appear once in the wishlist. |
 | WishlistDate | Date | Date (yyyy/MM/dd) the set was added to the wishlist |
-| Member | Enumeration | Family member the set is intended for. The proposed values are the distinct data.bt.PurchasedSet.Owner values. |
+| Member | Enumeration | Family member the set is intended for. The proposed values are the names listed in data/other/people/people.csv. |
 | Priority | Enumeration | Favorite, High, Medium or Low |
 
 Relationships:
