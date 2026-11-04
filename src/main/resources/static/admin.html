@@ -37,6 +37,14 @@
       <button id="img-backfill" class="btn" type="button">Download missing images</button>
       <p id="img-status" class="message"></p>
     </section>
+
+    <section class="card" id="backup">
+      <h2>Data backup</h2>
+      <p class="muted">Copies the purchases, wishlist, official prices, BrickOwl orders, theme settings, people and vendors into a zip file in data/backups. The 3 most recent backups are kept.</p>
+      <button id="backup-create" class="btn" type="button">Back up now</button>
+      <p id="backup-msg" class="message"></p>
+      <ul id="backup-list" class="muted"></ul>
+    </section>
   </main>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

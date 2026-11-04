@@ -79,8 +79,36 @@ $(function () {
       });
   });
 
+  function renderBackups(list) {
+    const $list = $('#backup-list').empty();
+    if (list.length === 0) {
+      $list.append('<li>No backup yet</li>');
+      return;
+    }
+    list.forEach(function (b) {
+      $list.append($('<li></li>').text(b.name + ' (' + BrickTools.fmt.number(Math.round(b.size / 1024)) + ' KB)'));
+    });
+  }
+
+  function refreshBackups() {
+    return BrickTools.api('GET', '/backups').done(renderBackups);
+  }
+
+  $('#backup-create').on('click', function () {
+    const $button = $(this).prop('disabled', true);
+    $('#backup-msg').text('Creating backup...');
+    BrickTools.api('POST', '/backups')
+      .done(function (r) { $('#backup-msg').text('Backup created: ' + r.name + ' (' + r.files.length + ' files).'); })
+      .fail(function (xhr) { $('#backup-msg').text(BrickTools.errorOf(xhr)); })
+      .always(function () {
+        $button.prop('disabled', false);
+        refreshBackups();
+      });
+  });
+
   refreshRebrickable().fail(function (xhr) {
     $('#rb-msg').text(BrickTools.errorOf(xhr));
   });
+  refreshBackups();
   pollBackfill();
 });

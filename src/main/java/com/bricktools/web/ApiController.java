@@ -1,5 +1,6 @@
 package com.bricktools.web;
 
+import com.bricktools.backup.BackupService;
 import com.bricktools.brickonomics.BrickonomicsService;
 import com.bricktools.brickowl.BrickOwlService;
 import com.bricktools.brickwatch.BrickWatchService;
@@ -41,6 +42,7 @@ public class ApiController {
   private final RebrickableService rebrickable;
   private final BrickWatchService brickWatch;
   private final BrickonomicsService brickonomics;
+  private final BackupService backup;
   private final BrickOwlService brickOwl;
   private final PurchaseService purchases;
   private final NotificationService notifications;
@@ -52,13 +54,14 @@ public class ApiController {
   private final WishlistService wishlist;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
-                       BrickonomicsService brickonomics, BrickOwlService brickOwl,
+                       BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
+    this.backup = backup;
     this.brickOwl = brickOwl;
     this.purchases = purchases;
     this.notifications = notifications;
@@ -141,6 +144,16 @@ public class ApiController {
   @GetMapping("/brickwatch/sets/{setNumber}/price")
   public Map<String, Object> setPrice(@PathVariable String setNumber) throws IOException, InterruptedException {
     return brickWatch.price(setNumber);
+  }
+
+  @GetMapping("/backups")
+  public List<Map<String, Object>> backups() throws IOException {
+    return backup.list();
+  }
+
+  @PostMapping("/backups")
+  public Map<String, Object> createBackup() throws IOException {
+    return backup.create();
   }
 
   @PostMapping("/brickonomics/sets/{setNumber}/price")
