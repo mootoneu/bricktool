@@ -5,6 +5,7 @@ $(function () {
 
   const fmt = BrickTools.fmt;
   const PRIORITY_RANK = { Favorite: 1, High: 2, Medium: 3, Low: 4 };
+  const SET_PAGE_SIZE = 48;
 
   let catalog = { fromYear: null, toYear: null, sets: [], themes: [] };
   let wishlist = [];
@@ -12,6 +13,10 @@ $(function () {
   let options = { members: [], priorities: [] };
   let wishlistSortKey = 'priorityRank';
   let wishlistSortDir = 1;
+  let filteredSetRows = [];
+  let renderedSetCount = 0;
+  let setObserver = null;
+  let forceSetReset = false;
 
   function report(selector, text) {
     $(selector).text(text || '');
@@ -115,7 +120,7 @@ $(function () {
         wishlist = entries || [];
         indexWishlist();
         renderThemeFilters();
-        renderSets();
+        renderSets(true);
         renderWishlist();
       })
       .fail(function (xhr) { report('#newsets-msg', BrickTools.errorOf(xhr)); });
@@ -163,6 +168,7 @@ $(function () {
       $card.append($('<span class="theme-card-name"></span>').text(theme.name));
       $card.on('click', function () {
         $('#ns-theme').val(theme.name);
+        forceSetReset = true;
         $('[data-tab="sets"]').trigger('click');
       });
       fragment.appendChild($card[0]);
@@ -204,51 +210,106 @@ $(function () {
     });
   }
 
-  function renderSets() {
-    const rows = filteredSets();
-    report('#set-summary', rows.length + ' of ' + catalog.sets.length + ' sets');
-    const $host = $('#set-cards').empty();
-    if (rows.length === 0) {
-      $host.append('<p class="muted">No sets match the filters.</p>');
+  function updateSetSummary() {
+    const total = filteredSetRows.length;
+    const catalogTotal = catalog.sets.length;
+    const label = total === catalogTotal ? 'sets' : (total === 1 ? 'matching set' : 'matching sets');
+    const suffix = total === catalogTotal ? '' : ' (' + catalogTotal + ' in catalogue)';
+    report('#set-summary', 'Showing ' + renderedSetCount + ' of ' + total + ' ' + label + suffix);
+  }
+
+  function updateSetLoader() {
+    $('#set-loader').prop('hidden', renderedSetCount >= filteredSetRows.length);
+  }
+
+  function setCard(set) {
+    const entry = wishlistBySet.get(set.setNumber);
+    const $card = $('<article class="set-card"></article>');
+
+    const $image = $('<div class="set-card-image"></div>');
+    if (set.imageUrl) {
+      $image.append($('<img loading="lazy">').attr('src', set.imageUrl).attr('alt', set.name || set.setNumber));
+    } else {
+      $image.append('<span class="set-card-noimg">No image</span>');
+    }
+    $card.append($image);
+
+    const $body = $('<div class="set-card-body"></div>');
+    $body.append($('<h3></h3>').attr('title', set.name || '').text(set.name || set.setNumber));
+    $body.append($('<p class="set-card-sub"></p>')
+      .text('#' + set.setNumber + (set.year ? ' · ' + set.year : '')));
+
+    const facts = [];
+    facts.push(set.numParts == null ? '— parts' : fmt.number(set.numParts) + ' parts');
+    facts.push(set.officialPrice == null ? '—' : fmt.money(set.officialPrice));
+    $body.append($('<p class="set-card-facts"></p>').text(facts.join(' · ')));
+
+    const $footer = $('<div class="set-card-footer"></div>');
+    $footer.append(themeChip(set.theme, set.themeImageUrl, set.themeColor));
+    $footer.append($('<button type="button" class="btn wishlist-toggle"></button>')
+      .addClass(entry ? 'secondary' : '')
+      .attr('data-set-number', set.setNumber)
+      .attr('data-set-name', set.name || set.setNumber)
+      .text(entry ? 'Remove from wishlist' : 'Save to wishlist'));
+    $body.append($footer);
+
+    $card.append($body);
+    return $card;
+  }
+
+  function appendSetCards(count) {
+    const target = Math.min(renderedSetCount + count, filteredSetRows.length);
+    if (target <= renderedSetCount) {
       return;
     }
-
     const fragment = document.createDocumentFragment();
-    rows.forEach(function (set) {
-      const entry = wishlistBySet.get(set.setNumber);
-      const $card = $('<article class="set-card"></article>');
+    for (let i = renderedSetCount; i < target; i++) {
+      fragment.appendChild(setCard(filteredSetRows[i])[0]);
+    }
+    $('#set-cards').append(fragment);
+    renderedSetCount = target;
+    updateSetSummary();
+    updateSetLoader();
+  }
 
-      const $image = $('<div class="set-card-image"></div>');
-      if (set.imageUrl) {
-        $image.append($('<img loading="lazy">').attr('src', set.imageUrl).attr('alt', set.name || set.setNumber));
-      } else {
-        $image.append('<span class="set-card-noimg">No image</span>');
+  function loadMoreSets() {
+    appendSetCards(SET_PAGE_SIZE);
+  }
+
+  function renderSets(preserve) {
+    const target = preserve ? renderedSetCount : 0;
+    filteredSetRows = filteredSets();
+    renderedSetCount = 0;
+    $('#set-cards').empty();
+
+    if (filteredSetRows.length === 0) {
+      $('#set-cards').append('<p class="muted">No sets match the filters.</p>');
+      updateSetSummary();
+      updateSetLoader();
+      return;
+    }
+    appendSetCards(Math.max(SET_PAGE_SIZE, target));
+  }
+
+  function setupSetObserver() {
+    const sentinel = document.querySelector('#set-loader');
+    if (!sentinel) {
+      return;
+    }
+    if ('IntersectionObserver' in window) {
+      setObserver = new IntersectionObserver(function (entries) {
+        if (entries.some(entry => entry.isIntersecting)) {
+          loadMoreSets();
+        }
+      }, { rootMargin: '400px 0px' });
+      setObserver.observe(sentinel);
+      return;
+    }
+    $(window).on('scroll', function () {
+      if ($(window).scrollTop() + $(window).height() + 400 >= $('#set-loader').offset().top) {
+        loadMoreSets();
       }
-      $card.append($image);
-
-      const $body = $('<div class="set-card-body"></div>');
-      $body.append($('<h3></h3>').attr('title', set.name || '').text(set.name || set.setNumber));
-      $body.append($('<p class="set-card-sub"></p>')
-        .text('#' + set.setNumber + (set.year ? ' · ' + set.year : '')));
-
-      const facts = [];
-      facts.push(set.numParts == null ? '— parts' : fmt.number(set.numParts) + ' parts');
-      facts.push(set.officialPrice == null ? '—' : fmt.money(set.officialPrice));
-      $body.append($('<p class="set-card-facts"></p>').text(facts.join(' · ')));
-
-      const $footer = $('<div class="set-card-footer"></div>');
-      $footer.append(themeChip(set.theme, set.themeImageUrl, set.themeColor));
-      $footer.append($('<button type="button" class="btn wishlist-toggle"></button>')
-        .addClass(entry ? 'secondary' : '')
-        .attr('data-set-number', set.setNumber)
-        .attr('data-set-name', set.name || set.setNumber)
-        .text(entry ? 'Remove from wishlist' : 'Save to wishlist'));
-      $body.append($footer);
-
-      $card.append($body);
-      fragment.appendChild($card[0]);
     });
-    $host.append(fragment);
   }
 
   function fillWishlistFilterOptions() {
@@ -378,8 +439,8 @@ $(function () {
     $('#wishlist-modal').prop('hidden', true);
   }
 
-  $('#set-filters').on('input', 'input[type="search"]', debounce(renderSets, 250));
-  $('#set-filters').on('change', 'select, input[type="number"], input[type="checkbox"]', renderSets);
+  $('#set-filters').on('input', 'input[type="search"]', debounce(function () { renderSets(); }, 250));
+  $('#set-filters').on('change', 'select, input[type="number"], input[type="checkbox"]', function () { renderSets(); });
   $('#ns-reset').on('click', function () {
     $('#set-filters').find('input[type="search"], input[type="number"]').val('');
     $('#ns-theme').val('');
@@ -461,7 +522,8 @@ $(function () {
 
   BrickTools.initTabs('main', function (name) {
     if (name === 'sets') {
-      renderSets();
+      renderSets(!forceSetReset);
+      forceSetReset = false;
     } else if (name === 'wishlist') {
       renderWishlist();
     } else if (name === 'themes') {
@@ -469,5 +531,6 @@ $(function () {
     }
   });
 
+  setupSetObserver();
   loadAll();
 });

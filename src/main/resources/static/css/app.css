@@ -150,6 +150,7 @@ table.data tbody tr.clickable { cursor: pointer; }
 .set-card-facts { margin: 0; font-size: .85rem; font-weight: 500; }
 .set-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
 .set-card-footer .btn { padding: 6px 10px; font-size: .8rem; }
+.set-loader { padding: 18px 0; text-align: center; color: var(--muted); font-size: .9rem; }
 
 .theme-chip {
   display: inline-flex; align-items: center; justify-content: center;
