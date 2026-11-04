@@ -107,7 +107,13 @@ $(function () {
     const $chip = $('<span class="theme-chip"></span>')
       .css({ 'background-color': background, color: readableText(background) });
     if (imageUrl) {
-      $chip.append($('<img loading="lazy">').attr('src', imageUrl).attr('alt', theme || ''));
+      $chip.append($('<img loading="lazy">')
+        .attr('src', imageUrl)
+        .attr('alt', theme || '')
+        .on('error', function () {
+          $(this).remove();
+          $chip.text(theme || 'Unknown theme');
+        }));
     } else {
       $chip.text(theme || 'Unknown theme');
     }
