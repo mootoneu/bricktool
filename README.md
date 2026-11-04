@@ -132,7 +132,7 @@ The columns are:
 
 Vendor, Buyer and Owner are enumerations (see [./doc/DataModel.md](./doc/DataModel.md#enumerations)). The add/edit form proposes the existing values and accepts new ones.
 
-The Open button in the Sites column opens a modal listing the websites that document the set: Lego, Lego instructions, Rebrickable, BrickLink, BrickOwl, BrickWatch, Amazon, Fnac and CDiscount. Each website is a clickable image that opens the set page in a new tab.
+The Open button in the Sites column opens a modal listing the websites that document the set: Lego, Lego instructions, Rebrickable, BrickLink, BrickOwl, BrickWatch, Brickonomics, Amazon, Fnac and CDiscount. Each website is a clickable image that opens the set page in a new tab.
 
 To join data:
 

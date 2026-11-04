@@ -51,6 +51,12 @@
       url: 'https://www.brickwatch.net/fr-FR/set/$SetNumber'
     },
     {
+      id: 'brickonomics',
+      label: 'Brickonomics',
+      image: 'img/sites/brickonomics.png',
+      url: 'https://brickonomics.net/set/$SetNumber-1'
+    },
+    {
       id: 'amazon',
       label: 'Amazon',
       image: 'img/sites/amazon.svg',
