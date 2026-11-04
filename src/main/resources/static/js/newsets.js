@@ -159,9 +159,8 @@ $(function () {
         .attr('title', theme.name);
       if (theme.imageUrl) {
         $card.append($('<img loading="lazy">').attr('src', theme.imageUrl).attr('alt', theme.name));
-      } else {
-        $card.append($('<span class="theme-card-name"></span>').text(theme.name));
       }
+      $card.append($('<span class="theme-card-name"></span>').text(theme.name));
       $card.on('click', function () {
         $('#ns-theme').val(theme.name);
         $('[data-tab="sets"]').trigger('click');

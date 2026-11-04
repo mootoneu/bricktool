@@ -382,6 +382,7 @@ $(function () {
         } else if (c.key === 'owned') {
           $td.append($('<input type="checkbox" disabled>').prop('checked', !!value));
         } else if (c.theme) {
+          const $cell = $('<div class="theme-cell"></div>');
           if (p.themeImageUrl) {
             const $badge = $('<span class="theme-badge"></span>');
             if (p.themeColor) {
@@ -391,10 +392,12 @@ $(function () {
               .attr('src', p.themeImageUrl)
               .attr('alt', value || '')
               .attr('title', value || ''));
-            $td.append($badge);
-          } else {
-            $td.text(value == null ? '' : value);
+            $cell.append($badge);
           }
+          if (value != null && value !== '') {
+            $cell.append($('<span class="theme-name"></span>').text(value));
+          }
+          $td.append($cell);
         } else if (c.logo || c.avatar) {
           const imageUrl = p[c.key + 'ImageUrl'];
           if (imageUrl) {
