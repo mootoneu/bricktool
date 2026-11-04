@@ -16,6 +16,39 @@ $(function () {
   ];
 
   let orders = [];
+  let items = [];
+  const sortState = {
+    orders: { key: null, dir: 1 },
+    items: { key: null, dir: 1 }
+  };
+
+  function compareValues(a, b, dir) {
+    const x = a == null ? '' : String(a);
+    const y = b == null ? '' : String(b);
+    if (x === '') return 1;
+    if (y === '') return -1;
+    const nx = Number(x), ny = Number(y);
+    if (!isNaN(nx) && !isNaN(ny)) return (nx - ny) * dir;
+    return x.localeCompare(y, undefined, { numeric: true }) * dir;
+  }
+
+  function sortRows(rows, state) {
+    if (!state.key) {
+      return rows;
+    }
+    return rows.slice().sort((a, b) => compareValues(a[state.key], b[state.key], state.dir));
+  }
+
+  function sortBy(state, key) {
+    state.dir = state.key === key ? -state.dir : 1;
+    state.key = key;
+  }
+
+  function markSortedHeader(table, state) {
+    $(table).find('thead th[data-key]').removeClass('sort-asc sort-desc')
+      .filter('[data-key="' + state.key + '"]')
+      .addClass(state.dir > 0 ? 'sort-asc' : 'sort-desc');
+  }
 
   function report(selector, text) {
     $(selector).text(text);
@@ -147,16 +180,19 @@ $(function () {
   function renderOrders() {
     const $tbody = $('#bo-orders tbody').empty();
     if (orders.length === 0) {
-      $tbody.append('<tr><td colspan="9" class="muted">No orders yet. Run an update from the Update tab.</td></tr>');
+      $tbody.append('<tr><td colspan="10" class="muted">No orders yet. Run an update from the Update tab.</td></tr>');
       return;
     }
-    orders.forEach(function (o) {
+    markSortedHeader('#bo-orders', sortState.orders);
+    sortRows(orders, sortState.orders).forEach(function (o) {
       const cells = [o.OrderTime, o.StoreName, o.Weight, o.TotalParts, o.TotalLots,
         fmt.money(o.PaidTotal), fmt.money(o.RefundTotal), fmt.money(o.Total)];
       const url = 'https://www.brickowl.com/user/934717/orders/' + encodeURIComponent(o.Id);
       $tbody.append('<tr class="clickable" data-id="' + esc(o.Id) + '">' +
         '<td><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(o.Id) + '</a></td>' +
-        cells.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>');
+        cells.map(v => '<td>' + esc(v) + '</td>').join('') +
+        '<td><button type="button" class="btn secondary bo-items" data-id="' + esc(o.Id) + '">Items</button></td>' +
+        '</tr>');
     });
   }
 
@@ -172,32 +208,58 @@ $(function () {
     }
   }
 
-  function loadItems(orderId) {
+  function renderItems() {
     const $tbody = $('#bo-items tbody').empty();
+    markSortedHeader('#bo-items', sortState.items);
+    if (items.length === 0) {
+      $tbody.append('<tr><td colspan="9" class="muted">No items for this order.</td></tr>');
+      return;
+    }
+    sortRows(items, sortState.items).forEach(function (i) {
+      const cells = [i.Type, i.Name, i.ColorName, i.DesignIds, i.ItemNumbers, i.Condition, i.Quantity,
+        fmt.money(i.ItemPrice), fmt.money(i.TotalPrice)];
+      $tbody.append('<tr>' + cells.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>');
+    });
+  }
+
+  function loadItems(orderId) {
+    items = [];
+    $('#bo-items tbody').empty();
     if (!orderId) {
       return;
     }
     BrickTools.api('GET', '/brickowl/orders/' + encodeURIComponent(orderId) + '/items')
-      .done(function (items) {
-        if (items.length === 0) {
-          $tbody.append('<tr><td colspan="9" class="muted">No items for this order.</td></tr>');
-        }
-        items.forEach(function (i) {
-          const cells = [i.Type, i.Name, i.ColorName, i.DesignIds, i.ItemNumbers, i.Condition, i.Quantity,
-            fmt.money(i.ItemPrice), fmt.money(i.TotalPrice)];
-          $tbody.append('<tr>' + cells.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>');
-        });
+      .done(function (list) {
+        items = list;
+        renderItems();
       })
       .fail(function (xhr) { report('#bo-update-msg', BrickTools.errorOf(xhr)); });
   }
 
+  function showItems(orderId) {
+    $('#bo-order-select').val(orderId);
+    $('[data-tab="items"]').trigger('click');
+  }
+
+  $('#bo-orders thead').on('click', 'th[data-key]', function () {
+    sortBy(sortState.orders, $(this).attr('data-key'));
+    renderOrders();
+  });
+
+  $('#bo-items thead').on('click', 'th[data-key]', function () {
+    sortBy(sortState.items, $(this).attr('data-key'));
+    renderItems();
+  });
+
   $('#bo-orders').on('click', 'tbody tr[data-id]', function (e) {
-    if ($(e.target).closest('a').length) {
+    if ($(e.target).closest('a, button').length) {
       return;
     }
-    const id = $(this).attr('data-id');
-    $('#bo-order-select').val(id);
-    $('[data-tab="items"]').trigger('click');
+    showItems($(this).attr('data-id'));
+  });
+
+  $('#bo-orders').on('click', '.bo-items', function () {
+    showItems($(this).attr('data-id'));
   });
 
   $('#bo-order-select').on('change', function () {

@@ -41,8 +41,16 @@
         <table class="data" id="bo-orders">
           <thead>
             <tr>
-              <th>Order Id</th><th>Order time</th><th>Store</th><th>Weight (kg)</th>
-              <th>Parts</th><th>Lots</th><th>Paid</th><th>Refund</th><th>Total</th>
+              <th class="sortable" data-key="Id">Order Id</th>
+              <th class="sortable" data-key="OrderTime">Order time</th>
+              <th class="sortable" data-key="StoreName">Store</th>
+              <th class="sortable" data-key="Weight">Weight (kg)</th>
+              <th class="sortable" data-key="TotalParts">Parts</th>
+              <th class="sortable" data-key="TotalLots">Lots</th>
+              <th class="sortable" data-key="PaidTotal">Paid</th>
+              <th class="sortable" data-key="RefundTotal">Refund</th>
+              <th class="sortable" data-key="Total">Total</th>
+              <th>Items</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -60,8 +68,15 @@
         <table class="data" id="bo-items">
           <thead>
             <tr>
-              <th>Type</th><th>Name</th><th>Color</th><th>Design ids</th><th>Item numbers</th>
-              <th>Condition</th><th>Quantity</th><th>Unit price</th><th>Total price</th>
+              <th class="sortable" data-key="Type">Type</th>
+              <th class="sortable" data-key="Name">Name</th>
+              <th class="sortable" data-key="ColorName">Color</th>
+              <th class="sortable" data-key="DesignIds">Design ids</th>
+              <th class="sortable" data-key="ItemNumbers">Item numbers</th>
+              <th class="sortable" data-key="Condition">Condition</th>
+              <th class="sortable" data-key="Quantity">Quantity</th>
+              <th class="sortable" data-key="ItemPrice">Unit price</th>
+              <th class="sortable" data-key="TotalPrice">Total price</th>
             </tr>
           </thead>
           <tbody></tbody>
