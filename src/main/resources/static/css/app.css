@@ -209,6 +209,9 @@ table.data th.actions-col { width: 18%; }
 .chart-filters label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
 .chart-filters select { padding: 6px 8px; font-size: .85rem; }
 .year-chart + .year-chart { margin-top: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 12px; font-size: .85rem; color: var(--text); }
+.legend-item { display: inline-flex; align-items: center; }
+.legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
 
 .modal {
   position: fixed; inset: 0; z-index: 20;

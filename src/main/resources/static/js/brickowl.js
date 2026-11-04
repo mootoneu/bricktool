@@ -53,28 +53,47 @@ $(function () {
       '</tbody></table></div></section>'
     );
 
-    const byStore = d3.group(stats.byStoreYear, d => d.store);
-    const $histograms = $('#bo-histograms').empty();
-    for (const [store, rowsByYear] of byStore) {
-      rowsByYear.sort((a, b) => String(a.year).localeCompare(String(b.year)));
-      const $card = $('<section class="card"></section>').append($('<h2></h2>').text(store || 'Unknown store'));
-      const $grid = $('<div class="grid"></div>').appendTo($card);
-      METRICS.forEach(m => drawBars($('<div></div>').appendTo($grid)[0], rowsByYear, m));
-      $histograms.append($card);
-    }
+    const storeRows = stats.byStoreYear.map(d => ({ ...d, store: d.store || 'Unknown store', year: String(d.year) }));
+    const stores = Array.from(new Set(storeRows.map(d => d.store))).sort((a, b) => a.localeCompare(b));
+    const years = Array.from(new Set(storeRows.map(d => d.year))).sort((a, b) => a.localeCompare(b));
+    const color = d3.scaleOrdinal(d3.schemeTableau10).domain(stores);
+    const byKey = new Map(storeRows.map(d => [d.store + '\u0000' + d.year, d]));
+
+    const $legend = $('<div class="legend"></div>');
+    stores.forEach(s => $legend.append($('<span class="legend-item"></span>')
+      .append($('<span class="legend-swatch"></span>').css('background-color', color(s)))
+      .append(document.createTextNode(' ' + s))));
+
+    const $card = $('<section class="card"></section>')
+      .append($('<h2>Histograms by year</h2>'))
+      .append($legend);
+    const $grid = $('<div class="grid"></div>').appendTo($card);
+    METRICS.forEach(m => drawBars($('<div></div>').appendTo($grid)[0], storeRows, byKey, years, stores, color, m));
+    $('#bo-histograms').empty().append($card);
   }
 
-  function drawBars(el, rows, metric) {
+  function drawBars(el, rows, byKey, years, stores, color, metric) {
     const width = 320, height = 180;
     const margin = { top: 24, right: 8, bottom: 28, left: 56 };
-    const value = d => d[metric.key] || 0;
+    const valueOf = (store, year) => {
+      const d = byKey.get(store + '\u0000' + year);
+      return d ? d[metric.key] || 0 : 0;
+    };
+    const groups = years.map(year => ({
+      year,
+      bars: stores.map(store => ({ store, year, value: valueOf(store, year) }))
+    }));
 
     const x = d3.scaleBand()
-      .domain(rows.map(d => d.year))
+      .domain(years)
       .range([margin.left, width - margin.right])
       .padding(0.2);
+    const x1 = d3.scaleBand()
+      .domain(stores)
+      .range([0, x.bandwidth()])
+      .padding(0.1);
     const y = d3.scaleLinear()
-      .domain([0, d3.max(rows, value) || 1])
+      .domain([0, d3.max(rows, d => d[metric.key] || 0) || 1])
       .nice()
       .range([height - margin.bottom, margin.top]);
 
@@ -98,16 +117,21 @@ $(function () {
       .attr('transform', `translate(${margin.left},0)`)
       .call(d3.axisLeft(y).ticks(4));
 
-    svg.selectAll('rect')
-      .data(rows)
+    svg.selectAll('g.group')
+      .data(groups)
+      .join('g')
+      .attr('class', 'group')
+      .attr('transform', d => `translate(${x(d.year)},0)`)
+      .selectAll('rect')
+      .data(d => d.bars)
       .join('rect')
-      .attr('x', d => x(d.year))
-      .attr('width', x.bandwidth())
-      .attr('y', d => y(value(d)))
-      .attr('height', d => y(0) - y(value(d)))
-      .attr('fill', '#3b82f6')
+      .attr('x', d => x1(d.store))
+      .attr('width', x1.bandwidth())
+      .attr('y', d => y(d.value))
+      .attr('height', d => y(0) - y(d.value))
+      .attr('fill', d => color(d.store))
       .append('title')
-      .text(d => `${d.year}: ${metric.format(d[metric.key])}`);
+      .text(d => `${d.store} ${d.year}: ${metric.format(d.value)}`);
   }
 
   function loadOrders() {
