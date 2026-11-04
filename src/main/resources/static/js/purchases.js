@@ -481,9 +481,9 @@ $(function () {
     $('#f-setNumber').val(p ? p.setNumber : '');
     $('#f-purchasePrice').val(p ? p.price : '');
     $('#f-purchaseDate').val(p && p.purchaseDate ? p.purchaseDate : today());
-    $('#f-vendor').val(p ? p.vendor : '');
-    $('#f-broughtBy').val(p ? p.broughtBy : '');
-    $('#f-owner').val(p ? p.owner : '');
+    $('#f-vendor').val(p ? p.vendor : BrickTools.getCookie('purchaseVendor'));
+    $('#f-broughtBy').val(p ? p.broughtBy : BrickTools.getCookie('purchaseBroughtBy'));
+    $('#f-owner').val(p ? p.owner : BrickTools.getCookie('purchaseOwner'));
     $('#f-partMissings').val(p ? p.partsMissing : 0);
     $('#f-owned').prop('checked', p ? !!p.owned : true);
     $('#f-reason').val(p ? p.reason : '');
@@ -516,6 +516,9 @@ $(function () {
       : BrickTools.api('POST', '/purchases', body);
     request
       .done(function () {
+        BrickTools.setCookie('purchaseVendor', body.vendor);
+        BrickTools.setCookie('purchaseBroughtBy', body.broughtBy);
+        BrickTools.setCookie('purchaseOwner', body.owner);
         $('#purchase-modal').prop('hidden', true);
         load();
         loadOptions();

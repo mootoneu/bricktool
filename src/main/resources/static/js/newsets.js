@@ -433,6 +433,8 @@ $(function () {
       $tr.append($('<td></td>').text(entry.wishlistDate || ''));
 
       const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary wishlist-open">Open</button>')
+        .attr('data-set-number', entry.setNumber));
       $actions.append($('<button type="button" class="btn wishlist-buy">Buy</button>')
         .attr('data-wishlist-id', entry.id));
       $actions.append($('<button type="button" class="btn secondary wishlist-edit">Edit</button>')
@@ -453,6 +455,11 @@ $(function () {
     return wishlist.find(entry => String(entry.id) === String(id));
   }
 
+  function rememberedOption(name, choices, fallback) {
+    const value = BrickTools.getCookie(name);
+    return choices.indexOf(value) === -1 ? fallback : value;
+  }
+
   function openWishlistForm(entry, set) {
     report('#wishlist-form-msg', '');
     const setNumber = entry ? entry.setNumber : set.setNumber;
@@ -468,8 +475,10 @@ $(function () {
     $('#wishlist-title').text(entry ? 'Edit wishlist entry' : 'Add to wishlist');
     fillSelect('#wishlist-member', options.members || [], false);
     fillSelect('#wishlist-priority', options.priorities || [], false);
-    $('#wishlist-member').val(entry ? entry.member : (options.members || [])[0] || '');
-    $('#wishlist-priority').val(entry ? entry.priority : 'Medium');
+    const members = options.members || [];
+    $('#wishlist-member').val(entry ? entry.member : rememberedOption('wishlistMember', members, members[0] || ''));
+    $('#wishlist-priority').val(entry ? entry.priority
+      : rememberedOption('wishlistPriority', options.priorities || [], 'Medium'));
     $('#wishlist-date').val(entry ? entry.wishlistDate : today());
 
     const hasMember = (options.members || []).length > 0;
@@ -570,6 +579,10 @@ $(function () {
     });
   }
 
+  $('#wishlist tbody').on('click', '.wishlist-open', function () {
+    BrickTools.openSetSites($(this).attr('data-set-number'));
+  });
+
   $('#wishlist tbody').on('click', '.wishlist-buy', function () {
     const entry = findWishlistEntry($(this).attr('data-wishlist-id'));
     if (entry) {
@@ -610,6 +623,8 @@ $(function () {
       : BrickTools.api('POST', '/wishlist', body);
     request
       .done(function () {
+        BrickTools.setCookie('wishlistMember', body.member);
+        BrickTools.setCookie('wishlistPriority', body.priority);
         closeWishlistForm();
         reloadWishlist();
       })
