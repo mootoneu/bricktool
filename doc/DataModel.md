@@ -245,6 +245,7 @@ The data.bt.themes model describes Lego themes enriched with their parent theme 
 | color_primary | String | Primary display color in hexadecimal format |
 | color_secondary | String | Secondary display color in hexadecimal format |
 | image | String | Image file name in data/le/themes/ |
+| hidden | Boolean | When true, the theme and its sets are excluded from the New Sets catalogue. Defaults to false. |
 
 Relationships:
 - data.re.themes.id → data.bt.themes.parent_id

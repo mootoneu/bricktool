@@ -133,6 +133,8 @@ To join data:
 
 The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets and limited to the current year when the current date is after 31 July; otherwise it contains both the current and the previous year.
 
+Themes whose `hidden` column is true in data/bt/themes.csv are excluded from the catalogue: neither their theme card nor their sets are shown. This keeps utility and promotional themes (gear, books, storage, …) out of the page. Hidden themes are still resolved for existing wishlist entries, so an entry added before a theme was hidden keeps its name, theme image and price.
+
 The page has three tabs:
 
 - **Themes**: all themes having sets in the period, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.

@@ -61,7 +61,7 @@ public class NewSetService {
     Map<String, Map<String, Object>> themes = new TreeMap<>(TEXT_ORDER);
     for (Map<String, String> set : context.setsByNumber().values()) {
       Integer year = toInt(set.get("year"));
-      if (year == null || year < fromYear || year > toYear) {
+      if (year == null || year < fromYear || year > toYear || isHidden(set.get("theme_id"), context)) {
         continue;
       }
       Map<String, Object> card = card(set, context);
@@ -165,6 +165,11 @@ public class NewSetService {
         !image.isEmpty() && context.themeImages().contains(image) ? "/api/themeimg/" + image : null);
     theme.put("color", COLOR.matcher(color).matches() ? color : null);
     return theme;
+  }
+
+  private static boolean isHidden(String themeId, Context context) {
+    Map<String, String> details = context.themeDetails().getOrDefault(clean(themeId), Map.of());
+    return Boolean.parseBoolean(clean(details.get("hidden")));
   }
 
   private static String clean(String value) {

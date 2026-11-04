@@ -40,13 +40,15 @@ class NewSetServiceTest {
             + "75192-1,Millennium Falcon," + currentYear + ",171,7541,https://cdn.example/75192-1.jpg\n"
             + "75192-2,Millennium Falcon Variant," + currentYear + ",171,7541,https://cdn.example/75192-2.jpg\n"
             + "10291-1,Queer Eye," + currentYear + ",172,974,https://cdn.example/10291-1.jpg\n"
+            + "50000-1,Gear Set," + currentYear + ",173,5,https://cdn.example/50000-1.jpg\n"
             + "10000-1,Old Set," + (fromYear - 1) + ",171,10,https://cdn.example/10000-1.jpg\n");
     Files.writeString(dir.resolve("re/themes.csv"),
-        "id,name,parent_id\n171,Star Wars,\n172,City,\n");
+        "id,name,parent_id\n171,Star Wars,\n172,City,\n173,Gear,\n");
     Files.writeString(dir.resolve("bt/themes.csv"),
-        "id,name,parent_id,parent_name,theme_uid,color_primary,color_secondary,image\n"
-            + "171,Star Wars,,,star-wars,#141414,#3d3d3d,star-wars.svg\n"
-            + "172,City,,,city,#003290,#ffd500,\n");
+        "id,name,parent_id,parent_name,theme_uid,color_primary,color_secondary,image,hidden\n"
+            + "171,Star Wars,,,star-wars,#141414,#3d3d3d,star-wars.svg,false\n"
+            + "172,City,,,city,#003290,#ffd500,,false\n"
+            + "173,Gear,,,gear,#3b3d4c,#606274,,true\n");
     Files.writeString(dir.resolve("le/themes/star-wars.svg"), "<svg/>", StandardCharsets.UTF_8);
     Files.writeString(dir.resolve("bt/setsimg/75192.jpg"), "jpg", StandardCharsets.UTF_8);
     Files.writeString(dir.resolve("bw/setprices.csv"), "SetNumber,LegoPrice\n75192,849.99\n");
@@ -103,6 +105,17 @@ class NewSetServiceTest {
     assertThat(themes).extracting(row -> row.get("name")).containsExactly("City", "Star Wars");
     assertThat(themes.get(1)).containsEntry("imageUrl", "/api/themeimg/star-wars.svg")
         .containsEntry("color", "#141414");
+  }
+
+  @Test
+  void hiddenThemesAreExcludedButStillResolvedForWishlists() throws IOException {
+    Map<String, Object> catalog = service.catalog();
+
+    assertThat(list(catalog, "sets")).extracting(row -> row.get("name")).doesNotContain("Gear Set");
+    assertThat(list(catalog, "themes")).extracting(row -> row.get("name")).doesNotContain("Gear");
+    assertThat(service.details(List.of("50000")).get("50000"))
+        .containsEntry("name", "Gear Set")
+        .containsEntry("theme", "Gear");
   }
 
   @Test
