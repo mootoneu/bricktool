@@ -7,6 +7,28 @@ $(function () {
   const PRIORITY_RANK = { Favorite: 1, High: 2, Medium: 3, Low: 4 };
   const SET_PAGE_SIZE = 48;
 
+  // Sets matching any of these rules are hidden from the Sets tab by default.
+  // Add more rules to this list to exclude other families of sets.
+  const DEFAULT_SET_EXCLUSIONS = [
+    {
+      id: 'l-number',
+      description: 'Set numbers starting with L',
+      excludes: set => /^l/i.test(String(set.setNumber || ''))
+    }
+  ];
+
+  function isExcludedByDefault(set) {
+    return DEFAULT_SET_EXCLUSIONS.some(rule => rule.excludes(set));
+  }
+
+  function applyDefaultExclusions(data) {
+    const source = data || {};
+    const sets = (source.sets || []).filter(set => !isExcludedByDefault(set));
+    const themeNames = new Set(sets.map(set => set.theme).filter(Boolean));
+    const themes = (source.themes || []).filter(theme => themeNames.has(theme.name));
+    return Object.assign({}, source, { sets: sets, themes: themes });
+  }
+
   let catalog = { fromYear: null, toYear: null, sets: [], themes: [] };
   let wishlist = [];
   let wishlistBySet = new Map();
@@ -99,7 +121,7 @@ $(function () {
       BrickTools.api('GET', '/wishlist'),
       BrickTools.api('GET', '/wishlist/options')
     ).done(function (catalogResponse, wishlistResponse, optionsResponse) {
-      catalog = catalogResponse[0] || catalog;
+      catalog = applyDefaultExclusions(catalogResponse[0] || catalog);
       wishlist = wishlistResponse[0] || [];
       options = optionsResponse[0] || options;
       indexWishlist();
