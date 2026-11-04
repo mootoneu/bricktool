@@ -418,6 +418,8 @@ $(function () {
       $tr.append($('<td></td>').text(entry.wishlistDate || ''));
 
       const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn wishlist-buy">Buy</button>')
+        .attr('data-wishlist-id', entry.id));
       $actions.append($('<button type="button" class="btn secondary wishlist-edit">Edit</button>')
         .attr('data-wishlist-id', entry.id));
       $actions.append($('<button type="button" class="btn danger wishlist-delete">Delete</button>')
@@ -507,6 +509,47 @@ $(function () {
     wishlistSortDir = wishlistSortKey === key ? -wishlistSortDir : 1;
     wishlistSortKey = key;
     renderWishlist();
+  });
+
+  function buyWishlistEntry(entry, $button) {
+    const label = entry.name || entry.setNumber;
+    const price = entry.officialPrice == null ? null : entry.officialPrice;
+    const priceText = price == null ? 'no official price' : fmt.money(price);
+    const message = 'Buy ' + label + ' (' + priceText + ')?\n\n'
+      + 'This records the purchase and removes the set from the wishlist.';
+    if (!window.confirm(message)) {
+      return;
+    }
+    $button.prop('disabled', true);
+    BrickTools.api('POST', '/purchases', {
+      setNumber: entry.setNumber,
+      purchasePrice: price,
+      purchaseDate: today(),
+      vendor: '',
+      broughtBy: '',
+      owner: entry.member || '',
+      partMissings: 0,
+      owned: true,
+      reason: ''
+    }).done(function () {
+      const redirect = function () { window.location.href = 'purchases.html#list'; };
+      if (entry.id == null) {
+        redirect();
+        return;
+      }
+      BrickTools.api('DELETE', '/wishlist/' + encodeURIComponent(entry.id))
+        .always(redirect);
+    }).fail(function (xhr) {
+      $button.prop('disabled', false);
+      report('#newsets-msg', BrickTools.errorOf(xhr));
+    });
+  }
+
+  $('#wishlist tbody').on('click', '.wishlist-buy', function () {
+    const entry = findWishlistEntry($(this).attr('data-wishlist-id'));
+    if (entry) {
+      buyWishlistEntry(entry, $(this));
+    }
   });
 
   $('#wishlist tbody').on('click', '.wishlist-edit', function () {

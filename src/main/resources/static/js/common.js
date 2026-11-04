@@ -45,13 +45,18 @@
   }
 
   function api(method, url, body) {
-    return $.ajax({
+    const settings = {
       url: '/api' + url,
       method: method,
       dataType: 'json',
       contentType: body ? 'application/json' : undefined,
       data: body ? JSON.stringify(body) : undefined
-    });
+    };
+    if (method === 'GET') {
+      // Always read fresh data; the browser otherwise reuses cached API responses.
+      settings.cache = false;
+    }
+    return $.ajax(settings);
   }
 
   function loadNotifications() {
@@ -105,6 +110,16 @@
         onChange(name);
       }
     });
+
+    const initial = String(window.location.hash || '').replace(/^#/, '');
+    if (initial) {
+      const $tab = $root.find('[data-tab]').filter(function () {
+        return String($(this).data('tab')) === initial;
+      });
+      if ($tab.length) {
+        $tab.first().trigger('click');
+      }
+    }
   }
 
   window.BrickTools = { api, errorOf, esc, fmt, tag, initHeader, initTabs };
