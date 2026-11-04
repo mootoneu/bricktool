@@ -34,6 +34,20 @@ $(function () {
       .fail(function (xhr) { $('#bw-result').text(BrickTools.errorOf(xhr)); });
   });
 
+  $('#bw-brickonomics').on('click', function () {
+    const setNumber = $.trim($('#bw-set').val());
+    if (!setNumber) {
+      $('#bw-result').text('Enter a set number first.');
+      return;
+    }
+    $('#bw-result').text('Fetching price from brickonomics...');
+    BrickTools.api('POST', '/brickonomics/sets/' + encodeURIComponent(setNumber) + '/price')
+      .done(function (r) {
+        $('#bw-result').text(r.setNumber + ': ' + BrickTools.fmt.money(r.legoPrice) + ' (fetched from brickonomics and saved)');
+      })
+      .fail(function (xhr) { $('#bw-result').text(BrickTools.errorOf(xhr)); });
+  });
+
   function renderBackfill(p) {
     let text = 'No purchased sets to check';
     if (p.total) {

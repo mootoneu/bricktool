@@ -1,5 +1,6 @@
 package com.bricktools.web;
 
+import com.bricktools.brickonomics.BrickonomicsService;
 import com.bricktools.brickowl.BrickOwlService;
 import com.bricktools.brickwatch.BrickWatchService;
 import com.bricktools.notification.NotificationService;
@@ -39,6 +40,7 @@ public class ApiController {
 
   private final RebrickableService rebrickable;
   private final BrickWatchService brickWatch;
+  private final BrickonomicsService brickonomics;
   private final BrickOwlService brickOwl;
   private final PurchaseService purchases;
   private final NotificationService notifications;
@@ -49,12 +51,14 @@ public class ApiController {
   private final NewSetService newSets;
   private final WishlistService wishlist;
 
-  public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch, BrickOwlService brickOwl,
+  public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
+                       BrickonomicsService brickonomics, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
+    this.brickonomics = brickonomics;
     this.brickOwl = brickOwl;
     this.purchases = purchases;
     this.notifications = notifications;
@@ -137,6 +141,12 @@ public class ApiController {
   @GetMapping("/brickwatch/sets/{setNumber}/price")
   public Map<String, Object> setPrice(@PathVariable String setNumber) throws IOException, InterruptedException {
     return brickWatch.price(setNumber);
+  }
+
+  @PostMapping("/brickonomics/sets/{setNumber}/price")
+  public Map<String, Object> fetchBrickonomicsPrice(@PathVariable String setNumber)
+      throws IOException, InterruptedException {
+    return brickonomics.fetchPrice(setNumber);
   }
 
   @GetMapping("/brickowl/stats")

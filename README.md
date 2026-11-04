@@ -59,6 +59,14 @@ Set data can be scrapped with the url <https://www.brickwatch.net/fr-FR/set/$SET
 The corresponding price is located in the table after the header "Information sur le prix", in the row starting with "Lego prix conseillé", in the last column.
 A one second delay must be implement to ensure two requests are not performed too fast from one another. This is essential to prevent a ban from BrickWatch.
 
+#### Brickonomics official price
+
+The Administration BrickWatch card also has a "Fetch price with brickonomics" button. It fetches the retail price from Brickonomics and saves it in data.bw.setprices csv, replacing any price already stored for the set. It is used instead of BrickWatch because BrickWatch bans scrapers.
+
+- The price is read from <https://brickonomics.net/set/$SETNUMBER-1>, in the "Retail price:" entry of the set details.
+- The request sends the cookies `country=fr` and `currency=EUR` so the price is in euros.
+- At most one request per second is made.
+
 #### BrickOwl page
 
 BrickOwl is a website that allows to purchase Lego sets, minifigs and parts individualy. This feature aims to prodive a tracking of past orders from BrickOwl.
