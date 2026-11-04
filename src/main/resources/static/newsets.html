@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools - New Sets</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <div class="toolbar">
+      <h1>New sets</h1>
+      <span id="newsets-window" class="muted"></span>
+    </div>
+    <p id="newsets-msg" class="warning"></p>
+
+    <nav class="tabs">
+      <button type="button" data-tab="themes" class="active">Themes</button>
+      <button type="button" data-tab="sets">Sets</button>
+      <button type="button" data-tab="wishlist">Wishlist</button>
+    </nav>
+
+    <section data-panel="themes">
+      <p class="muted">Choose a theme to see its new sets.</p>
+      <div id="theme-cards" class="theme-cards"></div>
+    </section>
+
+    <section data-panel="sets" hidden>
+      <div id="set-filters" class="filters">
+        <label>Name <input id="ns-name" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Theme <select id="ns-theme"><option value="">All</option></select></label>
+        <label>Official price min <input id="ns-price-min" type="number" min="0" step="0.01" placeholder="Min"></label>
+        <label>Official price max <input id="ns-price-max" type="number" min="0" step="0.01" placeholder="Max"></label>
+        <label class="filter-check"><span><input type="checkbox" id="ns-wishlisted"> Wishlisted only</span></label>
+        <div class="filter-actions">
+          <button type="button" id="ns-reset" class="btn secondary">Reset filters</button>
+        </div>
+      </div>
+      <p id="set-summary" class="muted"></p>
+      <div id="set-cards" class="set-cards"></div>
+    </section>
+
+    <section data-panel="wishlist" hidden>
+      <div id="wishlist-filters" class="filters">
+        <label>Name <input id="wl-name" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Theme <select id="wl-theme"><option value="">All</option></select></label>
+        <label>Member <select id="wl-member-filter"><option value="">All</option></select></label>
+        <label>Priority <select id="wl-priority-filter"><option value="">All</option></select></label>
+        <label>Official price min <input id="wl-price-min" type="number" min="0" step="0.01" placeholder="Min"></label>
+        <label>Official price max <input id="wl-price-max" type="number" min="0" step="0.01" placeholder="Max"></label>
+        <div class="filter-actions">
+          <button type="button" id="wl-reset" class="btn secondary">Reset filters</button>
+        </div>
+      </div>
+      <p id="wishlist-summary" class="muted"></p>
+
+      <div class="table-wrap">
+        <table class="data fit" id="wishlist">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th class="sortable" data-key="setNumber">Set Number</th>
+              <th class="sortable" data-key="name">Name</th>
+              <th class="sortable" data-key="year">Year</th>
+              <th class="sortable" data-key="numParts">Total parts</th>
+              <th class="sortable" data-key="theme">Theme</th>
+              <th class="sortable" data-key="officialPrice">Official Price</th>
+              <th class="sortable" data-key="member">Member</th>
+              <th class="sortable" data-key="priorityRank">Priority</th>
+              <th class="sortable" data-key="wishlistDate">Wishlist date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="wishlist-modal" class="modal" hidden>
+    <form id="wishlist-form">
+      <h2 id="wishlist-title">Add to wishlist</h2>
+      <input type="hidden" id="wishlist-id">
+      <input type="hidden" id="wishlist-set-number">
+      <p id="wishlist-set" class="muted"></p>
+      <label>Member <select id="wishlist-member" required></select></label>
+      <label>Priority <select id="wishlist-priority" required></select></label>
+      <label>Wishlist date (yyyy/MM/dd) <input id="wishlist-date" pattern="\d{4}/\d{2}/\d{2}" required></label>
+      <p id="wishlist-form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="wishlist-cancel" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/newsets.js"></script>
+</body>
+</html>

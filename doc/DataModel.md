@@ -297,6 +297,21 @@ Pictures of purchased sets are stored in data/bt/setsimg/ with the SetNumber as 
 - The Sets Purchase view displays the stored image, not the picture hosted by Rebrickable.
 - One-off backfill: the Administration page has a "Download missing images" button. It goes through every distinct SetNumber of data.bt.PurchasedSet, skips sets that already have an image, and downloads the others. One download is made per second to avoid being banned by Rebrickable. The run happens in the background and its progress is shown on the page.
 
+### Wishlist data
+
+The data.bt.Wishlist represent a set the user would like to buy. It is stored in data/bt/wishlist.csv and has the following fields:
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| Id | Integer | (PK) |
+| SetNumber | String | Lego set number (FK). A set can only appear once in the wishlist. |
+| WishlistDate | Date | Date (yyyy/MM/dd) the set was added to the wishlist |
+| Member | Enumeration | Family member the set is intended for. The proposed values are the distinct data.bt.PurchasedSet.Owner values. |
+| Priority | Enumeration | Favorite, High, Medium or Low |
+
+Relationships:
+- data.bt.Wishlist.SetNumber + '-1' = data.re.sets.set_num
+
 ### Part Color
 
 The data.bt.Color

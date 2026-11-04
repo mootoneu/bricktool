@@ -2,6 +2,7 @@ package com.bricktools.web;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -54,6 +55,7 @@ class ApiControllerTest {
     mvc.perform(get("/admin.html")).andExpect(status().isOk());
     mvc.perform(get("/brickowl.html")).andExpect(status().isOk());
     mvc.perform(get("/purchases.html")).andExpect(status().isOk());
+    mvc.perform(get("/newsets.html")).andExpect(status().isOk());
   }
 
   @Test
@@ -187,6 +189,58 @@ class ApiControllerTest {
   void unknownOtherImagesAreNotFound() throws Exception {
     mvc.perform(get("/api/vendorimg/unknown.svg")).andExpect(status().isNotFound());
     mvc.perform(get("/api/peopleimg/unknown.webp")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void newSetsCatalogueIsExposed() throws Exception {
+    Files.createDirectories(dataDir.resolve("re"));
+    Files.writeString(dataDir.resolve("re/sets.csv"),
+        "set_num,name,year,theme_id,num_parts,img_url\n"
+            + "75192-1,Millennium Falcon," + java.time.LocalDate.now().getYear()
+            + ",171,7541,https://cdn.example/75192-1.jpg\n");
+
+    mvc.perform(get("/api/newsets"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.sets[0].setNumber").value("75192"))
+        .andExpect(jsonPath("$.sets[0].name").value("Millennium Falcon"));
+  }
+
+  @Test
+  void wishlistCanBeCreatedListedUpdatedAndDeleted() throws Exception {
+    Files.createDirectories(dataDir.resolve("re"));
+    Files.writeString(dataDir.resolve("re/sets.csv"),
+        "set_num,name,year,theme_id,num_parts,img_url\n"
+            + "75192-1,Millennium Falcon," + java.time.LocalDate.now().getYear()
+            + ",171,7541,https://cdn.example/75192-1.jpg\n");
+    String body = "{\"setNumber\":\"75192\",\"wishlistDate\":\"2026/02/03\","
+        + "\"member\":\"Duncan\",\"priority\":\"High\"}";
+
+    mvc.perform(post("/api/wishlist").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(1));
+
+    mvc.perform(get("/api/wishlist"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].setNumber").value("75192"))
+        .andExpect(jsonPath("$[0].name").value("Millennium Falcon"))
+        .andExpect(jsonPath("$[0].member").value("Duncan"))
+        .andExpect(jsonPath("$[0].priority").value("High"));
+
+    mvc.perform(put("/api/wishlist/1").contentType(MediaType.APPLICATION_JSON)
+            .content(body.replace("\"High\"", "\"Low\"")))
+        .andExpect(status().isNoContent());
+    mvc.perform(get("/api/wishlist"))
+        .andExpect(jsonPath("$[0].priority").value("Low"));
+
+    mvc.perform(delete("/api/wishlist/1")).andExpect(status().isNoContent());
+    mvc.perform(get("/api/wishlist")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+  }
+
+  @Test
+  void wishlistPrioritiesAreExposed() throws Exception {
+    mvc.perform(get("/api/wishlist/options"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.priorities", hasItem("Favorite")));
   }
 
   @Test

@@ -11,6 +11,9 @@ import com.bricktools.rebrickable.RebrickableService;
 import com.bricktools.setimg.SetImageBackfill;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.theme.ThemeImageService;
+import com.bricktools.wishlist.NewSetService;
+import com.bricktools.wishlist.WishlistRequest;
+import com.bricktools.wishlist.WishlistService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -20,6 +23,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,10 +46,13 @@ public class ApiController {
   private final SetImageBackfill backfill;
   private final ThemeImageService themeImages;
   private final OtherImageService otherImages;
+  private final NewSetService newSets;
+  private final WishlistService wishlist;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
-                       SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages) {
+                       SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
+                       NewSetService newSets, WishlistService wishlist) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickOwl = brickOwl;
@@ -55,6 +62,8 @@ public class ApiController {
     this.backfill = backfill;
     this.themeImages = themeImages;
     this.otherImages = otherImages;
+    this.newSets = newSets;
+    this.wishlist = wishlist;
   }
 
   @PostMapping("/setimg/backfill")
@@ -170,5 +179,38 @@ public class ApiController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void updatePurchase(@PathVariable int id, @RequestBody PurchaseRequest request) throws IOException {
     purchases.update(id, request);
+  }
+
+  @GetMapping("/newsets")
+  public Map<String, Object> newSets() throws IOException {
+    return newSets.catalog();
+  }
+
+  @GetMapping("/wishlist")
+  public List<Map<String, Object>> wishlistEntries() throws IOException {
+    return wishlist.list();
+  }
+
+  @GetMapping("/wishlist/options")
+  public Map<String, Object> wishlistOptions() throws IOException {
+    return wishlist.options();
+  }
+
+  @PostMapping("/wishlist")
+  @ResponseStatus(HttpStatus.CREATED)
+  public Map<String, Integer> createWishlistEntry(@RequestBody WishlistRequest request) throws IOException {
+    return Map.of("id", wishlist.create(request));
+  }
+
+  @PutMapping("/wishlist/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void updateWishlistEntry(@PathVariable int id, @RequestBody WishlistRequest request) throws IOException {
+    wishlist.update(id, request);
+  }
+
+  @DeleteMapping("/wishlist/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteWishlistEntry(@PathVariable int id) throws IOException {
+    wishlist.delete(id);
   }
 }

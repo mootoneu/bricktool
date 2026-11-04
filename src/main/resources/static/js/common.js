@@ -4,6 +4,7 @@
   const NAV = [
     { id: 'admin', label: 'Administration', href: 'admin.html' },
     { id: 'brickowl', label: 'BrickOwl', href: 'brickowl.html' },
+    { id: 'newsets', label: 'New Sets', href: 'newsets.html' },
     { id: 'purchases', label: 'Sets Purchase', href: 'purchases.html' }
   ];
 

@@ -129,3 +129,15 @@ To join data:
 - data.bt.PurchasedSet.SetNumber + '-1' = data.re.sets.set_num
 - data.re.sets.theme_id = data.re.themes.id
 
+### New Sets page
+
+The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets and limited to the current year when the current date is after 31 July; otherwise it contains both the current and the previous year.
+
+The page has three tabs:
+
+- **Themes**: all themes having sets in the period, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.
+- **Sets**: all sets of the period as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and restricted to wishlisted sets.
+- **Wishlist**: the wishlisted sets in a table with name, year, total parts, theme image, official price, member, priority and wishlist date. The table can be filtered by name, theme, member, priority and official price. Each row can be edited or deleted.
+
+The wishlist data model is described in [./doc/DataModel.md](./doc/DataModel.md#wishlist-data). Official prices come from data.bw.SetPrice; a set without a stored official price shows a dash until its price is fetched from the Administration page.
+
