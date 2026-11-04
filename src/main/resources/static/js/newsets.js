@@ -270,7 +270,14 @@ $(function () {
     const facts = [];
     facts.push(set.numParts == null ? '— parts' : fmt.number(set.numParts) + ' parts');
     facts.push(set.officialPrice == null ? '—' : fmt.money(set.officialPrice));
-    $body.append($('<p class="set-card-facts"></p>').text(facts.join(' · ')));
+    const $facts = $('<p class="set-card-facts"></p>').text(facts.join(' · '));
+    if (set.officialPrice == null) {
+      $facts.append(' ').append(BrickTools.priceButton(set.setNumber, function (result) {
+        set.officialPrice = result.legoPrice;
+        reloadWishlist();
+      }));
+    }
+    $body.append($facts);
 
     const $footer = $('<div class="set-card-footer"></div>');
     $footer.append(themeChip(set.theme, set.themeImageUrl, set.themeColor));

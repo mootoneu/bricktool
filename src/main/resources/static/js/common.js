@@ -256,7 +256,104 @@
     $modal.find('.modal-close').trigger('focus');
   }
 
+  const PRICE_SOURCES = [
+    {
+      id: 'brickonomics',
+      label: 'Brickonomics',
+      fetch: function (setNumber) {
+        return api('POST', '/brickonomics/sets/' + encodeURIComponent(setNumber) + '/price');
+      }
+    }
+  ];
+
+  const SYNC_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M13.5 6A5.5 5.5 0 0 0 3.2 4.6L2 6"></path><path d="M2 2.5V6h3.5"></path>' +
+    '<path d="M2.5 10A5.5 5.5 0 0 0 12.8 11.4L14 10"></path><path d="M14 13.5V10h-3.5"></path></svg>';
+
+  let $priceModal = null;
+
+  function closePriceSources() {
+    if ($priceModal) {
+      $priceModal.prop('hidden', true);
+    }
+  }
+
+  function ensurePriceModal() {
+    if ($priceModal) {
+      return $priceModal;
+    }
+    $priceModal = $(
+      '<div id="price-sources-modal" class="modal" hidden>' +
+        '<div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="price-sources-title">' +
+          '<div class="modal-head">' +
+            '<h2 id="price-sources-title">Official price</h2>' +
+            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+          '</div>' +
+          '<p class="modal-sub">Choose a website to fetch the official Lego price from.</p>' +
+          '<div id="price-sources-list"></div>' +
+          '<p id="price-sources-msg" class="message"></p>' +
+        '</div>' +
+      '</div>'
+    );
+    $priceModal.on('click', function (e) {
+      if (e.target === this) {
+        closePriceSources();
+      }
+    });
+    $priceModal.on('click', '.modal-close', closePriceSources);
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape' && $priceModal && !$priceModal.prop('hidden')) {
+        closePriceSources();
+      }
+    });
+    $('body').append($priceModal);
+    return $priceModal;
+  }
+
+  function openPriceSources(setNumber, onFetched) {
+    const value = $.trim(setNumber == null ? '' : String(setNumber));
+    if (!value) {
+      return;
+    }
+    const $modal = ensurePriceModal();
+    $('#price-sources-title').text('Official price of set ' + value);
+    $('#price-sources-msg').text('');
+
+    const $list = $('#price-sources-list').empty();
+    PRICE_SOURCES.forEach(function (source) {
+      $list.append($('<button type="button" class="btn"></button>')
+        .text('Fetch price with ' + source.label)
+        .on('click', function () {
+          const $buttons = $list.find('button').prop('disabled', true);
+          $('#price-sources-msg').text('Fetching price with ' + source.label + '...');
+          source.fetch(value)
+            .done(function (result) {
+              closePriceSources();
+              if (onFetched) {
+                onFetched(result);
+              }
+            })
+            .fail(function (xhr) {
+              $('#price-sources-msg').text(errorOf(xhr));
+              $buttons.prop('disabled', false);
+            });
+        }));
+    });
+
+    $modal.prop('hidden', false);
+    $modal.find('.modal-close').trigger('focus');
+  }
+
+  function priceButton(setNumber, onFetched) {
+    return $('<button type="button" class="btn secondary icon-btn"></button>')
+      .attr('title', 'Fetch official price')
+      .attr('aria-label', 'Fetch official price')
+      .html(SYNC_ICON)
+      .on('click', function () { openPriceSources(setNumber, onFetched); });
+  }
+
   window.BrickTools = {
-    api, errorOf, esc, fmt, tag, initHeader, initTabs, closeSetSites, openSetSites
+    api, errorOf, esc, fmt, tag, initHeader, initTabs, closeSetSites, openSetSites, openPriceSources, priceButton
   };
 })(window, jQuery);

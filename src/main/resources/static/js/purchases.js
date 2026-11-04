@@ -13,7 +13,7 @@ $(function () {
     { key: 'numParts', label: 'Total parts', fmt: fmt.number, width: 5 },
     { key: 'year', label: 'Year', width: 3 },
     { key: 'theme', label: 'Theme', theme: true, width: 5.5 },
-    { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, width: 5.5 },
+    { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, priceFetch: true, width: 5.5 },
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
     { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
     { key: 'purchaseDate', label: 'Date', width: 7 },
@@ -431,6 +431,8 @@ $(function () {
           }
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));
+        } else if (c.priceFetch && value == null) {
+          $td.append(BrickTools.priceButton(p.setNumber, function () { load(); }));
         } else {
           $td.text(c.fmt ? c.fmt(value) : (value == null ? '' : value));
         }

@@ -212,6 +212,7 @@ table.data th.actions-col { width: 18%; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 12px; font-size: .85rem; color: var(--text); }
 .legend-item { display: inline-flex; align-items: center; }
 .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.icon-btn { padding: 3px 5px; line-height: 0; vertical-align: middle; }
 
 .modal {
   position: fixed; inset: 0; z-index: 20;
