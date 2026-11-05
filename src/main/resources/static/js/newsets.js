@@ -262,7 +262,9 @@ $(function () {
     const theme = textValue('#ns-theme');
     const min = numberValue('#ns-price-min');
     const max = numberValue('#ns-price-max');
-    const wishlistedOnly = $('#ns-wishlisted').is(':checked');
+    const showNew = $('#ns-new').is(':checked');
+    const showPurchased = $('#ns-purchased').is(':checked');
+    const showWishlisted = $('#ns-wishlisted').is(':checked');
 
     return catalog.sets.filter(function (set) {
       if (name && String(set.name || '').toLowerCase().indexOf(name) === -1) {
@@ -277,7 +279,10 @@ $(function () {
       if (!priceMatches(set.officialPrice, min, max)) {
         return false;
       }
-      return !wishlistedOnly || wishlistBySet.has(set.setNumber);
+      const wishlisted = wishlistBySet.has(set.setNumber);
+      const purchased = Boolean(set.purchased);
+      const isNew = !wishlisted && !purchased;
+      return (isNew && showNew) || (purchased && showPurchased) || (wishlisted && showWishlisted);
     });
   }
 
@@ -543,7 +548,7 @@ $(function () {
   $('#ns-reset').on('click', function () {
     $('#set-filters').find('input[type="search"], input[type="number"]').val('');
     $('#ns-theme').val('');
-    $('#ns-wishlisted').prop('checked', false);
+    $('#ns-new, #ns-purchased, #ns-wishlisted').prop('checked', true);
     rootFilter = '';
     renderSets();
   });
