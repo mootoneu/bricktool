@@ -415,7 +415,7 @@ $(function () {
 
     const $tbody = $('#wishlist tbody').empty();
     if (rows.length === 0) {
-      $tbody.append('<tr><td colspan="11" class="muted">No wishlisted sets match the filters.</td></tr>');
+      $tbody.append('<tr><td colspan="12" class="muted">No wishlisted sets match the filters.</td></tr>');
       return;
     }
 
@@ -436,6 +436,7 @@ $(function () {
       $tr.append($('<td></td>').append(themeChip(entry.theme, entry.themeImageUrl, entry.themeColor)));
       $tr.append($('<td></td>').text(entry.officialPrice == null ? '' : fmt.money(entry.officialPrice)));
       $tr.append($('<td></td>').text(entry.member || ''));
+      $tr.append($('<td></td>').text(entry.buyer || ''));
       $tr.append($('<td></td>').append(
         $('<span class="priority"></span>')
           .addClass('priority-' + String(entry.priority || '').toLowerCase())
@@ -489,6 +490,8 @@ $(function () {
     $('#wishlist-member').val(entry ? entry.member : rememberedOption('wishlistMember', members, members[0] || ''));
     $('#wishlist-priority').val(entry ? entry.priority
       : rememberedOption('wishlistPriority', options.priorities || [], 'Medium'));
+    fillSelect('#wishlist-buyer', members, false);
+    $('#wishlist-buyer').val(entry ? entry.buyer || '' : rememberedOption('wishlistBuyer', members, ''));
     $('#wishlist-date').val(entry ? entry.wishlistDate : today());
 
     const hasMember = (options.members || []).length > 0;
@@ -626,7 +629,8 @@ $(function () {
       setNumber: $.trim($('#wishlist-set-number').val()),
       wishlistDate: $.trim($('#wishlist-date').val()),
       member: $('#wishlist-member').val() || '',
-      priority: $('#wishlist-priority').val() || ''
+      priority: $('#wishlist-priority').val() || '',
+      buyer: $('#wishlist-buyer').val() || ''
     };
     const request = id
       ? BrickTools.api('PUT', '/wishlist/' + encodeURIComponent(id), body)
@@ -635,6 +639,7 @@ $(function () {
       .done(function () {
         BrickTools.setCookie('wishlistMember', body.member);
         BrickTools.setCookie('wishlistPriority', body.priority);
+        BrickTools.setCookie('wishlistBuyer', body.buyer);
         closeWishlistForm();
         reloadWishlist();
       })

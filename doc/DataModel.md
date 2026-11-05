@@ -310,6 +310,7 @@ The data.bt.Wishlist represent a set the user would like to buy. It is stored in
 | WishlistDate | Date | Date (yyyy/MM/dd) the set was added to the wishlist |
 | Member | Enumeration | Family member the set is intended for. The proposed values are the names listed in data/other/people/people.csv. |
 | Priority | Enumeration | Favorite, High, Medium or Low |
+| Buyer | Enumeration | Family member who should buy the set in the future. Optional (empty when not set). The proposed values are the names listed in data/other/people/people.csv. |
 
 Relationships:
 - data.bt.Wishlist.SetNumber + '-1' = data.re.sets.set_num

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WishlistService {
 
-  private static final List<String> HEADERS = List.of("Id", "SetNumber", "WishlistDate", "Member", "Priority");
+  private static final List<String> HEADERS = List.of("Id", "SetNumber", "WishlistDate", "Member", "Priority", "Buyer");
   private static final List<String> PRIORITIES = List.of("Favorite", "High", "Medium", "Low");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
   private static final Pattern SET_NUMBER = Pattern.compile("[A-Za-z0-9-]+");
@@ -52,6 +52,7 @@ public class WishlistService {
       entry.put("wishlistDate", clean(row.get("WishlistDate")));
       entry.put("member", clean(row.get("Member")));
       entry.put("priority", clean(row.get("Priority")));
+      entry.put("buyer", clean(row.get("Buyer")));
       entry.putAll(details.getOrDefault(setNumber, Map.of()));
       entry.put("setNumber", setNumber);
       result.add(entry);
@@ -145,6 +146,7 @@ public class WishlistService {
       throw new IllegalArgumentException("Member is required");
     }
     String priority = priority(request == null ? null : request.priority());
+    String buyer = clean(request == null ? null : request.buyer());
 
     Map<String, String> row = new LinkedHashMap<>();
     row.put("Id", String.valueOf(id));
@@ -152,6 +154,7 @@ public class WishlistService {
     row.put("WishlistDate", date);
     row.put("Member", member);
     row.put("Priority", priority);
+    row.put("Buyer", buyer);
     return row;
   }
 

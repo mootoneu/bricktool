@@ -139,6 +139,26 @@ class WishlistServiceTest {
   }
 
   @Test
+  void buyerIsStoredInTheCsvAndCanBeUpdated() throws IOException {
+    int id = service.create(request("75192", "2026/02/03", "Duncan", "High", "Eglantine"));
+
+    assertThat(Files.readString(dir.resolve("bt/wishlist.csv")))
+        .startsWith("Id,SetNumber,WishlistDate,Member,Priority,Buyer")
+        .contains("1,75192,2026/02/03,Duncan,High,Eglantine");
+    assertThat(service.list().get(0)).containsEntry("buyer", "Eglantine");
+
+    service.update(id, request("75192", "2026/02/03", "Duncan", "High", "Duncan"));
+    assertThat(service.list().get(0)).containsEntry("buyer", "Duncan");
+  }
+
+  @Test
+  void buyerIsOptional() throws IOException {
+    service.create(request("75192", "2026/02/03", "Duncan", "High"));
+
+    assertThat(service.list().get(0)).containsEntry("buyer", "");
+  }
+
+  @Test
   void updateRejectsUnknownIds() {
     assertThatThrownBy(() -> service.update(42, request("75192", "2026/02/03", "Duncan", "High")))
         .isInstanceOf(IllegalArgumentException.class)
@@ -146,7 +166,11 @@ class WishlistServiceTest {
   }
 
   private static WishlistRequest request(String setNumber, String date, String member, String priority) {
-    return new WishlistRequest(setNumber, date, member, priority);
+    return request(setNumber, date, member, priority, "");
+  }
+
+  private static WishlistRequest request(String setNumber, String date, String member, String priority, String buyer) {
+    return new WishlistRequest(setNumber, date, member, priority, buyer);
   }
 
   @SuppressWarnings("unchecked")
