@@ -192,17 +192,27 @@ class ApiControllerTest {
   }
 
   @Test
-  void newSetsCatalogueIsExposed() throws Exception {
+  void newSetsCatalogueIsExposedForTheCurrentYearByDefaultAndCanSelectAnotherYear() throws Exception {
+    int currentYear = java.time.LocalDate.now().getYear();
     Files.createDirectories(dataDir.resolve("re"));
     Files.writeString(dataDir.resolve("re/sets.csv"),
         "set_num,name,year,theme_id,num_parts,img_url\n"
-            + "75192-1,Millennium Falcon," + java.time.LocalDate.now().getYear()
-            + ",171,7541,https://cdn.example/75192-1.jpg\n");
+            + "75192-1,Millennium Falcon," + currentYear
+            + ",171,7541,https://cdn.example/75192-1.jpg\n"
+            + "10000-1,Old Set," + (currentYear - 1)
+            + ",171,10,https://cdn.example/10000-1.jpg\n");
 
     mvc.perform(get("/api/newsets"))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.year").value(currentYear))
         .andExpect(jsonPath("$.sets[0].setNumber").value("75192"))
         .andExpect(jsonPath("$.sets[0].name").value("Millennium Falcon"));
+
+    mvc.perform(get("/api/newsets").param("year", String.valueOf(currentYear - 1)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.year").value(currentYear - 1))
+        .andExpect(jsonPath("$.sets[0].setNumber").value("10000"))
+        .andExpect(jsonPath("$.sets[0].name").value("Old Set"));
   }
 
   @Test

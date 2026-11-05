@@ -177,6 +177,10 @@ table.data th.actions-col { width: 18%; }
 
 .toolbar { display: flex; justify-content: space-between; align-items: center; }
 
+.year-selector { display: flex; align-items: center; gap: 8px; }
+.year-selector .btn { padding: 4px 10px; font-size: 1rem; line-height: 1.2; }
+.year-selector-value { min-width: 4ch; text-align: center; font-weight: 600; font-size: 1.05rem; }
+
 .filters {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px; align-items: end;

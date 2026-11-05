@@ -39,10 +39,11 @@ $(function () {
     return Object.assign({}, source, { sets: sets, themes: themes });
   }
 
-  let catalog = { fromYear: null, toYear: null, sets: [], themes: [] };
+  let catalog = { year: null, sets: [], themes: [] };
   let wishlist = [];
   let wishlistBySet = new Map();
   let options = { members: [], priorities: [] };
+  let selectedYear = new Date().getFullYear();
   let wishlistSortKey = 'priorityRank';
   let wishlistSortDir = 1;
   let filteredSetRows = [];
@@ -134,7 +135,7 @@ $(function () {
 
   function loadAll() {
     return $.when(
-      BrickTools.api('GET', '/newsets'),
+      BrickTools.api('GET', catalogueUrl()),
       BrickTools.api('GET', '/wishlist'),
       BrickTools.api('GET', '/wishlist/options')
     ).done(function (catalogResponse, wishlistResponse, optionsResponse) {
@@ -142,7 +143,7 @@ $(function () {
       wishlist = wishlistResponse[0] || [];
       options = optionsResponse[0] || options;
       indexWishlist();
-      renderWindow();
+      renderYearSelector();
       renderThemeFilters();
       renderThemes();
       renderSets();
@@ -151,6 +152,27 @@ $(function () {
     }).fail(function (xhr) {
       report('#newsets-msg', BrickTools.errorOf(xhr));
     });
+  }
+
+  function catalogueUrl() {
+    return '/newsets?year=' + encodeURIComponent(selectedYear);
+  }
+
+  function loadCatalogue() {
+    const $buttons = $('#newsets-year-prev, #newsets-year-next').prop('disabled', true);
+    renderYearSelector();
+    return BrickTools.api('GET', catalogueUrl())
+      .done(function (response) {
+        catalog = applyDefaultExclusions(response || catalog);
+        rootFilter = '';
+        $('#ns-theme').val('');
+        renderThemeFilters();
+        renderThemes();
+        renderSets();
+        report('#newsets-msg', '');
+      })
+      .fail(function (xhr) { report('#newsets-msg', BrickTools.errorOf(xhr)); })
+      .always(function () { $buttons.prop('disabled', false); });
   }
 
   function reloadWishlist() {
@@ -173,15 +195,8 @@ $(function () {
     });
   }
 
-  function renderWindow() {
-    if (catalog.fromYear == null) {
-      report('#newsets-window', '');
-      return;
-    }
-    const years = catalog.fromYear === catalog.toYear
-      ? String(catalog.toYear)
-      : catalog.fromYear + '–' + catalog.toYear;
-    report('#newsets-window', 'Sets released in ' + years);
+  function renderYearSelector() {
+    $('#newsets-year-value').text(selectedYear);
   }
 
   function renderThemeFilters() {
@@ -194,7 +209,7 @@ $(function () {
     const grouped = $('#theme-root-group').is(':checked');
     const themes = grouped ? catalog.rootThemes : catalog.themes;
     if (themes.length === 0) {
-      $host.append('<p class="muted">No new sets found for this period.</p>');
+      $host.append('<p class="muted">No new sets found for this year.</p>');
       return;
     }
     const fragment = document.createDocumentFragment();
@@ -520,6 +535,14 @@ $(function () {
     $('#ns-wishlisted').prop('checked', false);
     rootFilter = '';
     renderSets();
+  });
+  $('#newsets-year-prev').on('click', function () {
+    selectedYear -= 1;
+    loadCatalogue();
+  });
+  $('#newsets-year-next').on('click', function () {
+    selectedYear += 1;
+    loadCatalogue();
   });
   $('#theme-root-group').on('change', renderThemes);
 

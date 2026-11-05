@@ -21,10 +21,8 @@ class NewSetServiceTest {
   @TempDir
   Path dir;
 
-  private final LocalDate today = LocalDate.now();
-  private final int currentYear = today.getYear();
-  private final int fromYear =
-      today.isAfter(LocalDate.of(currentYear, 7, 31)) ? currentYear : currentYear - 1;
+  private final int currentYear = LocalDate.now().getYear();
+  private final int previousYear = currentYear - 1;
 
   private NewSetService service;
 
@@ -41,7 +39,7 @@ class NewSetServiceTest {
             + "75192-2,Millennium Falcon Variant," + currentYear + ",171,7541,https://cdn.example/75192-2.jpg\n"
             + "10291-1,Queer Eye," + currentYear + ",172,974,https://cdn.example/10291-1.jpg\n"
             + "50000-1,Gear Set," + currentYear + ",173,5,https://cdn.example/50000-1.jpg\n"
-            + "10000-1,Old Set," + (fromYear - 1) + ",171,10,https://cdn.example/10000-1.jpg\n");
+            + "10000-1,Old Set," + previousYear + ",171,10,https://cdn.example/10000-1.jpg\n");
     Files.writeString(dir.resolve("re/themes.csv"),
         "id,name,parent_id\n171,Star Wars,\n172,City,\n173,Gear,\n");
     Files.writeString(dir.resolve("bt/themes.csv"),
@@ -58,10 +56,10 @@ class NewSetServiceTest {
   }
 
   @Test
-  void catalogOnlyContainsCanonicalSetsOfTheCurrentPeriod() throws IOException {
-    Map<String, Object> catalog = service.catalog();
+  void catalogOnlyContainsCanonicalSetsOfTheRequestedYear() throws IOException {
+    Map<String, Object> catalog = service.catalog(currentYear);
 
-    assertThat(catalog).containsEntry("fromYear", fromYear).containsEntry("toYear", currentYear);
+    assertThat(catalog).containsEntry("year", currentYear);
     List<Map<String, Object>> sets = list(catalog, "sets");
     assertThat(sets).extracting(row -> row.get("setNumber"))
         .containsExactlyInAnyOrder("75192", "10291");
@@ -69,8 +67,17 @@ class NewSetServiceTest {
   }
 
   @Test
+  void catalogCanBeBuiltForAnotherYear() throws IOException {
+    Map<String, Object> catalog = service.catalog(previousYear);
+
+    assertThat(catalog).containsEntry("year", previousYear);
+    assertThat(list(catalog, "sets")).extracting(row -> row.get("setNumber")).containsExactly("10000");
+    assertThat(list(catalog, "sets").get(0)).containsEntry("year", previousYear);
+  }
+
+  @Test
   void cardExposesThemeImageColorPriceAndStoredImage() throws IOException {
-    List<Map<String, Object>> sets = list(service.catalog(), "sets");
+    List<Map<String, Object>> sets = list(service.catalog(currentYear), "sets");
     Map<String, Object> falcon = sets.stream()
         .filter(row -> "75192".equals(row.get("setNumber")))
         .findFirst()
@@ -87,7 +94,7 @@ class NewSetServiceTest {
 
   @Test
   void cardsFallBackToCdnImageWhenNoStoredImageExists() throws IOException {
-    List<Map<String, Object>> sets = list(service.catalog(), "sets");
+    List<Map<String, Object>> sets = list(service.catalog(currentYear), "sets");
     Map<String, Object> queerEye = sets.stream()
         .filter(row -> "10291".equals(row.get("setNumber")))
         .findFirst()
@@ -100,7 +107,7 @@ class NewSetServiceTest {
 
   @Test
   void themesAreAlphabeticalAndUnique() throws IOException {
-    List<Map<String, Object>> themes = list(service.catalog(), "themes");
+    List<Map<String, Object>> themes = list(service.catalog(currentYear), "themes");
 
     assertThat(themes).extracting(row -> row.get("name")).containsExactly("City", "Star Wars");
     assertThat(themes.get(1)).containsEntry("imageUrl", "/api/themeimg/star-wars.svg")
@@ -109,7 +116,7 @@ class NewSetServiceTest {
 
   @Test
   void hiddenThemesAreExcludedButStillResolvedForWishlists() throws IOException {
-    Map<String, Object> catalog = service.catalog();
+    Map<String, Object> catalog = service.catalog(currentYear);
 
     assertThat(list(catalog, "sets")).extracting(row -> row.get("name")).doesNotContain("Gear Set");
     assertThat(list(catalog, "themes")).extracting(row -> row.get("name")).doesNotContain("Gear");
@@ -122,7 +129,7 @@ class NewSetServiceTest {
   void cardsTellWhetherTheSetWasPurchased() throws IOException {
     Files.writeString(dir.resolve("bt/purchased_sets.csv"), "Id,SetNumber,PurchasePrice\n1,75192,849.99\n");
 
-    List<Map<String, Object>> sets = list(service.catalog(), "sets");
+    List<Map<String, Object>> sets = list(service.catalog(currentYear), "sets");
 
     assertThat(sets.stream().filter(row -> "75192".equals(row.get("setNumber"))).findFirst().orElseThrow())
         .containsEntry("purchased", true);
@@ -138,7 +145,7 @@ class NewSetServiceTest {
         "set_num,name,year,theme_id,num_parts,img_url\n"
             + "60000-1,Boat," + currentYear + ",175,100,https://cdn.example/60000-1.jpg\n");
 
-    Map<String, Object> catalog = service.catalog();
+    Map<String, Object> catalog = service.catalog(currentYear);
 
     assertThat(list(catalog, "sets").get(0))
         .containsEntry("theme", "Sub Coast")

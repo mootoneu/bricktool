@@ -142,14 +142,14 @@ To join data:
 
 ### New Sets page
 
-The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets and limited to the current year when the current date is after 31 July; otherwise it contains both the current and the previous year.
+The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets for a single release year. The current year is selected by default, and a year selector with previous and next buttons at the top of the page switches between years.
 
 Themes whose `hidden` column is true in data/bt/themes.csv are excluded from the catalogue: neither their theme card nor their sets are shown. This keeps utility and promotional themes (gear, books, storage, …) out of the page. Hidden themes are still resolved for existing wishlist entries, so an entry added before a theme was hidden keeps its name, theme image and price.
 
 The page has three tabs:
 
-- **Themes**: all themes having sets in the period, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.
-- **Sets**: all sets of the period as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and restricted to wishlisted sets. Clicking a card (outside its wishlist button) opens the same external websites modal as the Sets Purchase list. Wishlisted sets have a yellow card and purchased sets a green card; a set that is both is shown green.
+- **Themes**: all themes having sets in the selected year, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.
+- **Sets**: all sets of the selected year as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and restricted to wishlisted sets. Clicking a card (outside its wishlist button) opens the same external websites modal as the Sets Purchase list. Wishlisted sets have a yellow card and purchased sets a green card; a set that is both is shown green.
 - **Wishlist**: the wishlisted sets in a table with name, year, total parts, theme image, official price, member, buyer, priority and wishlist date. The buyer is the family member who should buy the set in the future and is optional. The table can be filtered by name, theme, member, priority and official price. Each row can be edited, deleted, or bought: Buy records the set as a purchase using its official price, today's date and the wishlist member as owner, then removes it from the wishlist and opens the Sets Purchase list.
 
 The wishlist data model is described in [./doc/DataModel.md](./doc/DataModel.md#wishlist-data). Official prices come from data.bw.SetPrice; a set without a stored official price shows a dash until its price is fetched from the Administration page.

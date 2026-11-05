@@ -18,6 +18,7 @@ import com.bricktools.wishlist.WishlistRequest;
 import com.bricktools.wishlist.WishlistService;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -205,8 +207,8 @@ public class ApiController {
   }
 
   @GetMapping("/newsets")
-  public Map<String, Object> newSets() throws IOException {
-    return newSets.catalog();
+  public Map<String, Object> newSets(@RequestParam(required = false) Integer year) throws IOException {
+    return newSets.catalog(year == null ? LocalDate.now().getYear() : year);
   }
 
   @GetMapping("/wishlist")

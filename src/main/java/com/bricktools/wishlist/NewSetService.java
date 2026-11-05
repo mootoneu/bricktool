@@ -7,7 +7,6 @@ import com.bricktools.theme.ThemeImageService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.text.Collator;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,20 +51,15 @@ public class NewSetService {
     this.themeImages = themeImages;
   }
 
-  public synchronized Map<String, Object> catalog() throws IOException {
+  public synchronized Map<String, Object> catalog(int year) throws IOException {
     Context context = context();
-    LocalDate today = LocalDate.now();
-    int currentYear = today.getYear();
-    boolean afterJuly = today.isAfter(LocalDate.of(currentYear, 7, 31));
-    int fromYear = afterJuly ? currentYear : currentYear - 1;
-    int toYear = currentYear;
 
     List<Map<String, Object>> sets = new ArrayList<>();
     Map<String, Map<String, Object>> themes = new TreeMap<>(TEXT_ORDER);
     Map<String, Map<String, Object>> rootThemes = new TreeMap<>(TEXT_ORDER);
     for (Map<String, String> set : context.setsByNumber().values()) {
-      Integer year = toInt(set.get("year"));
-      if (year == null || year < fromYear || year > toYear || isHidden(set.get("theme_id"), context)) {
+      Integer setYear = toInt(set.get("year"));
+      if (setYear == null || setYear != year || isHidden(set.get("theme_id"), context)) {
         continue;
       }
       Map<String, Object> card = card(set, context);
@@ -86,8 +80,7 @@ public class NewSetService {
         .thenComparing(row -> String.valueOf(row.get("setNumber")), TEXT_ORDER));
 
     Map<String, Object> result = new LinkedHashMap<>();
-    result.put("fromYear", fromYear);
-    result.put("toYear", toYear);
+    result.put("year", year);
     result.put("sets", sets);
     result.put("themes", List.copyOf(themes.values()));
     result.put("rootThemes", List.copyOf(rootThemes.values()));
