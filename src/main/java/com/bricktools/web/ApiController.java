@@ -4,6 +4,7 @@ import com.bricktools.backup.BackupService;
 import com.bricktools.brickonomics.BrickonomicsService;
 import com.bricktools.brickowl.BrickOwlService;
 import com.bricktools.brickwatch.BrickWatchService;
+import com.bricktools.color.ColorService;
 import com.bricktools.notification.NotificationService;
 import com.bricktools.notification.NotificationService.Notification;
 import com.bricktools.other.OtherImageService;
@@ -54,12 +55,13 @@ public class ApiController {
   private final OtherImageService otherImages;
   private final NewSetService newSets;
   private final WishlistService wishlist;
+  private final ColorService colors;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
-                       NewSetService newSets, WishlistService wishlist) {
+                       NewSetService newSets, WishlistService wishlist, ColorService colors) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -73,6 +75,7 @@ public class ApiController {
     this.otherImages = otherImages;
     this.newSets = newSets;
     this.wishlist = wishlist;
+    this.colors = colors;
   }
 
   @PostMapping("/setimg/backfill")
@@ -209,6 +212,16 @@ public class ApiController {
   @GetMapping("/newsets")
   public Map<String, Object> newSets(@RequestParam(required = false) Integer year) throws IOException {
     return newSets.catalog(year == null ? LocalDate.now().getYear() : year);
+  }
+
+  @GetMapping("/colors")
+  public List<Map<String, Object>> colors() throws IOException {
+    return colors.colors();
+  }
+
+  @GetMapping("/color-mappings")
+  public List<Map<String, Object>> colorMappings() throws IOException {
+    return colors.mappings();
   }
 
   @GetMapping("/wishlist")

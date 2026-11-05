@@ -268,6 +268,31 @@ class ApiControllerTest {
   }
 
   @Test
+  void colorsAndTheirExternalMappingsAreExposed() throws Exception {
+    Files.createDirectories(dataDir.resolve("re"));
+    Files.writeString(dataDir.resolve("re/colors.csv"),
+        "id,name,rgb,is_trans,num_parts,num_sets,y1,y2\n"
+            + "0,Black,05131D,False,851062,235496,1957,2027\n");
+    Files.writeString(dataDir.resolve("re/color_mappings.csv"),
+        "id,ext_system,ext_id,ext_descr,is_export_id,is_import_id\n"
+            + "0,BL,11,\"[\"\"Black\"\"]\",True,True\n"
+            + "0,LE,26,\"[\"\"Black\"\", \"\"BLACK\"\"]\",True,True\n");
+
+    mvc.perform(get("/api/colors"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(0))
+        .andExpect(jsonPath("$[0].name").value("Black"))
+        .andExpect(jsonPath("$[0].rgb").value("05131D"))
+        .andExpect(jsonPath("$[0].isTrans").value(false));
+
+    mvc.perform(get("/api/color-mappings"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[1].extSystem").value("LE"))
+        .andExpect(jsonPath("$[1].extId").value("26"))
+        .andExpect(jsonPath("$[1].extNames[1]").value("BLACK"));
+  }
+
+  @Test
   void invalidSetNumberIsRejectedBeforeScraping() throws Exception {
     mvc.perform(get("/api/brickwatch/sets/{set}/price", "bad set!"))
         .andExpect(status().isBadRequest());

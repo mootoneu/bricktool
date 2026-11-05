@@ -154,3 +154,15 @@ The page has three tabs:
 
 The wishlist data model is described in [./doc/DataModel.md](./doc/DataModel.md#wishlist-data). Official prices come from data.bw.SetPrice; a set without a stored official price shows a dash until its price is fetched from the Administration page.
 
+### Colors
+
+Colors are shared by all pages through `common.js`:
+
+- `BrickTools.getLegoColorId(ext_system, ext_id)` resolves an identifier from an external system (`LE`, `BO`, `BL`, `LD`, …) to the Lego color id used by the application. It reads data/re/color_mappings.csv and caches the mapping.
+- `BrickTools.getColor(color_id)` resolves a color object (`id`, `name`, `rgb`, `isTrans`, `numParts`, `numSets`, `y1`, `y2`) from data/re/colors.csv. The file is cached after the first read.
+- Both methods return a promise, so they can be called before any color data has been loaded.
+- `BrickTools.openColorInfo(color_id)` opens a modal showing a chip with the color and a table of the Id and Name used by Lego (LE), BrickOwl (BO), BrickLink (BL) and LDraw (LD).
+- `BrickTools.openColorPicker(current_color_id, onSelect)` opens a modal showing the currently selected color with its chip and information, followed by a searchable list of colors. Confirming a choice calls `onSelect` with the selected color object.
+
+The colors are exposed by `GET /api/colors` and the external identifiers by `GET /api/color-mappings`. Both reference files are read once and kept in memory by the server.
+

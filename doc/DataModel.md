@@ -58,6 +58,10 @@ Relationships:
 | name | string |
 | rgb | string |
 | is_trans | boolean |
+| num_parts | integer |
+| num_sets | integer |
+| y1 | integer |
+| y2 | integer |
 
 ##### data.re.part_categories
 
@@ -168,11 +172,14 @@ Relationships:
 
 ##### data.re.color_mappings
 
-| Column | Type |
-| ---------- | ---------- |
-| id | integer |
-| ext_ids | string |
-| ext_descrs | string |
+| Column | Type | Description |
+| ---------- | ---------- | ---------- |
+| id | integer (FK → colors.id) | Lego color id used by the application |
+| ext_system | string | External system code |
+| ext_id | string | Identifier in the external system |
+| ext_descr | string | JSON array of the color names in the external system |
+| is_export_id | boolean | Whether the identifier can be exported |
+| is_import_id | boolean | Whether the identifier can be imported |
 
 External systems:
 - BL = BrickLink
