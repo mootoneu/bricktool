@@ -11,9 +11,19 @@ $(function () {
   // Add more rules to this list to exclude other families of sets.
   const DEFAULT_SET_EXCLUSIONS = [
     {
-      id: 'l-number',
-      description: 'Set numbers starting with L',
-      excludes: set => /^l/i.test(String(set.setNumber || ''))
+      id: 'noparts',
+      description: 'Set without parts',
+      excludes: set => !set.numParts
+    },
+    {
+      id: '666',
+      description: 'Set numbers of length >= 7',
+      excludes: set => set.setNumber.length >= 7
+    },
+    {
+      id: 'minisets',
+      description: 'Set numbers starting with L or 2D',
+      excludes: set => /^l|2D/i.test(String(set.setNumber || ''))
     }
   ];
 

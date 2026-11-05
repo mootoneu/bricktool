@@ -32,7 +32,7 @@ Once downloaded it the csv files must be unzipped into the Data folder at data/r
 ##### data.re.themes
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | id | integer |
 | name | string |
 | parent_id | integer (FK → themes.id) |
@@ -40,7 +40,7 @@ Once downloaded it the csv files must be unzipped into the Data folder at data/r
 ##### data.re.sets
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | set_num | string (PK) |
 | name | string |
 | year | integer |
@@ -53,7 +53,7 @@ Relationships:
 ##### data.re.colors
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | id | integer (PK) |
 | name | string |
 | rgb | string |
@@ -62,14 +62,14 @@ Relationships:
 ##### data.re.part_categories
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | id | integer (PK) |
 | name | string |
 
 ##### data.re.parts
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | part_num | string (PK) |
 | name | string |
 | part_cat_id | integer (FK → part_categories.id) |
@@ -81,7 +81,7 @@ Relationships:
 ##### data.re.part_relationships
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | rel_type | string |
 | child_part_num | string (FK → parts.part_num) |
 | parent_part_num | string (FK → parts.part_num) |
@@ -89,7 +89,7 @@ Relationships:
 Relationship types:
 
 | Code | Meaning |
-|--------|--------|
+| -------- | -------- |
 | P | Print |
 | R | Pair |
 | B | Sub-Part |
@@ -100,7 +100,7 @@ Relationship types:
 ##### data.re.elements
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | element_id | string (PK) |
 | part_num | string (FK → parts.part_num) |
 | color_id | integer (FK → colors.id) |
@@ -108,7 +108,7 @@ Relationship types:
 ##### data.re.minifigs
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | fig_num | string (PK) |
 | name | string |
 | num_parts | integer |
@@ -116,7 +116,7 @@ Relationship types:
 ##### data.re.inventories
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | id | integer (PK) |
 | version | integer |
 | set_num | string |
@@ -130,7 +130,7 @@ Notes:
 ##### data.re.inventory_parts
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | inventory_id | integer (FK → inventories.id) |
 | part_num | string (FK → parts.part_num) |
 | color_id | integer (FK → colors.id) |
@@ -145,7 +145,7 @@ Relationships:
 ##### data.re.inventory_sets
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | inventory_id | integer (FK → inventories.id) |
 | set_num | string (FK → sets.set_num) |
 | quantity | integer |
@@ -157,7 +157,7 @@ Relationships:
 ##### data.re.inventory_minifigs
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | inventory_id | integer (FK → inventories.id) |
 | fig_num | string (FK → minifigs.fig_num) |
 | quantity | integer |
@@ -169,7 +169,7 @@ Relationships:
 ##### data.re.color_mappings
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | id | integer |
 | ext_ids | string |
 | ext_descrs | string |
@@ -184,7 +184,7 @@ External systems:
 ##### data.re.part_mappings
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | part_num | string |
 | ext_part_num | string |
 | ext_id | string |
@@ -192,7 +192,7 @@ External systems:
 ##### data.re.set_mappings
 
 | Column | Type |
-|----------|----------|
+| ---------- | ---------- |
 | set_num | string |
 | ext_set_num | string |
 | ext_id | string |
@@ -335,6 +335,56 @@ The data.bt.Color
 | ContrastColorHex | String | Represents a contrasting color of ColorHex to be used as foreground color when ColorHex is used as a background color |
 | Tags | String | Comma separated list of tag in [Chrome, Speckle, Milky, Metallic, Glitter, Transparent, Pearl, Opal] |
 
+### PaB purchases data
+
+The data.bt.PaBPurchases represent a purchase made in a Lego store at the Pick a Brick wall. It has the following fields:
+
+| Field Name | Type | Description |
+| ---------- | ---------- | ---------- |
+| Id | interger (PK) | |
+| PurchaseDate | date | Date the PaB purchase was made |
+| BoxQuantity | integer | Number of box of parts bought |
+| Price | decimal | Price in € |
+
+### PaB parts data
+
+The data.bt.PaBParts represent the parts bought of a PaBPurchase. It has the following fields:
+
+| Field Name | Type | Description |
+| ---------- | ---------- | ---------- |
+| Id | interger (PK) | |
+| PaBPurchaseId | integer | Identifier of the PaBPurchase (FK)  |
+| PartNumber | integer | Lego part number (FK) |
+| PartColor | integer | Lego color number (FK) |
+| Quantity | integer | Amount of part purchased |
+
+Relationships:
+- data.bt.PaBParts.PaBPurchaseId = data.bt.PaBPurchase.Id
+- data.bt.PaBParts.PartNumber = data.re.parts.part_num
+- data.bt.PaBParts.PartColor = data.re.colors.id
+
+### Color tags data
+
+The data.bt.ColorTags represent the tags associated with a Lego color. It has the following fields:
+
+| Field Name | Type | Description |
+| ---------- | ---------- | ---------- |
+| ColorId | interger (FK) | |
+| Name | string | Color name (duplicated data from colors.csv) |
+| Family | string | Indicates the family name of the color |
+| primary | boolean | Indicates that the color is one of the primary colors and is a root category. All other color should have a primary color in their tag |
+| hidden | boolean | Indicates that the color is obsolete and should not be shown to the user in list, tables... |
+| metallic | boolean | Indicates that the color is metallic |
+| special | boolean | Indicates that the color is special |
+| translucent | boolean | Indicates that the color is translucent |
+| tag_list | string | A semicolon (;) separated list of tags |
+
+The primary colors values can be `Black, Blue, Brown, Gray, Green, Orange, Pink, Purple, Red, White, Yellow, Clear`.
+The family values can be a primary color or `Primary` or `Other`.
+
+Relationships:
+- data.bt.ColorTags.ColorId = data.re.colors.id
+
 ## BrickOwl data
 
 BrickOwl provide a public API at <https://www.brickowl.com/api_docs>
@@ -378,4 +428,3 @@ The data.bo.OrderItem represent an order from a store in BrickOwl. It is sourced
 | Quantity | Decimal | ordered_quantity - refunded_quantity | |
 | ItemPrice | String | base_price | |
 | TotalPrice | String | base_price * (ordered_quantity - refunded_quantity) | |
-
