@@ -142,7 +142,7 @@ To join data:
 
 ### New Sets page
 
-The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets for a single release year. The current year is selected by default, and a year selector with previous and next buttons at the top of the page switches between years.
+The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets for a single release year. The current year is selected by default. A year selector with previous and next buttons at the top of the page switches between years; clicking the selected year opens a descending list of years from the current year down to 1970. The active filters are kept when the year changes, so a theme or price filter continues to apply to the newly selected year.
 
 Themes whose `hidden` column is true in data/bt/themes.csv are excluded from the catalogue: neither their theme card nor their sets are shown. This keeps utility and promotional themes (gear, books, storage, …) out of the page. Hidden themes are still resolved for existing wishlist entries, so an entry added before a theme was hidden keeps its name, theme image and price.
 

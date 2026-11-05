@@ -159,20 +159,19 @@ $(function () {
   }
 
   function loadCatalogue() {
-    const $buttons = $('#newsets-year-prev, #newsets-year-next').prop('disabled', true);
+    const $controls = $('#newsets-year-prev, #newsets-year-next, #newsets-year-value')
+      .prop('disabled', true);
     renderYearSelector();
     return BrickTools.api('GET', catalogueUrl())
       .done(function (response) {
         catalog = applyDefaultExclusions(response || catalog);
-        rootFilter = '';
-        $('#ns-theme').val('');
         renderThemeFilters();
         renderThemes();
         renderSets();
         report('#newsets-msg', '');
       })
       .fail(function (xhr) { report('#newsets-msg', BrickTools.errorOf(xhr)); })
-      .always(function () { $buttons.prop('disabled', false); });
+      .always(function () { $controls.prop('disabled', false); });
   }
 
   function reloadWishlist() {
@@ -196,11 +195,23 @@ $(function () {
   }
 
   function renderYearSelector() {
-    $('#newsets-year-value').text(selectedYear);
+    const $select = $('#newsets-year-value');
+    const firstYear = Math.max(new Date().getFullYear(), selectedYear);
+    $select.empty();
+    for (let year = firstYear; year >= 1970; year--) {
+      $select.append($('<option></option>').val(year).text(year));
+    }
+    $select.val(String(selectedYear));
   }
 
   function renderThemeFilters() {
-    fillSelect('#ns-theme', themeNames(false), true);
+    const names = themeNames(false);
+    const selectedTheme = textValue('#ns-theme');
+    if (selectedTheme && names.indexOf(selectedTheme) === -1) {
+      names.push(selectedTheme);
+      names.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+    fillSelect('#ns-theme', names, true);
     fillSelect('#wl-theme', themeNames(true), true);
   }
 
@@ -536,7 +547,17 @@ $(function () {
     rootFilter = '';
     renderSets();
   });
+  $('#newsets-year-value').on('change', function () {
+    const year = parseInt($(this).val(), 10);
+    if (!isNaN(year) && year !== selectedYear) {
+      selectedYear = year;
+      loadCatalogue();
+    }
+  });
   $('#newsets-year-prev').on('click', function () {
+    if (selectedYear <= 1970) {
+      return;
+    }
     selectedYear -= 1;
     loadCatalogue();
   });
