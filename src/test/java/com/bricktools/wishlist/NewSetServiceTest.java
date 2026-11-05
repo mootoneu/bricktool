@@ -119,6 +119,18 @@ class NewSetServiceTest {
   }
 
   @Test
+  void cardsTellWhetherTheSetWasPurchased() throws IOException {
+    Files.writeString(dir.resolve("bt/purchased_sets.csv"), "Id,SetNumber,PurchasePrice\n1,75192,849.99\n");
+
+    List<Map<String, Object>> sets = list(service.catalog(), "sets");
+
+    assertThat(sets.stream().filter(row -> "75192".equals(row.get("setNumber"))).findFirst().orElseThrow())
+        .containsEntry("purchased", true);
+    assertThat(sets.stream().filter(row -> "10291".equals(row.get("setNumber"))).findFirst().orElseThrow())
+        .containsEntry("purchased", false);
+  }
+
+  @Test
   void childThemesAreGroupedUnderTheirRootTheme() throws IOException {
     Files.writeString(dir.resolve("re/themes.csv"),
         "id,name,parent_id\n171,Star Wars,\n172,City,\n173,Gear,\n174,Coast Guard,172\n175,Sub Coast,174\n");

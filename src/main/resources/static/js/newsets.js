@@ -271,6 +271,11 @@ $(function () {
   function setCard(set) {
     const entry = wishlistBySet.get(set.setNumber);
     const $card = $('<article class="set-card"></article>').attr('data-set-number', set.setNumber);
+    if (set.purchased) {
+      $card.addClass('purchased');
+    } else if (entry) {
+      $card.addClass('wishlisted');
+    }
 
     const $image = $('<div class="set-card-image"></div>');
     if (set.imageUrl) {

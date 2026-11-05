@@ -37,6 +37,7 @@ public class NewSetService {
   private final Path themesFile;
   private final Path themeDetailsFile;
   private final Path pricesFile;
+  private final Path purchasesFile;
   private final SetImageService setImages;
   private final ThemeImageService themeImages;
 
@@ -46,6 +47,7 @@ public class NewSetService {
     this.themesFile = data.resolve("re/themes.csv");
     this.themeDetailsFile = data.resolve("bt/themes.csv");
     this.pricesFile = data.resolve("bw/setprices.csv");
+    this.purchasesFile = data.resolve("bt/purchased_sets.csv");
     this.setImages = setImages;
     this.themeImages = themeImages;
   }
@@ -136,8 +138,12 @@ public class NewSetService {
     for (Map<String, String> price : Csv.read(pricesFile)) {
       prices.put(clean(price.get("SetNumber")), clean(price.get("LegoPrice")));
     }
+    Set<String> purchased = new HashSet<>();
+    for (Map<String, String> purchase : Csv.read(purchasesFile)) {
+      purchased.add(clean(purchase.get("SetNumber")));
+    }
     return new Context(setsByNumber, themes, parents, themeDetails, themeImages.available(), setImages.available(),
-        prices);
+        prices, purchased);
   }
 
   private static String rootOf(String themeId, Context context) {
@@ -176,6 +182,7 @@ public class NewSetService {
         !themeImage.isEmpty() && context.themeImages().contains(themeImage) ? "/api/themeimg/" + themeImage : null);
     card.put("themeColor", COLOR.matcher(themeColor).matches() ? themeColor : null);
     card.put("officialPrice", toDouble(context.prices().get(setNumber)));
+    card.put("purchased", context.purchased().contains(setNumber));
     card.put("imageUrl", context.storedImages().contains(setNumber) ? "/api/setimg/" + setNumber
         : imageUrl.isEmpty() ? null : imageUrl);
     return card;
@@ -220,5 +227,6 @@ public class NewSetService {
 
   private record Context(Map<String, Map<String, String>> setsByNumber, Map<String, String> themes,
                          Map<String, String> parents, Map<String, Map<String, String>> themeDetails,
-                         Set<String> themeImages, Set<String> storedImages, Map<String, String> prices) {}
+                         Set<String> themeImages, Set<String> storedImages, Map<String, String> prices,
+                         Set<String> purchased) {}
 }
