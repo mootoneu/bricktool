@@ -82,6 +82,43 @@
     percent: v => (v == null || v === '') ? '' : number.format(Number(v)) + ' %'
   };
 
+  function readableText(color) {
+    const hex = String(color || '#e5e7eb').replace('#', '');
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex.slice(0, 6);
+    if (!/^[0-9a-fA-F]{6}$/.test(full)) {
+      return '#111827';
+    }
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#111827' : '#ffffff';
+  }
+
+  function themeBadge(theme, imageUrl, color) {
+    const label = String(theme || '').trim() || 'Unknown theme';
+    const $chip = $('<span class="theme-chip"></span>').attr('title', label);
+    if (color) {
+      $chip.css({ 'background-color': color, color: readableText(color) });
+    }
+    if (imageUrl) {
+      $chip.append($('<img loading="lazy">')
+        .attr('src', imageUrl)
+        .attr('alt', label)
+        .on('error', function () {
+          $(this).remove();
+        }));
+    } else {
+      $chip.text(label);
+    }
+    return $chip;
+  }
+
+  function today() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate());
+  }
+
   function esc(value) {
     return $('<span>').text(value == null ? '' : String(value)).html();
   }
@@ -188,6 +225,8 @@
   }
 
   let $siteModal = null;
+  let siteContext = null;
+  let siteRequest = 0;
 
   function siteUrl(site, setNumber) {
     return site.url.split('$SetNumber').join(encodeURIComponent(setNumber));
@@ -210,6 +249,13 @@
             '<h2 id="set-sites-title">Set</h2>' +
             '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
           '</div>' +
+          '<div class="set-sites-detail">' +
+            '<div id="set-sites-image" class="set-sites-image"></div>' +
+            '<div id="set-sites-theme" class="set-sites-theme"></div>' +
+            '<p id="set-sites-meta" class="set-sites-meta"></p>' +
+            '<div id="set-sites-actions" class="set-sites-actions"></div>' +
+            '<p id="set-sites-action-msg" class="set-sites-action-msg message"></p>' +
+          '</div>' +
           '<p class="modal-sub">Open this set on an external website.</p>' +
           '<div id="set-sites-grid" class="site-grid"></div>' +
         '</div>' +
@@ -230,14 +276,7 @@
     return $siteModal;
   }
 
-  function openSetSites(setNumber) {
-    const value = $.trim(setNumber == null ? '' : String(setNumber));
-    if (!value) {
-      return;
-    }
-    const $modal = ensureSiteModal();
-    $('#set-sites-title').text('Set ' + value);
-
+  function renderSiteLinks(setNumber) {
     const $grid = $('#set-sites-grid').empty();
     SET_SITES.forEach(function (site) {
       const $image = $('<img loading="lazy">')
@@ -249,7 +288,7 @@
       $grid.append(
         $('<a class="site-tile"></a>')
           .attr('data-site', site.id)
-          .attr('href', siteUrl(site, value))
+          .attr('href', siteUrl(site, setNumber))
           .attr('target', '_blank')
           .attr('rel', 'noopener noreferrer')
           .attr('title', site.label + ' (opens in a new tab)')
@@ -257,9 +296,180 @@
           .append($('<span class="site-label"></span>').text(site.label))
       );
     });
+  }
+
+  function renderSetDetails(details, setNumber) {
+    const data = details || {};
+    const name = String(data.name || '').trim();
+    $('#set-sites-title').text(name || ('Set ' + setNumber));
+
+    const $image = $('#set-sites-image').empty();
+    if (data.imageUrl) {
+      $image.append($('<img loading="lazy">')
+        .attr('src', data.imageUrl)
+        .attr('alt', name || ('Set ' + setNumber)));
+    } else {
+      $image.append($('<span class="set-card-noimg"></span>').text('No image'));
+    }
+
+    $('#set-sites-theme').empty().append(themeBadge(data.theme, data.themeImageUrl, data.themeColor));
+    if (data.themeImageUrl) {
+      $('#set-sites-theme').append($('<span class="set-sites-theme-name"></span>')
+        .text(String(data.theme || '').trim() || 'Unknown theme'));
+    }
+
+    const meta = ['#' + setNumber];
+    if (data.numParts != null) {
+      meta.push(fmt.number(data.numParts) + ' parts');
+    }
+    if (data.officialPrice != null) {
+      meta.push(fmt.money(data.officialPrice));
+    }
+    if (data.year != null) {
+      meta.push(data.year);
+    }
+    $('#set-sites-meta').text(meta.join(' · '));
+  }
+
+  function renderSetAction() {
+    const $actions = $('#set-sites-actions').empty();
+    if (!siteContext) {
+      return;
+    }
+    const $button = $('<button type="button" class="btn"></button>')
+      .text(siteContext.entry ? 'Buy' : 'Save to wishlist');
+    $button.on('click', siteContext.entry ? buySet : saveSetToWishlist);
+    $actions.append($button);
+  }
+
+  function saveSetToWishlist() {
+    const context = siteContext;
+    if (!context) {
+      return;
+    }
+    const $button = $('#set-sites-actions .btn').prop('disabled', true);
+    const $message = $('#set-sites-action-msg').text('Saving to wishlist…');
+    api('GET', '/wishlist/options')
+      .done(function (options) {
+        const members = (options && options.members) || [];
+        const priorities = (options && options.priorities) || [];
+        const member = rememberedOption('wishlistMember', members, members[0] || '');
+        const priority = rememberedOption('wishlistPriority', priorities,
+          priorities.indexOf('Medium') === -1 ? (priorities[0] || '') : 'Medium');
+        const buyer = rememberedOption('wishlistBuyer', members, '');
+        if (!member) {
+          $message.text('No family member is available. Add people to data/other/people/people.csv first.');
+          $button.prop('disabled', false);
+          return;
+        }
+        const body = {
+          setNumber: context.setNumber,
+          wishlistDate: today(),
+          member: member,
+          priority: priority,
+          buyer: buyer
+        };
+        api('POST', '/wishlist', body)
+          .done(function (result) {
+            setCookie('wishlistMember', member);
+            setCookie('wishlistPriority', priority);
+            setCookie('wishlistBuyer', buyer);
+            context.entry = Object.assign({}, context.details, {
+              id: result.id,
+              setNumber: context.setNumber,
+              member: member,
+              priority: priority,
+              buyer: buyer,
+              wishlistDate: body.wishlistDate
+            });
+            renderSetAction();
+            $('#set-sites-action-msg').text('Saved to wishlist for ' + member + '.');
+            $(document).trigger('bricktools:wishlist-changed');
+          })
+          .fail(function (xhr) {
+            $message.text(errorOf(xhr));
+            $button.prop('disabled', false);
+          });
+      })
+      .fail(function (xhr) {
+        $message.text(errorOf(xhr));
+        $button.prop('disabled', false);
+      });
+  }
+
+  function buySet() {
+    const context = siteContext;
+    if (!context || !context.entry || context.entry.id == null) {
+      return;
+    }
+    const entry = context.entry;
+    const data = Object.assign({}, entry, context.details || {});
+    const label = data.name || ('Set ' + context.setNumber);
+    const price = data.officialPrice == null ? null : data.officialPrice;
+    const message = 'Buy ' + label + ' (' + (price == null ? 'no official price' : fmt.money(price)) + ')?\n\n'
+      + 'This records the purchase and removes the set from the wishlist.';
+    if (!window.confirm(message)) {
+      return;
+    }
+    const $button = $('#set-sites-actions .btn').prop('disabled', true);
+    const $message = $('#set-sites-action-msg').text('Recording purchase…');
+    api('POST', '/purchases', {
+      setNumber: context.setNumber,
+      purchasePrice: price,
+      purchaseDate: today(),
+      vendor: '',
+      broughtBy: '',
+      owner: entry.member || '',
+      partMissings: 0,
+      owned: true,
+      reason: ''
+    }).done(function () {
+      $(document).trigger('bricktools:wishlist-changed');
+      api('DELETE', '/wishlist/' + encodeURIComponent(entry.id))
+        .always(function () { window.location.href = 'purchases.html#list'; });
+    }).fail(function (xhr) {
+      $message.text(errorOf(xhr));
+      $button.prop('disabled', false);
+    });
+  }
+
+  function openSetSites(setNumber, details) {
+    const value = $.trim(setNumber == null ? '' : String(setNumber));
+    if (!value) {
+      return;
+    }
+    const $modal = ensureSiteModal();
+    const request = ++siteRequest;
+    siteContext = { setNumber: value, details: details || {}, entry: null };
+    renderSetDetails(details, value);
+    renderSiteLinks(value);
+    $('#set-sites-actions').empty();
+    $('#set-sites-action-msg').text('Loading wishlist status…');
 
     $modal.prop('hidden', false);
     $modal.find('.modal-close').trigger('focus');
+
+    api('GET', '/wishlist')
+      .done(function (entries) {
+        if (request !== siteRequest) {
+          return;
+        }
+        const entry = (entries || []).find(row => String(row.setNumber) === value) || null;
+        siteContext.entry = entry;
+        if (!details && entry) {
+          siteContext.details = entry;
+          renderSetDetails(entry, value);
+        }
+        $('#set-sites-action-msg').text('');
+        renderSetAction();
+      })
+      .fail(function (xhr) {
+        if (request !== siteRequest) {
+          return;
+        }
+        $('#set-sites-action-msg').text(errorOf(xhr));
+        renderSetAction();
+      });
   }
 
   const PRICE_SOURCES = [
@@ -362,6 +572,11 @@
   function getCookie(name) {
     const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
     return match ? decodeURIComponent(match[1]) : '';
+  }
+
+  function rememberedOption(name, choices, fallback) {
+    const value = getCookie(name);
+    return choices.indexOf(value) === -1 ? fallback : value;
   }
 
   function setCookie(name, value) {

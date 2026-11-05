@@ -576,7 +576,8 @@ $(function () {
     if ($(e.target).closest('button, a, input, select, label, textarea').length) {
       return;
     }
-    BrickTools.openSetSites($(this).attr('data-set-number'));
+    const setNumber = $(this).attr('data-set-number');
+    BrickTools.openSetSites(setNumber, findSet(setNumber));
   });
 
   $('#set-cards').on('click', '.wishlist-toggle', function () {
@@ -647,7 +648,9 @@ $(function () {
   }
 
   $('#wishlist tbody').on('click', '.wishlist-open', function () {
-    BrickTools.openSetSites($(this).attr('data-set-number'));
+    const setNumber = $(this).attr('data-set-number');
+    const entry = wishlist.find(row => row.setNumber === setNumber);
+    BrickTools.openSetSites(setNumber, entry || findSet(setNumber));
   });
 
   $('#wishlist tbody').on('click', '.wishlist-buy', function () {
@@ -675,7 +678,7 @@ $(function () {
   });
 
   $('#wishlist-cancel').on('click', closeWishlistForm);
-
+  $(document).on('bricktools:wishlist-changed', reloadWishlist);
   $('#wishlist-form').on('submit', function (event) {
     event.preventDefault();
     const id = $('#wishlist-id').val();
