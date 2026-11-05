@@ -208,6 +208,83 @@ $(function () {
     }
   }
 
+
+  function readableTextColor(hex) {
+    const full = String(hex || '#e5e7eb').replace('#', '');
+    const expanded = full.length === 3 ? full.split('').map(function (c) { return c + c; }).join('') : full.slice(0, 6);
+    if (!/^[0-9a-fA-F]{6}$/.test(expanded)) {
+      return '#111827';
+    }
+    const r = parseInt(expanded.slice(0, 2), 16);
+    const g = parseInt(expanded.slice(2, 4), 16);
+    const b = parseInt(expanded.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#111827' : '#ffffff';
+  }
+
+  function renderColorCell(item) {
+    const colorId = String(item.ColorId || '').trim();
+    const $cell = $('<td></td>');
+    if (!colorId) {
+      $cell.text(item.ColorName || '');
+      return $cell;
+    }
+    const $chip = $('<span class="color-chip"></span>')
+      .attr('title', item.ColorName || '')
+      .text(item.ColorName || '')
+      .css('cursor', 'pointer')
+      .attr('tabindex', '0')
+      .on('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          $chip.trigger('click');
+        }
+      });
+    $cell.append($chip);
+    BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+      if (legoId === null || legoId === undefined) {
+        $chip.text(item.ColorName || '');
+        return;
+      }
+      BrickTools.getColor(legoId).done(function (color) {
+        const hex = colorHex(color);
+        if (hex) {
+          $chip.css({
+            'background-color': hex,
+            color: readableTextColor(hex)
+          });
+        } else {
+          $chip.text(item.ColorName || '');
+        }
+      }).fail(function () {
+        $chip.text(item.ColorName || '');
+      });
+    }).fail(function () {
+      $chip.text(item.ColorName || '');
+    });
+    $chip.on('click', function () {
+      BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+        if (legoId !== null && legoId !== undefined) {
+          BrickTools.getColor(legoId).done(function (color) {
+            if (color) {
+              BrickTools.openColorInfo(color.id);
+            }
+          });
+        }
+      });
+    });
+    return $cell;
+  }
+
+  function colorHex(color) {
+    const rgb = String((color && color.rgb) || '').replace('#', '').trim();
+    if (/^[0-9a-fA-F]{6}$/.test(rgb)) {
+      return '#' + rgb;
+    }
+    if (/^[0-9a-fA-F]{3}$/.test(rgb)) {
+      return '#' + rgb.split('').map(function (c) { return c + c; }).join('');
+    }
+    return null;
+  }
   function renderItems() {
     const $tbody = $('#bo-items tbody').empty();
     markSortedHeader('#bo-items', sortState.items);
@@ -216,9 +293,17 @@ $(function () {
       return;
     }
     sortRows(items, sortState.items).forEach(function (i) {
-      const cells = [i.Type, i.Name, i.ColorName, i.DesignIds, i.ItemNumbers, i.Condition, i.Quantity,
-        fmt.money(i.ItemPrice), fmt.money(i.TotalPrice)];
-      $tbody.append('<tr>' + cells.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>');
+      const $row = $('<tr></tr>');
+      $row.append($('<td></td>').text(i.Type));
+      $row.append($('<td></td>').text(i.Name));
+      $row.append(renderColorCell(i));
+      $row.append($('<td></td>').text(i.DesignIds));
+      $row.append($('<td></td>').text(i.ItemNumbers));
+      $row.append($('<td></td>').text(i.Condition));
+      $row.append($('<td></td>').text(i.Quantity));
+      $row.append($('<td></td>').text(fmt.money(i.ItemPrice)));
+      $row.append($('<td></td>').text(fmt.money(i.TotalPrice)));
+      $tbody.append($row);
     });
   }
 
@@ -237,6 +322,7 @@ $(function () {
   }
 
   function showItems(orderId) {
+
     $('#bo-order-select').val(orderId);
     $('[data-tab="items"]').trigger('click');
   }
