@@ -674,6 +674,32 @@
     });
   }
 
+  /**
+   * Returns a cleaned name with the following transformations:
+   * - remove `LEGO` at the start of the name
+   * - remove the color name (column ColorName)
+   * - remove the part numbers inside the last parenthesis at the end
+   */
+  function getPartNameFromBOName(name, colorName = null) {
+    let result = name;
+
+    // Remove "LEGO" from start (with optional whitespace after it)
+    result = result.replace(/^LEGO\s*/, '');
+
+    // Remove the color name if provided via ColorName column
+    if (colorName && typeof colorName === 'string' && colorName.trim()) {
+      const cleanColorName = colorName.trim();
+      // Case-insensitive match of standalone color word followed by whitespace or end of string
+      result = result.replace(new RegExp(`\\b${cleanColorName}\\s*`, 'i'), '');
+    }
+
+    // Remove parentheses with numbers at the end (e.g., (7538), (4175 / 31593))
+    result = result.replace(/\(\d+(?:\s*\/\s*\d+)?\)\s*$/, '');
+
+    return result.trim();
+  }
+
+
   function colorHex(color) {
     const rgb = String((color && color.rgb) || '').replace('#', '').trim();
     return /^[0-9a-fA-F]{6}$/.test(rgb) ? '#' + rgb : '#e5e7eb';
