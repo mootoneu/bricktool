@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +39,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Brick Tools API", description = "Endpoints exposed by the Brick Tools application")
 @RestController
 @RequestMapping("/api")
 public class ApiController {
@@ -78,19 +85,46 @@ public class ApiController {
     this.colors = colors;
   }
 
-  @PostMapping("/setimg/backfill")
+  /**
+   * Start the set image backfill process.
+   */
+  @PostMapping(path = "/setimg/backfill", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Start Set Image Backfill",
+      description = "Initiates a background job to download missing set images. Returns progress information."
+  )
+  @ApiResponse(responseCode = "202", description = "Backfill started")
+  @ApiResponse(responseCode = "409", description = "A backfill is already running")
   public ResponseEntity<SetImageBackfill.Progress> startSetImageBackfill() throws IOException {
     HttpStatus status = backfill.start() ? HttpStatus.ACCEPTED : HttpStatus.CONFLICT;
     return ResponseEntity.status(status).body(backfill.progress());
   }
 
-  @GetMapping("/setimg/backfill")
+  /**
+   * Get the current progress of the set image backfill job.
+   */
+  @GetMapping(path = "/setimg/backfill", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Backfill Status",
+      description = "Returns the current progress of the background image backfill job."
+  )
   public SetImageBackfill.Progress setImageBackfillStatus() {
     return backfill.progress();
   }
 
-  @GetMapping("/setimg/{setNumber}")
-  public ResponseEntity<Resource> setImage(@PathVariable String setNumber) throws IOException {
+  /**
+   * Download a set image for the given set number.
+   */
+  @GetMapping(path = "/setimg/{setNumber}", produces = "image/*")
+  @Operation(
+      summary = "Get Set Image",
+      description = "Returns the image for a Lego set."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "Set image not found")
+  public ResponseEntity<Resource> setImage(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber)
+      throws IOException {
     Optional<Path> image = setImages.find(setNumber);
     if (image.isEmpty()) {
       return ResponseEntity.notFound().build();
@@ -100,8 +134,19 @@ public class ApiController {
         .body(setImages.resource(image.get()));
   }
 
-  @GetMapping("/themeimg/{imageName:.+}")
-  public ResponseEntity<Resource> themeImage(@PathVariable String imageName) throws IOException {
+  /**
+   * Download a theme image by its internal name.
+   */
+  @GetMapping(path = "/themeimg/{imageName:.+}", produces = "image/*")
+  @Operation(
+      summary = "Get Theme Image",
+      description = "Returns the image for a Lego theme."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "Theme image not found")
+  public ResponseEntity<Resource> themeImage(
+      @Parameter(name = "imageName", description = "Internal name of the theme image") @PathVariable String imageName)
+      throws IOException {
     Optional<Path> image = themeImages.find(imageName);
     if (image.isEmpty()) {
       return ResponseEntity.notFound().build();
@@ -111,13 +156,41 @@ public class ApiController {
         .body(themeImages.resource(image.get()));
   }
 
-  @GetMapping("/vendorimg/{imageName:.+}")
-  public ResponseEntity<Resource> vendorImage(@PathVariable String imageName) throws IOException {
-    return otherImage("vendor", imageName);
+  /**
+   * Download a vendor image by its internal name.
+   */
+  @GetMapping(path = "/vendorimg/{imageName:.+}", produces = "image/*")
+  @Operation(
+      summary = "Get Vendor Image",
+      description = "Returns the logo/image for a set vendor."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "Vendor image not found")
+  public ResponseEntity<Resource> vendorImage(
+      @Parameter(name = "imageName", description = "Internal name of the vendor image") @PathVariable String imageName)
+      throws IOException {
+    Optional<Path> image = otherImages.find("vendor", imageName);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(otherImages.contentType(image.get())))
+        .body(otherImages.resource(image.get()));
   }
 
-  @GetMapping("/peopleimg/{imageName:.+}")
-  public ResponseEntity<Resource> peopleImage(@PathVariable String imageName) throws IOException {
+  /**
+   * Download a people image by its internal name.
+   */
+  @GetMapping(path = "/peopleimg/{imageName:.+}", produces = "image/*")
+  @Operation(
+      summary = "Get People Image",
+      description = "Returns the image for a person (family member, friend, etc.)."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "People image not found")
+  public ResponseEntity<Resource> peopleImage(
+      @Parameter(name = "imageName", description = "Internal name of the people image") @PathVariable String imageName)
+      throws IOException {
     return otherImage("people", imageName);
   }
 
@@ -131,129 +204,302 @@ public class ApiController {
         .body(otherImages.resource(image.get()));
   }
 
-  @GetMapping("/notifications")
+  /**
+   * Get the list of application notifications.
+   */
+  @GetMapping(path = "/notifications", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Notifications",
+      description = "Returns all current notifications in the system."
+  )
   public List<Notification> notifications() {
     return notifications.list();
   }
 
-  @GetMapping("/rebrickable/status")
+  /**
+   * Check the status of the rebrickable sync service.
+   */
+  @GetMapping(path = "/rebrickable/status", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Rebrickable Status",
+      description = "Returns information about the last successful download from rebrickable.com."
+  )
   public Map<String, Object> rebrickableStatus() throws IOException {
     return rebrickable.status();
   }
 
-  @PostMapping("/rebrickable/update")
+  /**
+   * Trigger a full data sync with rebrickable.com.
+   */
+  @PostMapping(path = "/rebrickable/update", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Update Rebrickable Data",
+      description = "Starts downloading the latest data from rebrickable.com."
+  )
   public Map<String, Object> rebrickableUpdate() throws IOException, InterruptedException {
     return Map.of("lastDownload", rebrickable.update().toString());
   }
 
-  @GetMapping("/brickwatch/sets/{setNumber}/price")
-  public Map<String, Object> setPrice(@PathVariable String setNumber) throws IOException, InterruptedException {
+  /**
+   * Fetch the official Lego price for a set from BrickWatch.
+   */
+  @GetMapping(path = "/brickwatch/sets/{setNumber}/price", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Set Price from BrickWatch",
+      description = "Fetches the official Lego price for a specific set number."
+  )
+  public Map<String, Object> setPrice(@PathVariable(name = "setNumber") String setNumber) throws IOException, InterruptedException {
     return brickWatch.price(setNumber);
   }
 
-  @GetMapping("/backups")
+  /**
+   * Get list of available backups and their details.
+   */
+  @GetMapping(path = "/backups", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List Backups",
+      description = "Returns information about all existing data backups."
+  )
   public List<Map<String, Object>> backups() throws IOException {
     return backup.list();
   }
 
-  @PostMapping("/backups")
+  /**
+   * Create a new backup of the application data.
+   */
+  @PostMapping(path = "/backups", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Create Backup",
+      description = "Creates a new backup of all stored data."
+  )
   public Map<String, Object> createBackup() throws IOException {
     return backup.create();
   }
 
-  @PostMapping("/brickonomics/sets/{setNumber}/price")
-  public Map<String, Object> fetchBrickonomicsPrice(@PathVariable String setNumber)
+  /**
+   * Fetch the official Lego price for a set from Brickonomics.
+   */
+  @PostMapping(path = "/brickonomics/sets/{setNumber}/price", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Set Price from Brickonomics",
+      description = "Fetches the official Lego price for a specific set number from brickonomics.com."
+  )
+  public Map<String, Object> fetchBrickonomicsPrice(@PathVariable(name = "setNumber") String setNumber)
       throws IOException, InterruptedException {
     return brickonomics.fetchPrice(setNumber);
   }
 
-  @GetMapping("/brickowl/stats")
+  /**
+   * Get statistics about BrickOwl integration.
+   */
+  @GetMapping(path = "/brickowl/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get BrickOwl Stats",
+      description = "Returns cached statistics from BrickOwl."
+  )
   public Map<String, Object> brickOwlStats() throws IOException {
     return brickOwl.stats();
   }
 
-  @PostMapping("/brickowl/update")
+  /**
+   * Trigger a refresh of BrickOwl data.
+   */
+  @PostMapping(path = "/brickowl/update", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Update BrickOwl Data",
+      description = "Starts downloading the latest data from BrickOwl."
+  )
   public Map<String, Object> brickOwlUpdate() throws IOException {
     return brickOwl.update();
   }
 
-  @GetMapping("/brickowl/orders")
+  /**
+   * Get list of all BrickOwl orders.
+   */
+  @GetMapping(path = "/brickowl/orders", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List BrickOwl Orders",
+      description = "Returns a list of all BrickOwl catalog orders."
+  )
   public List<Map<String, String>> brickOwlOrders() throws IOException {
     return brickOwl.orders();
   }
 
-  @GetMapping("/brickowl/orders/{orderId}/items")
-  public List<Map<String, String>> brickOwlItems(@PathVariable String orderId) throws IOException {
+  /**
+   * Get the items in a specific BrickOwl order.
+   */
+  @GetMapping(path = "/brickowl/orders/{orderId}/items", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Order Items",
+      description = "Returns all items for a specific BrickOwl order."
+  )
+  public List<Map<String, String>> brickOwlItems(@Parameter(name = "orderId", description = "BrickOwl order ID") @PathVariable String orderId) throws IOException {
     return brickOwl.items(orderId);
   }
 
-  @GetMapping("/brickowl/parts")
+  /**
+   * Get all parts from BrickOwl.
+   */
+  @GetMapping(path = "/brickowl/parts", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List Parts",
+      description = "Returns a list of all Lego parts tracked by BrickOwl."
+  )
   public List<Map<String, Object>> brickOwlParts() throws IOException {
     return brickOwl.parts();
   }
 
-  @GetMapping("/purchases")
+  /**
+   * Get all purchases (owned sets).
+   */
+  @GetMapping(path = "/purchases", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List Purchases",
+      description = "Returns all set purchases recorded in the database."
+  )
   public List<Map<String, Object>> purchases() throws IOException {
     return purchases.list();
   }
 
-  @GetMapping("/purchases/options")
+  /**
+   * Get available options for purchase creation (family members, etc.).
+   */
+  @GetMapping(path = "/purchases/options", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Purchase Options",
+      description = "Returns the dropdown options used when creating a new purchase record."
+  )
   public Map<String, List<String>> purchaseOptions() throws IOException {
     return purchases.options();
   }
 
-  @PostMapping("/purchases")
+  /**
+   * Create a new purchase record for a set.
+   */
+  @PostMapping(path = "/purchases", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create Purchase",
+      description = "Records the purchase of a Lego set."
+  )
+  @ApiResponse(responseCode = "201", description = "Purchase created")
   public Map<String, Integer> createPurchase(@RequestBody PurchaseRequest request) throws IOException {
     return Map.of("id", purchases.create(request));
   }
 
-  @PutMapping("/purchases/{id}")
+  /**
+   * Update an existing purchase record.
+   */
+  @PutMapping(path = "/purchases/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void updatePurchase(@PathVariable int id, @RequestBody PurchaseRequest request) throws IOException {
+  @Operation(
+      summary = "Update Purchase",
+      description = "Updates information for an existing purchase record."
+  )
+  @ApiResponse(responseCode = "204", description = "Purchase updated")
+  public void updatePurchase(@Parameter(name = "id", description = "Purchase ID") @PathVariable int id, @RequestBody PurchaseRequest request) throws IOException {
     purchases.update(id, request);
   }
 
-  @GetMapping("/newsets")
-  public Map<String, Object> newSets(@RequestParam(required = false) Integer year) throws IOException {
+  /**
+   * Get recently released sets (catalog).
+   */
+  @GetMapping(path = "/newsets", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List New Sets",
+      description = "Returns sets released in a specific year or the current year."
+  )
+  public Map<String, Object> newSets(@Parameter(name = "year", description = "Release year (optional)") @RequestParam(required = false) Integer year) throws IOException {
     return newSets.catalog(year == null ? LocalDate.now().getYear() : year);
   }
 
-  @GetMapping("/colors")
+  /**
+   * Get all available colors.
+   */
+  @GetMapping(path = "/colors", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List Colors",
+      description = "Returns all Lego colors tracked by the application."
+  )
   public List<Map<String, Object>> colors() throws IOException {
     return colors.colors();
   }
 
-  @GetMapping("/color-mappings")
+  /**
+   * Get color mappings between different identifier systems.
+   */
+  @GetMapping(path = "/color-mappings", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Color Mappings",
+      description = "Returns mappings that link Lego color IDs to external identifiers (BrickOwl, BrickLink, LDraw, etc.)."
+  )
   public List<Map<String, Object>> colorMappings() throws IOException {
     return colors.mappings();
   }
 
-  @GetMapping("/wishlist")
+  /**
+   * Get all wishlisted sets.
+   */
+  @GetMapping(path = "/wishlist", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List Wishlist",
+      description = "Returns all items currently in the wishlist."
+  )
   public List<Map<String, Object>> wishlistEntries() throws IOException {
     return wishlist.list();
   }
 
-  @GetMapping("/wishlist/options")
+  /**
+   * Get available options for wishlist creation (family members, priorities, etc.).
+   */
+  @GetMapping(path = "/wishlist/options", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Wishlist Options",
+      description = "Returns the dropdown options used when creating a new wishlist entry."
+  )
   public Map<String, Object> wishlistOptions() throws IOException {
     return wishlist.options();
   }
 
-  @PostMapping("/wishlist")
+  /**
+   * Add a new set to the wishlist.
+   */
+  @PostMapping(path = "/wishlist", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Add to Wishlist",
+      description = "Adds a Lego set to the personal wishlist with ownership and priority information."
+  )
+  @ApiResponse(responseCode = "201", description = "Wishlist entry created")
   public Map<String, Integer> createWishlistEntry(@RequestBody WishlistRequest request) throws IOException {
     return Map.of("id", wishlist.create(request));
   }
 
-  @PutMapping("/wishlist/{id}")
+  /**
+   * Update an existing wishlist entry.
+   */
+  @PutMapping(path = "/wishlist/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void updateWishlistEntry(@PathVariable int id, @RequestBody WishlistRequest request) throws IOException {
+  @Operation(
+      summary = "Update Wishlist Entry",
+      description = "Updates information for an existing wishlist item."
+  )
+  @ApiResponse(responseCode = "204", description = "Wishlist entry updated")
+  public void updateWishlistEntry(@Parameter(name = "id", description = "Wishlist entry ID") @PathVariable int id, @RequestBody WishlistRequest request) throws IOException {
     wishlist.update(id, request);
   }
 
-  @DeleteMapping("/wishlist/{id}")
+  /**
+   * Remove a set from the wishlist.
+   */
+  @DeleteMapping(path = "/wishlist/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteWishlistEntry(@PathVariable int id) throws IOException {
+  @Operation(
+      summary = "Remove from Wishlist",
+      description = "Removes a Lego set from the personal wishlist."
+  )
+  @ApiResponse(responseCode = "204", description = "Wishlist entry removed")
+  public void deleteWishlistEntry(@Parameter(name = "id", description = "Wishlist entry ID") @PathVariable int id) throws IOException {
     wishlist.delete(id);
   }
 }

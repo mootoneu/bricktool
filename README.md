@@ -172,3 +172,10 @@ Colors are shared by all pages through `color.js`:
 
 The colors are exposed by `GET /api/colors` and the external identifiers by `GET /api/color-mappings`. Both reference files are read once and kept in memory by the server.
 
+### API documentation
+
+The REST API is documented with OpenAPI (springdoc). When the application is running:
+
+- Swagger UI: `http://localhost:8780/swagger-ui/index.html`
+- OpenAPI specification: `http://localhost:8780/v3/api-docs`
+
