@@ -326,7 +326,7 @@ $(function () {
     facts.push(set.officialPrice == null ? '—' : fmt.money(set.officialPrice));
     const $facts = $('<p class="set-card-facts"></p>').text(facts.join(' · '));
     if (set.officialPrice == null) {
-      $facts.append(' ').append(BrickTools.priceButton(set.setNumber, function (result) {
+      $facts.append(' ').append(BrickSets.priceButton(set.setNumber, function (result) {
         set.officialPrice = result.legoPrice;
         reloadWishlist();
       }));
@@ -577,7 +577,7 @@ $(function () {
       return;
     }
     const setNumber = $(this).attr('data-set-number');
-    BrickTools.openSetSites(setNumber, findSet(setNumber));
+    BrickSets.openSetSites(setNumber, findSet(setNumber));
   });
 
   $('#set-cards').on('click', '.wishlist-toggle', function () {
@@ -650,7 +650,7 @@ $(function () {
   $('#wishlist tbody').on('click', '.wishlist-open', function () {
     const setNumber = $(this).attr('data-set-number');
     const entry = wishlist.find(row => row.setNumber === setNumber);
-    BrickTools.openSetSites(setNumber, entry || findSet(setNumber));
+    BrickSets.openSetSites(setNumber, entry || findSet(setNumber));
   });
 
   $('#wishlist tbody').on('click', '.wishlist-buy', function () {

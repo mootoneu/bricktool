@@ -385,7 +385,7 @@ $(function () {
         if (c.links) {
           $td.append($('<button type="button" class="btn secondary">Open</button>')
             .attr('title', 'Open set ' + (p.setNumber || '') + ' on external websites')
-            .on('click', function () { BrickTools.openSetSites(p.setNumber, p); }));
+            .on('click', function () { BrickSets.openSetSites(p.setNumber, p); }));
         } else if (c.image) {
           if (value) {
             $td.append($('<img class="set-img" alt="" loading="lazy">').attr('src', value));
@@ -432,7 +432,7 @@ $(function () {
         } else if (c.tag) {
           $td.append(BrickTools.tag(value));
         } else if (c.priceFetch && value == null) {
-          $td.append(BrickTools.priceButton(p.setNumber, function () { load(); }));
+          $td.append(BrickSets.priceButton(p.setNumber, function () { load(); }));
         } else {
           $td.text(c.fmt ? c.fmt(value) : (value == null ? '' : value));
         }

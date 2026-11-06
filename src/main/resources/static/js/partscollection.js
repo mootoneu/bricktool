@@ -109,11 +109,11 @@ $(function () {
       .attr('tabindex', '0');
     $cell.append($chip);
 
-    BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+    BrickColor.getLegoColorId('BO', colorId).then(function (legoId) {
       if (legoId === null || legoId === undefined) {
         return;
       }
-      BrickTools.getColor(legoId).done(function (color) {
+      BrickColor.getColor(legoId).done(function (color) {
         const hex = colorHex(color);
         if (hex) {
           $chip.css({
@@ -125,9 +125,9 @@ $(function () {
     });
 
     function openColor() {
-      BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+      BrickColor.getLegoColorId('BO', colorId).then(function (legoId) {
         if (legoId !== null && legoId !== undefined) {
-          BrickTools.openColorInfo(legoId);
+          BrickColor.openColorInfo(legoId);
         }
       });
     }

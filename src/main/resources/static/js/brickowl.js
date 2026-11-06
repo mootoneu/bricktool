@@ -240,12 +240,12 @@ $(function () {
         }
       });
     $cell.append($chip);
-    BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+    BrickColor.getLegoColorId('BO', colorId).then(function (legoId) {
       if (legoId === null || legoId === undefined) {
         $chip.text(item.ColorName || '');
         return;
       }
-      BrickTools.getColor(legoId).done(function (color) {
+      BrickColor.getColor(legoId).done(function (color) {
         const hex = colorHex(color);
         if (hex) {
           $chip.css({
@@ -262,11 +262,11 @@ $(function () {
       $chip.text(item.ColorName || '');
     });
     $chip.on('click', function () {
-      BrickTools.getLegoColorId('BO', colorId).then(function (legoId) {
+      BrickColor.getLegoColorId('BO', colorId).then(function (legoId) {
         if (legoId !== null && legoId !== undefined) {
-          BrickTools.getColor(legoId).done(function (color) {
+          BrickColor.getColor(legoId).done(function (color) {
             if (color) {
-              BrickTools.openColorInfo(color.id);
+              BrickColor.openColorInfo(color.id);
             }
           });
         }
