@@ -8,6 +8,8 @@ import com.bricktools.color.ColorService;
 import com.bricktools.notification.NotificationService;
 import com.bricktools.notification.NotificationService.Notification;
 import com.bricktools.other.OtherImageService;
+import com.bricktools.pab.PabPurchaseRequest;
+import com.bricktools.pab.PabService;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
 import com.bricktools.rebrickable.RebrickableService;
@@ -63,12 +65,13 @@ public class ApiController {
   private final NewSetService newSets;
   private final WishlistService wishlist;
   private final ColorService colors;
+  private final PabService pab;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
-                       NewSetService newSets, WishlistService wishlist, ColorService colors) {
+                       NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -83,6 +86,7 @@ public class ApiController {
     this.newSets = newSets;
     this.wishlist = wishlist;
     this.colors = colors;
+    this.pab = pab;
   }
 
   /**
@@ -501,5 +505,38 @@ public class ApiController {
   @ApiResponse(responseCode = "204", description = "Wishlist entry removed")
   public void deleteWishlistEntry(@Parameter(name = "id", description = "Wishlist entry ID") @PathVariable int id) throws IOException {
     wishlist.delete(id);
+  }
+
+  @GetMapping(path = "/pab/purchases", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List PaB purchases",
+      description = "Returns the Pick a Brick purchases with the total quantity of their parts."
+  )
+  public List<Map<String, Object>> pabPurchases() throws IOException {
+    return pab.purchases();
+  }
+
+  @PostMapping(path = "/pab/purchases", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create PaB purchase",
+      description = "Records a Pick a Brick purchase made in a Lego store."
+  )
+  @ApiResponse(responseCode = "201", description = "PaB purchase created")
+  public Map<String, Integer> createPabPurchase(@RequestBody PabPurchaseRequest request) throws IOException {
+    return Map.of("id", pab.create(request));
+  }
+
+  @PutMapping(path = "/pab/purchases/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Update PaB purchase",
+      description = "Updates an existing Pick a Brick purchase."
+  )
+  @ApiResponse(responseCode = "204", description = "PaB purchase updated")
+  public void updatePabPurchase(
+      @Parameter(name = "id", description = "PaB purchase ID") @PathVariable int id,
+      @RequestBody PabPurchaseRequest request) throws IOException {
+    pab.update(id, request);
   }
 }

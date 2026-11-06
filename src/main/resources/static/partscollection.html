@@ -30,7 +30,25 @@
     </section>
 
     <section data-panel="pab-purchases" hidden>
-      <p class="muted">PaB Purchases — empty.</p>
+      <div class="toolbar">
+        <button type="button" id="pab-purchase-add" class="btn">Add new purchase</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data" id="pab-purchases">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Purchase date</th>
+              <th>Box quantity</th>
+              <th>Price</th>
+              <th>Total parts</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="pab-purchases-msg" class="muted"></p>
     </section>
 
     <section data-panel="pab-parts" hidden>
@@ -58,6 +76,27 @@
       <p id="bo-parts-msg" class="muted"></p>
     </section>
   </main>
+
+  <div id="pab-purchase-modal" class="modal" hidden>
+    <form id="pab-purchase-form">
+      <h2 id="pab-purchase-title">Add PaB purchase</h2>
+      <input type="hidden" id="pab-purchase-id">
+      <label>Purchase date (yyyy/MM/dd)
+        <input id="pab-purchase-date" pattern="\d{4}/\d{2}/\d{2}" required>
+      </label>
+      <label>Box quantity
+        <input id="pab-purchase-boxes" type="number" min="1" step="1" value="1" required>
+      </label>
+      <label>Price (€)
+        <input id="pab-purchase-price" type="number" min="0" step="0.01" value="0" required>
+      </label>
+      <p id="pab-purchase-form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="pab-purchase-cancel" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>

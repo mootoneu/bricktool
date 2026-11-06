@@ -11,6 +11,11 @@ $(function () {
   let loaded = false;
   const sortState = { key: 'name', dir: 1 };
 
+  let pabPurchases = [];
+  let pabPurchasesLoading = false;
+  let pabPurchasesLoaded = false;
+  let selectedPabPurchaseId = '';
+
   function compareValues(a, b, dir) {
     const x = a == null ? '' : String(a);
     const y = b == null ? '' : String(b);
@@ -224,6 +229,117 @@ $(function () {
       });
   }
 
+  function findPabPurchase(id) {
+    return pabPurchases.find(function (purchase) {
+      return String(purchase.id) === String(id);
+    });
+  }
+
+  function renderPabPurchases() {
+    const $tbody = $('#pab-purchases tbody').empty();
+    if (pabPurchases.length === 0) {
+      $tbody.append('<tr><td colspan="6" class="muted">No PaB purchases yet.</td></tr>');
+      return;
+    }
+    pabPurchases.forEach(function (purchase) {
+      const $row = $('<tr></tr>');
+      $row.append($('<td></td>').text(purchase.id == null ? '' : purchase.id));
+      $row.append($('<td></td>').text(purchase.purchaseDate || ''));
+      $row.append($('<td></td>').text(purchase.boxQuantity == null ? '' : fmt.number(purchase.boxQuantity)));
+      $row.append($('<td></td>').text(purchase.price == null ? '' : fmt.money(purchase.price)));
+      $row.append($('<td></td>').text(fmt.number(purchase.totalParts || 0)));
+
+      const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary pab-parts-open">Parts</button>')
+        .attr('data-pab-purchase-id', purchase.id));
+      $actions.append($('<button type="button" class="btn secondary pab-purchase-edit">Edit</button>')
+        .attr('data-pab-purchase-id', purchase.id));
+      $row.append($actions);
+      $tbody.append($row);
+    });
+  }
+
+  function loadPabPurchases() {
+    if (pabPurchasesLoading) {
+      return;
+    }
+    pabPurchasesLoading = true;
+    report('#pab-purchases-msg', 'Loading PaB purchases…');
+    BrickTools.api('GET', '/pab/purchases')
+      .done(function (list) {
+        pabPurchases = Array.isArray(list) ? list : [];
+        pabPurchasesLoaded = true;
+        renderPabPurchases();
+        report('#pab-purchases-msg', pabPurchases.length === 0 ? 'No PaB purchases stored yet.' : '');
+      })
+      .fail(function (xhr) {
+        pabPurchases = [];
+        const $tbody = $('#pab-purchases tbody').empty();
+        $tbody.append($('<tr></tr>').append(
+          $('<td colspan="6" class="muted"></td>').text('Unable to load PaB purchases.')));
+        report('#pab-purchases-msg', BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        pabPurchasesLoading = false;
+      });
+  }
+
+  function openPabPurchaseForm(purchase) {
+    $('#pab-purchase-form-msg').text('');
+    $('#pab-purchase-id').val(purchase ? purchase.id : '');
+    $('#pab-purchase-title').text(purchase ? 'Edit PaB purchase' : 'Add PaB purchase');
+    $('#pab-purchase-date').val(purchase ? purchase.purchaseDate : BrickTools.today());
+    $('#pab-purchase-boxes').val(purchase && purchase.boxQuantity != null ? purchase.boxQuantity : 1);
+    $('#pab-purchase-price').val(purchase && purchase.price != null ? purchase.price : 0);
+    $('#pab-purchase-modal').prop('hidden', false);
+    $('#pab-purchase-date').trigger('focus');
+  }
+
+  function closePabPurchaseForm() {
+    $('#pab-purchase-modal').prop('hidden', true);
+  }
+
+  $('#pab-purchase-add').on('click', function () {
+    openPabPurchaseForm(null);
+  });
+
+  $('#pab-purchase-cancel').on('click', closePabPurchaseForm);
+
+  $('#pab-purchases').on('click', '.pab-purchase-edit', function () {
+    openPabPurchaseForm(findPabPurchase($(this).attr('data-pab-purchase-id')));
+  });
+
+  $('#pab-purchases').on('click', '.pab-parts-open', function () {
+    selectedPabPurchaseId = String($(this).attr('data-pab-purchase-id'));
+    $('.tabs [data-tab="pab-parts"]').trigger('click');
+  });
+
+  $('#pab-purchase-form').on('submit', function (event) {
+    event.preventDefault();
+    const id = $('#pab-purchase-id').val();
+    const boxQuantity = parseInt($('#pab-purchase-boxes').val(), 10);
+    const price = parseFloat($('#pab-purchase-price').val());
+    const body = {
+      purchaseDate: String($('#pab-purchase-date').val() || '').trim(),
+      boxQuantity: isNaN(boxQuantity) ? 1 : boxQuantity,
+      price: isNaN(price) ? 0 : price
+    };
+    const $buttons = $('#pab-purchase-form button').prop('disabled', true);
+    $('#pab-purchase-form-msg').text('Saving…');
+    BrickTools.api(id ? 'PUT' : 'POST',
+        id ? '/pab/purchases/' + encodeURIComponent(id) : '/pab/purchases', body)
+      .done(function () {
+        closePabPurchaseForm();
+        loadPabPurchases();
+      })
+      .fail(function (xhr) {
+        $('#pab-purchase-form-msg').text(BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        $buttons.prop('disabled', false);
+      });
+  });
+
   $('#bo-parts-collection thead').on('click', 'th[data-key]', function () {
     sortBy(sortState, $(this).attr('data-key'));
     renderParts();
@@ -232,6 +348,9 @@ $(function () {
   BrickTools.initTabs('main', function (name) {
     if (name === 'brickowl') {
       loadParts();
+    }
+    if (name === 'pab-purchases' && !pabPurchasesLoaded) {
+      loadPabPurchases();
     }
   });
 
