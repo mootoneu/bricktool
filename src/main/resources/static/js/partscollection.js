@@ -181,7 +181,7 @@ $(function () {
     sortRows(parts, sortState).forEach(function (part) {
       const $row = $('<tr></tr>');
       $row.append($('<td></td>').text(part.type || ''));
-      $row.append($('<td></td>').text(part.name || ''));
+      $row.append($('<td></td>').text(BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '')));
       $row.append(renderColorCell(part));
       $row.append($('<td></td>').text(part.designIds || ''));
       $row.append($('<td></td>').text(part.itemNumbers || ''));

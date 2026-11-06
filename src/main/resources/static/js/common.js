@@ -1008,6 +1008,6 @@
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs, closeSetSites, openSetSites, openPriceSources, priceButton,
     getColor, getLegoColorId, openColorInfo, openColorPicker,
-    getCookie, setCookie
+    getCookie, setCookie, getPartNameFromBOName
   };
 })(window, jQuery);

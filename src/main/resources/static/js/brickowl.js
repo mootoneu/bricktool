@@ -295,7 +295,8 @@ $(function () {
     sortRows(items, sortState.items).forEach(function (i) {
       const $row = $('<tr></tr>');
       $row.append($('<td></td>').text(i.Type));
-      $row.append($('<td></td>').text(i.Name));
+      $row.append($('<td></td>').text(BrickTools.getPartNameFromBOName(i.
+        Name, i.ColorName)));
       $row.append(renderColorCell(i));
       $row.append($('<td></td>').text(i.DesignIds));
       $row.append($('<td></td>').text(i.ItemNumbers));
