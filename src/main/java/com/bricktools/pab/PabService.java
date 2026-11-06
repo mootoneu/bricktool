@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class PabService {
 
-  private static final List<String> PURCHASE_HEADERS = List.of("Id", "PurchaseDate", "BoxQuantity", "Price");
+  private static final List<String> PURCHASE_HEADERS =
+      List.of("Id", "PurchaseDate", "BoxQuantity", "MinifigQuantity", "Price");
   private static final List<String> PART_HEADERS =
       List.of("Id", "PaBPurchaseId", "PartNumber", "PartColor", "Quantity");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
@@ -48,6 +49,8 @@ public class PabService {
       entry.put("id", toInt(id));
       entry.put("purchaseDate", clean(row.get("PurchaseDate")));
       entry.put("boxQuantity", toInt(row.get("BoxQuantity")));
+      Integer minifigs = toInt(row.get("MinifigQuantity"));
+      entry.put("minifigQuantity", minifigs == null ? 0 : minifigs);
       entry.put("price", toDouble(row.get("Price")));
       entry.put("totalParts", totals.getOrDefault(id, 0));
       result.add(entry);
@@ -213,6 +216,10 @@ public class PabService {
     if (boxes < 1) {
       throw new IllegalArgumentException("Box quantity must be at least 1");
     }
+    int minifigs = request == null || request.minifigQuantity() == null ? 0 : request.minifigQuantity();
+    if (minifigs < 0) {
+      throw new IllegalArgumentException("Minifig quantity must not be negative");
+    }
     BigDecimal price = request == null || request.price() == null ? BigDecimal.ZERO : request.price();
     if (price.signum() < 0) {
       throw new IllegalArgumentException("Price must not be negative");
@@ -221,6 +228,7 @@ public class PabService {
     row.put("Id", String.valueOf(id));
     row.put("PurchaseDate", date);
     row.put("BoxQuantity", String.valueOf(boxes));
+    row.put("MinifigQuantity", String.valueOf(minifigs));
     row.put("Price", price.stripTrailingZeros().toPlainString());
     return row;
   }

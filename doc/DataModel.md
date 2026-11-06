@@ -352,6 +352,7 @@ The data.bt.PaBPurchases represent a purchase made in a Lego store at the Pick a
 | Id | interger (PK) | |
 | PurchaseDate | date | Date the PaB purchase was made |
 | BoxQuantity | integer | Number of box of parts bought |
+| MinifigQuantity | integer | Number of minifig bought |
 | Price | decimal | Price in € |
 
 ### PaB parts data

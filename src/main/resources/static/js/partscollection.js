@@ -241,7 +241,7 @@ $(function () {
   function renderPabPurchases() {
     const $tbody = $('#pab-purchases tbody').empty();
     if (pabPurchases.length === 0) {
-      $tbody.append('<tr><td colspan="6" class="muted">No PaB purchases yet.</td></tr>');
+      $tbody.append('<tr><td colspan="7" class="muted">No PaB purchases yet.</td></tr>');
       return;
     }
     pabPurchases.forEach(function (purchase) {
@@ -249,6 +249,7 @@ $(function () {
       $row.append($('<td></td>').text(purchase.id == null ? '' : purchase.id));
       $row.append($('<td></td>').text(purchase.purchaseDate || ''));
       $row.append($('<td></td>').text(purchase.boxQuantity == null ? '' : fmt.number(purchase.boxQuantity)));
+      $row.append($('<td></td>').text(purchase.minifigQuantity == null ? '' : fmt.number(purchase.minifigQuantity)));
       $row.append($('<td></td>').text(purchase.price == null ? '' : fmt.money(purchase.price)));
       $row.append($('<td></td>').text(fmt.number(purchase.totalParts || 0)));
 
@@ -284,7 +285,7 @@ $(function () {
         populatePabPurchaseSelect();
         const $tbody = $('#pab-purchases tbody').empty();
         $tbody.append($('<tr></tr>').append(
-          $('<td colspan="6" class="muted"></td>').text('Unable to load PaB purchases.')));
+          $('<td colspan="7" class="muted"></td>').text('Unable to load PaB purchases.')));
         report('#pab-purchases-msg', BrickTools.errorOf(xhr));
       })
       .always(function () {
@@ -301,6 +302,7 @@ $(function () {
     $('#pab-purchase-title').text(purchase ? 'Edit PaB purchase' : 'Add PaB purchase');
     $('#pab-purchase-date').val(purchase ? purchase.purchaseDate : BrickTools.today());
     $('#pab-purchase-boxes').val(purchase && purchase.boxQuantity != null ? purchase.boxQuantity : 1);
+    $('#pab-purchase-minifigs').val(purchase && purchase.minifigQuantity != null ? purchase.minifigQuantity : 0);
     $('#pab-purchase-price').val(purchase && purchase.price != null ? purchase.price : 0);
     $('#pab-purchase-modal').prop('hidden', false);
     $('#pab-purchase-date').trigger('focus');
@@ -329,10 +331,12 @@ $(function () {
     event.preventDefault();
     const id = $('#pab-purchase-id').val();
     const boxQuantity = parseInt($('#pab-purchase-boxes').val(), 10);
+    const minifigQuantity = parseInt($('#pab-purchase-minifigs').val(), 10);
     const price = parseFloat($('#pab-purchase-price').val());
     const body = {
       purchaseDate: String($('#pab-purchase-date').val() || '').trim(),
       boxQuantity: isNaN(boxQuantity) ? 1 : boxQuantity,
+      minifigQuantity: isNaN(minifigQuantity) ? 0 : minifigQuantity,
       price: isNaN(price) ? 0 : price
     };
     const $buttons = $('#pab-purchase-form button').prop('disabled', true);

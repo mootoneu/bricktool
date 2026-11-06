@@ -36,7 +36,7 @@ class PabPurchaseApiTest {
   @Test
   void purchasesCanBeCreatedListedAndUpdated() throws Exception {
     mvc.perform(post("/api/pab/purchases").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"purchaseDate\":\"2026/02/03\",\"boxQuantity\":2,\"price\":24.90}"))
+            .content("{\"purchaseDate\":\"2026/02/03\",\"boxQuantity\":2,\"minifigQuantity\":1,\"price\":24.90}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1));
 
@@ -44,17 +44,19 @@ class PabPurchaseApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].purchaseDate").value("2026/02/03"))
         .andExpect(jsonPath("$[0].boxQuantity").value(2))
+        .andExpect(jsonPath("$[0].minifigQuantity").value(1))
         .andExpect(jsonPath("$[0].price").value(24.9))
         .andExpect(jsonPath("$[0].totalParts").value(0));
 
     mvc.perform(put("/api/pab/purchases/1").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"purchaseDate\":\"2026/03/04\",\"boxQuantity\":3,\"price\":12.50}"))
+            .content("{\"purchaseDate\":\"2026/03/04\",\"boxQuantity\":3,\"minifigQuantity\":2,\"price\":12.50}"))
         .andExpect(status().isNoContent());
 
     mvc.perform(get("/api/pab/purchases"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].purchaseDate").value("2026/03/04"))
         .andExpect(jsonPath("$[0].boxQuantity").value(3))
+        .andExpect(jsonPath("$[0].minifigQuantity").value(2))
         .andExpect(jsonPath("$[0].price").value(12.5));
   }
 

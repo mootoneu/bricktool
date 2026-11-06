@@ -42,25 +42,26 @@ class PabServiceTest {
 
   @Test
   void createWritesThePurchasesFileAndReturnsTheId() throws IOException {
-    int id = service.create(new PabPurchaseRequest("2026/02/03", 2, new BigDecimal("24.90")));
+    int id = service.create(new PabPurchaseRequest("2026/02/03", 2, 1, new BigDecimal("24.90")));
 
     assertThat(id).isEqualTo(1);
     assertThat(Files.readString(dir.resolve("bt/pab_purchases.csv")))
-        .startsWith("Id,PurchaseDate,BoxQuantity,Price")
-        .contains("1,2026/02/03,2,24.9");
+        .startsWith("Id,PurchaseDate,BoxQuantity,MinifigQuantity,Price")
+        .contains("1,2026/02/03,2,1,24.9");
 
     assertThat(service.purchases().get(0))
         .containsEntry("id", 1)
         .containsEntry("purchaseDate", "2026/02/03")
         .containsEntry("boxQuantity", 2)
+        .containsEntry("minifigQuantity", 1)
         .containsEntry("price", 24.9)
         .containsEntry("totalParts", 0);
   }
 
   @Test
   void totalPartsSumsTheQuantityOfRelatedParts() throws IOException {
-    int first = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
-    int second = service.create(new PabPurchaseRequest("2026/02/04", 1, BigDecimal.ONE));
+    int first = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
+    int second = service.create(new PabPurchaseRequest("2026/02/04", 1, 0, BigDecimal.ONE));
     Files.writeString(dir.resolve("bt/pab_parts.csv"),
         "Id,PaBPurchaseId,PartNumber,PartColor,Quantity\n"
             + "1," + first + ",3001,5,20\n"
@@ -75,40 +76,44 @@ class PabServiceTest {
 
   @Test
   void updateChangesThePurchaseAndKeepsItsId() throws IOException {
-    int id = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
+    int id = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
 
-    service.update(id, new PabPurchaseRequest("2026/03/04", 3, new BigDecimal("12.50")));
+    service.update(id, new PabPurchaseRequest("2026/03/04", 3, 2, new BigDecimal("12.50")));
 
     assertThat(service.purchases().get(0))
         .containsEntry("id", id)
         .containsEntry("purchaseDate", "2026/03/04")
         .containsEntry("boxQuantity", 3)
+        .containsEntry("minifigQuantity", 2)
         .containsEntry("price", 12.5);
   }
 
   @Test
   void invalidPurchaseIsRejected() throws IOException {
-    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("03/02/2026", 1, BigDecimal.TEN)))
+    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("03/02/2026", 1, 0, BigDecimal.TEN)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("date");
-    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("2026/02/03", 0, BigDecimal.TEN)))
+    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("2026/02/03", 0, 0, BigDecimal.TEN)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Box quantity");
-    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("2026/02/03", 1, new BigDecimal("-1"))))
+    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("2026/02/03", 1, -1, BigDecimal.TEN)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Minifig quantity");
+    assertThatThrownBy(() -> service.create(new PabPurchaseRequest("2026/02/03", 1, 0, new BigDecimal("-1"))))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Price");
   }
 
   @Test
   void updateRejectsUnknownIds() {
-    assertThatThrownBy(() -> service.update(42, new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN)))
+    assertThatThrownBy(() -> service.update(42, new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Unknown PaB purchase id");
   }
 
   @Test
   void createPartAddsThePartAndListsTheCatalogInformation() throws IOException {
-    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
+    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
 
     int partId = service.createPart(purchaseId, new PabPartRequest("3001", 5, 20));
 
@@ -133,8 +138,8 @@ class PabServiceTest {
 
   @Test
   void partsAreFilteredByPurchase() throws IOException {
-    int first = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
-    int second = service.create(new PabPurchaseRequest("2026/02/04", 1, BigDecimal.ONE));
+    int first = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
+    int second = service.create(new PabPurchaseRequest("2026/02/04", 1, 0, BigDecimal.ONE));
     service.createPart(first, new PabPartRequest("3001", 5, 2));
     service.createPart(second, new PabPartRequest("3002", 1, 7));
 
@@ -144,7 +149,7 @@ class PabServiceTest {
 
   @Test
   void updatePartChangesThePartAndKeepsThePurchase() throws IOException {
-    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
+    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
     int partId = service.createPart(purchaseId, new PabPartRequest("3001", 5, 2));
 
     service.updatePart(partId, new PabPartRequest("3002", 1, 9));
@@ -161,7 +166,7 @@ class PabServiceTest {
 
   @Test
   void invalidPartIsRejected() throws IOException {
-    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, BigDecimal.TEN));
+    int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
 
     assertThatThrownBy(() -> service.createPart(42, new PabPartRequest("3001", 5, 1)))
         .isInstanceOf(IllegalArgumentException.class)
