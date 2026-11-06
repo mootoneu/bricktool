@@ -23,7 +23,7 @@ public class PabService {
   private static final List<String> PURCHASE_HEADERS =
       List.of("Id", "PurchaseDate", "BoxQuantity", "MinifigQuantity", "Price");
   private static final List<String> PART_HEADERS =
-      List.of("Id", "PaBPurchaseId", "PartNumber", "PartColor", "Quantity");
+      List.of("Id", "PaBPurchaseId", "PartNumber", "PartColorId", "Quantity");
   private static final Pattern DATE = Pattern.compile("\\d{4}/\\d{2}/\\d{2}");
 
   private final Path purchasesFile;
@@ -91,7 +91,7 @@ public class PabService {
         continue;
       }
       String partNumber = clean(row.get("PartNumber"));
-      String colorId = clean(row.get("PartColor"));
+      String colorId = clean(row.get("PartColorId"));
       Map<String, String> part = partCatalog.getOrDefault(partNumber, Map.of());
       Map<String, String> color = colorCatalog.getOrDefault(colorId, Map.of());
 
@@ -99,7 +99,7 @@ public class PabService {
       entry.put("id", toInt(row.get("Id")));
       entry.put("paBPurchaseId", toInt(row.get("PaBPurchaseId")));
       entry.put("partNumber", partNumber);
-      entry.put("partColor", toInt(colorId));
+      entry.put("partColorId", toInt(colorId));
       entry.put("quantity", toInt(row.get("Quantity")));
       entry.put("partName", clean(part.get("name")));
       entry.put("partCategory", categoryNames.getOrDefault(clean(part.get("part_cat_id")), ""));
@@ -152,12 +152,12 @@ public class PabService {
     if (!catalog(partsCatalogFile, "part_num").containsKey(partNumber)) {
       throw new IllegalArgumentException("Unknown part number " + partNumber);
     }
-    Integer color = request == null ? null : request.partColor();
-    if (color == null) {
+    Integer colorId = request == null ? null : request.partColorId();
+    if (colorId == null) {
       throw new IllegalArgumentException("Part color is required");
     }
-    if (!catalog(colorsCatalogFile, "id").containsKey(String.valueOf(color))) {
-      throw new IllegalArgumentException("Unknown part color " + color);
+    if (!catalog(colorsCatalogFile, "id").containsKey(String.valueOf(colorId))) {
+      throw new IllegalArgumentException("Unknown part color id " + colorId);
     }
     int quantity = request == null || request.quantity() == null ? 1 : request.quantity();
     if (quantity < 1) {
@@ -168,7 +168,7 @@ public class PabService {
     row.put("Id", String.valueOf(id));
     row.put("PaBPurchaseId", String.valueOf(purchaseId));
     row.put("PartNumber", partNumber);
-    row.put("PartColor", String.valueOf(color));
+    row.put("PartColorId", String.valueOf(colorId));
     row.put("Quantity", String.valueOf(quantity));
     return row;
   }

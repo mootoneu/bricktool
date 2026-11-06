@@ -384,7 +384,7 @@ $(function () {
   }
 
   function pabColorChip(part) {
-    const colorId = part.partColor;
+    const colorId = part.partColorId;
     const label = part.colorName || (colorId == null ? '' : String(colorId));
     const $chip = $('<span class="color-chip"></span>')
       .attr('title', label)
@@ -471,7 +471,7 @@ $(function () {
     $('#pab-part-id').val(part ? part.id : '');
     $('#pab-part-title').text(part ? 'Edit PaB part' : 'Add PaB part');
     $('#pab-part-number').val(part ? part.partNumber : '');
-    $('#pab-part-color').val(part && part.partColor != null ? part.partColor : '');
+    $('#pab-part-color').val(part && part.partColorId != null ? part.partColorId : '');
     $('#pab-part-quantity').val(part && part.quantity != null ? part.quantity : 1);
     $('#pab-part-modal').prop('hidden', false);
     $('#pab-part-number').trigger('focus');

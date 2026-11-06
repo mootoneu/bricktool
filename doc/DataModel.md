@@ -364,7 +364,7 @@ The data.bt.PaBParts represent the parts bought of a PaBPurchase. It has the fol
 | Id | interger (PK) | |
 | PaBPurchaseId | integer | Identifier of the PaBPurchase (FK)  |
 | PartNumber | integer | Lego part number (FK) |
-| PartColor | integer | Lego color number (FK) |
+| PartColorId | integer | Lego color number (FK) |
 | Quantity | integer | Amount of part purchased |
 
 Relationships:
