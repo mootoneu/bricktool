@@ -4,6 +4,7 @@
   const NAV = [
     { id: 'purchases', label: 'Sets Purchase', href: 'purchases.html' },
     { id: 'brickowl', label: 'BrickOwl', href: 'brickowl.html' },
+    { id: 'partscollection', label: 'Parts Collection', href: 'partscollection.html' },
     { id: 'newsets', label: 'New Sets', href: 'newsets.html' },
     { id: 'admin', label: 'Administration', href: 'admin.html' }
   ];

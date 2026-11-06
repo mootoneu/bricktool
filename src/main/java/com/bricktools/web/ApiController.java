@@ -187,6 +187,11 @@ public class ApiController {
     return brickOwl.items(orderId);
   }
 
+  @GetMapping("/brickowl/parts")
+  public List<Map<String, Object>> brickOwlParts() throws IOException {
+    return brickOwl.parts();
+  }
+
   @GetMapping("/purchases")
   public List<Map<String, Object>> purchases() throws IOException {
     return purchases.list();

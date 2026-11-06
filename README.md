@@ -96,6 +96,12 @@ From that list, for each order_id, retrieve the data at:
  1. <https://api.brickowl.com/v1/order/view> to get the full data of an order. The result must be stored in the data model data.bo.Order
  2. <https://api.brickowl.com/v1/order/items> to get the list of BrickOwl items in that order. The results must be stored in the data model data.bo.OrderItem
 
+### Parts Collection page
+
+The Parts Collection page gathers the BrickOwl items purchased across all orders. Its BrickOwl tab shows one row per part, grouped by BrickOwl item (BOID), type and condition. Each row displays the part information, the list of orders containing it (each order id links to the BrickOwl order page) and the summed quantity over all those orders. Columns are sortable; the Orders column sorts by the number of orders containing the part.
+
+The data is exposed by `GET /api/brickowl/parts`.
+
 ### Sets Purchase page
 
 The Sets Purchase page provides various tabs to display the purchase data, add and edit purchase data and show statistics about purchases.

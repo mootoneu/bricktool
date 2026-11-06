@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -92,6 +93,44 @@ public class BrickOwlService {
 
   public List<Map<String, String>> items(String orderId) throws IOException {
     return Csv.read(itemsFile).stream().filter(i -> orderId.equals(i.get("OrderId"))).toList();
+  }
+
+  /**
+   * Groups every order item by brick/color/condition across all orders, so the
+   * same part ordered several times is shown once with its orders and total quantity.
+   */
+  public List<Map<String, Object>> parts() throws IOException {
+    Map<String, Map<String, String>> ordersById = new HashMap<>();
+    for (Map<String, String> order : Csv.read(ordersFile)) {
+      ordersById.put(order.get("Id"), order);
+    }
+
+    Map<String, PartAggregate> parts = new LinkedHashMap<>();
+    for (Map<String, String> item : Csv.read(itemsFile)) {
+      String boid = value(item, "BOID");
+      String name = value(item, "Name");
+      if (boid.isBlank() && name.isBlank()) {
+        // BrickOwl sometimes returns empty item lines (removed lots). They carry
+        // no useful part information, so do not display them.
+        continue;
+      }
+      String key = boid.isBlank()
+          ? String.join("\u0000", value(item, "Type"), name, value(item, "ColorId"),
+              value(item, "DesignIds"), value(item, "ItemNumbers"), value(item, "Condition"))
+          : String.join("\u0000", value(item, "Type"), boid, value(item, "Condition"));
+      parts.computeIfAbsent(key, k -> new PartAggregate()).add(item);
+    }
+
+    return parts.values().stream()
+        .map(aggregate -> aggregate.toRow(ordersById))
+        .sorted(Comparator
+            .comparing((Map<String, Object> row) -> String.valueOf(row.getOrDefault("name", "")),
+                String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(row -> String.valueOf(row.getOrDefault("colorName", "")),
+                String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(row -> String.valueOf(row.getOrDefault("condition", "")),
+                String.CASE_INSENSITIVE_ORDER))
+        .toList();
   }
 
   public Map<String, Object> stats() throws IOException {
@@ -227,6 +266,88 @@ public class BrickOwlService {
       }
     }
     return String.join(",", values);
+  }
+
+  private static String value(Map<String, String> row, String key) {
+    String value = row.get(key);
+    return value == null ? "" : value.trim();
+  }
+
+  private static String firstNonBlank(String current, String candidate) {
+    if (current != null && !current.isBlank()) {
+      return current;
+    }
+    return candidate == null ? "" : candidate.trim();
+  }
+
+  private static void addIds(Set<String> target, String values) {
+    if (values == null) {
+      return;
+    }
+    for (String value : values.split(",")) {
+      String id = value.trim();
+      if (!id.isEmpty()) {
+        target.add(id);
+      }
+    }
+  }
+
+  private static final class PartAggregate {
+
+    private String type = "";
+    private String name = "";
+    private String colorId = "";
+    private String colorName = "";
+    private String condition = "";
+    private final Set<String> designIds = new LinkedHashSet<>();
+    private final Set<String> itemNumbers = new LinkedHashSet<>();
+    private final Set<String> orderIds = new LinkedHashSet<>();
+    private double totalQuantity;
+
+    void add(Map<String, String> item) {
+      type = firstNonBlank(type, item.get("Type"));
+      name = firstNonBlank(name, item.get("Name"));
+      colorId = firstNonBlank(colorId, item.get("ColorId"));
+      colorName = firstNonBlank(colorName, item.get("ColorName"));
+      condition = firstNonBlank(condition, item.get("Condition"));
+      addIds(designIds, item.get("DesignIds"));
+      addIds(itemNumbers, item.get("ItemNumbers"));
+      String orderId = value(item, "OrderId");
+      if (!orderId.isEmpty()) {
+        orderIds.add(orderId);
+      }
+      totalQuantity += num(item.get("Quantity"));
+    }
+
+    Map<String, Object> toRow(Map<String, Map<String, String>> ordersById) {
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("type", type);
+      row.put("name", name);
+      row.put("colorId", colorId);
+      row.put("colorName", colorName);
+      row.put("designIds", String.join(",", designIds));
+      row.put("itemNumbers", String.join(",", itemNumbers));
+      row.put("condition", condition);
+      row.put("orders", orders(ordersById));
+      row.put("totalQuantity", totalQuantity);
+      return row;
+    }
+
+    private List<Map<String, Object>> orders(Map<String, Map<String, String>> ordersById) {
+      List<Map<String, Object>> orders = new ArrayList<>();
+      for (String orderId : orderIds) {
+        Map<String, String> order = ordersById.get(orderId);
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("id", orderId);
+        entry.put("orderTime", order == null ? "" : order.getOrDefault("OrderTime", ""));
+        entry.put("storeName", order == null ? "" : order.getOrDefault("StoreName", ""));
+        orders.add(entry);
+      }
+      orders.sort(Comparator
+          .comparing((Map<String, Object> order) -> String.valueOf(order.get("orderTime")))
+          .reversed());
+      return orders;
+    }
   }
 
   private static String yearOf(String isoTime) {

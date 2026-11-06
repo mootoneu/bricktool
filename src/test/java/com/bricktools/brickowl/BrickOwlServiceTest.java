@@ -47,6 +47,13 @@ class BrickOwlServiceTest {
     return String.join(",", orderId, "", "", "", "", "", type, "", "", "", qty, "0", qty, "", "");
   }
 
+  private static String partItem(String orderId, String boid, String designIds, String itemNumbers,
+                                 String condition, String name, String colorId, String colorName,
+                                 String qty) {
+    return String.join(",", orderId, boid, designIds, itemNumbers, condition, name, "Part", "1",
+        colorId, colorName, qty, "0", qty, "0.5", "0.5");
+  }
+
   private void writeFixture() throws IOException {
     Files.createDirectories(dir.resolve("bo"));
     Files.writeString(dir.resolve("bo/orders.csv"), String.join("\n", ORDER_HEADER,
@@ -121,6 +128,43 @@ class BrickOwlServiceTest {
     assertThat(service.orders().get(0)).containsEntry("Id", "3");
     assertThat(service.items("1")).hasSize(3);
     assertThat(service.items("3")).hasSize(1);
+  }
+
+  @Test
+  void partsAreGroupedAcrossOrdersAndConditions() throws IOException {
+    Files.createDirectories(dir.resolve("bo"));
+    Files.writeString(dir.resolve("bo/orders.csv"), String.join("\n", ORDER_HEADER,
+        order("1", "2024-03-01T10:00:00Z", "Shop A", "2", "10"),
+        order("2", "2024-05-01T10:00:00Z", "Shop A", "0", "20"),
+        order("3", "2025-01-01T10:00:00Z", "Shop B", "4", "30")) + "\n");
+    Files.writeString(dir.resolve("bo/order_items.csv"), String.join("\n", ITEM_HEADER,
+        partItem("1", "3001-1", "3001", "300101", "New", "Brick 2x4", "1", "White", "10"),
+        partItem("2", "3001-1", "3001", "300102", "New", "Brick 2x4", "1", "White", "5"),
+        partItem("3", "3001-1", "3001", "300103", "New", "Brick 2x4", "1", "White", "1"),
+        partItem("3", "3001-1", "3001", "300103", "Used (Good)", "Brick 2x4", "1", "White", "2"),
+        partItem("3", "3002-1", "3002", "300201", "New", "Brick 2x3", "1", "White", "7")) + "\n");
+
+    List<Map<String, Object>> parts = new BrickOwlService(props("KEY"), RestClient.builder()).parts();
+
+    assertThat(parts).hasSize(3);
+    Map<String, Object> newBrick = parts.stream()
+        .filter(p -> p.get("name").equals("Brick 2x4") && p.get("condition").equals("New"))
+        .findFirst().orElseThrow();
+    assertThat(newBrick)
+        .containsEntry("colorName", "White")
+        .containsEntry("designIds", "3001")
+        .containsEntry("itemNumbers", "300101,300102,300103")
+        .containsEntry("totalQuantity", 16.0);
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> orders = (List<Map<String, Object>>) newBrick.get("orders");
+    assertThat(orders).extracting(o -> o.get("id")).containsExactly("3", "2", "1");
+    assertThat(orders.get(0)).containsEntry("storeName", "Shop B");
+
+    Map<String, Object> usedBrick = parts.stream()
+        .filter(p -> p.get("name").equals("Brick 2x4") && p.get("condition").equals("Used (Good)"))
+        .findFirst().orElseThrow();
+    assertThat(usedBrick).containsEntry("totalQuantity", 2.0);
   }
 
   @Test

@@ -54,6 +54,7 @@ class ApiControllerTest {
   void servesFeaturePages() throws Exception {
     mvc.perform(get("/admin.html")).andExpect(status().isOk());
     mvc.perform(get("/brickowl.html")).andExpect(status().isOk());
+    mvc.perform(get("/partscollection.html")).andExpect(status().isOk());
     mvc.perform(get("/purchases.html")).andExpect(status().isOk());
     mvc.perform(get("/newsets.html")).andExpect(status().isOk());
   }
@@ -265,6 +266,13 @@ class ApiControllerTest {
     mvc.perform(get("/api/brickowl/stats"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totals.orders").value(0));
+  }
+
+  @Test
+  void brickOwlPartsListIsExposed() throws Exception {
+    mvc.perform(get("/api/brickowl/parts"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray());
   }
 
   @Test

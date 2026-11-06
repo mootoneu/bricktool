@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brick Tools - Parts Collection</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="app-header" class="app-header"></header>
+
+  <main class="container">
+    <h1>Parts collection</h1>
+
+    <nav class="tabs">
+      <button type="button" data-tab="explorer">Part explorer</button>
+      <button type="button" data-tab="collection">Collection</button>
+      <button type="button" data-tab="pab-purchases">PaB Purchases</button>
+      <button type="button" data-tab="pab-parts">PaB Parts</button>
+      <button type="button" data-tab="brickowl" class="active">BrickOwl</button>
+    </nav>
+
+    <section data-panel="explorer" hidden>
+      <p class="muted">Part explorer — empty.</p>
+    </section>
+
+    <section data-panel="collection" hidden>
+      <p class="muted">Collection — empty.</p>
+    </section>
+
+    <section data-panel="pab-purchases" hidden>
+      <p class="muted">PaB Purchases — empty.</p>
+    </section>
+
+    <section data-panel="pab-parts" hidden>
+      <p class="muted">PaB Parts — empty.</p>
+    </section>
+
+    <section data-panel="brickowl">
+      <div class="table-wrap">
+        <table class="data" id="bo-parts-collection">
+          <thead>
+            <tr>
+              <th class="sortable" data-key="type">Type</th>
+              <th class="sortable" data-key="name">Name</th>
+              <th class="sortable" data-key="colorName">Color</th>
+              <th class="sortable" data-key="designIds">Design ids</th>
+              <th class="sortable" data-key="itemNumbers">Item numbers</th>
+              <th class="sortable" data-key="condition">Condition</th>
+              <th class="sortable" data-key="orders">Orders</th>
+              <th class="sortable" data-key="totalQuantity">Total quantity</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="bo-parts-msg" class="muted"></p>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/partscollection.js"></script>
+</body>
+</html>
