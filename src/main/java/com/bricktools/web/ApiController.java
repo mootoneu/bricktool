@@ -8,6 +8,7 @@ import com.bricktools.color.ColorService;
 import com.bricktools.notification.NotificationService;
 import com.bricktools.notification.NotificationService.Notification;
 import com.bricktools.other.OtherImageService;
+import com.bricktools.pab.PabPartRequest;
 import com.bricktools.pab.PabPurchaseRequest;
 import com.bricktools.pab.PabService;
 import com.bricktools.purchase.PurchaseRequest;
@@ -538,5 +539,42 @@ public class ApiController {
       @Parameter(name = "id", description = "PaB purchase ID") @PathVariable int id,
       @RequestBody PabPurchaseRequest request) throws IOException {
     pab.update(id, request);
+  }
+
+  @GetMapping(path = "/pab/purchases/{purchaseId}/parts", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List PaB parts",
+      description = "Returns the parts of a Pick a Brick purchase with their name, category and color."
+  )
+  public List<Map<String, Object>> pabParts(
+      @Parameter(name = "purchaseId", description = "PaB purchase ID") @PathVariable int purchaseId)
+      throws IOException {
+    return pab.parts(purchaseId);
+  }
+
+  @PostMapping(path = "/pab/purchases/{purchaseId}/parts", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create PaB part",
+      description = "Adds a part to an existing Pick a Brick purchase."
+  )
+  @ApiResponse(responseCode = "201", description = "PaB part created")
+  public Map<String, Integer> createPabPart(
+      @Parameter(name = "purchaseId", description = "PaB purchase ID") @PathVariable int purchaseId,
+      @RequestBody PabPartRequest request) throws IOException {
+    return Map.of("id", pab.createPart(purchaseId, request));
+  }
+
+  @PutMapping(path = "/pab/parts/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Update PaB part",
+      description = "Updates an existing part of a Pick a Brick purchase."
+  )
+  @ApiResponse(responseCode = "204", description = "PaB part updated")
+  public void updatePabPart(
+      @Parameter(name = "id", description = "PaB part ID") @PathVariable int id,
+      @RequestBody PabPartRequest request) throws IOException {
+    pab.updatePart(id, request);
   }
 }

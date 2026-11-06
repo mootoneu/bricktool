@@ -14,7 +14,10 @@ $(function () {
   let pabPurchases = [];
   let pabPurchasesLoading = false;
   let pabPurchasesLoaded = false;
+  let pabPurchasesCallbacks = [];
   let selectedPabPurchaseId = '';
+  let pabParts = [];
+  let pabPartsRequest = 0;
 
   function compareValues(a, b, dir) {
     const x = a == null ? '' : String(a);
@@ -259,7 +262,10 @@ $(function () {
     });
   }
 
-  function loadPabPurchases() {
+  function loadPabPurchases(callback) {
+    if (callback) {
+      pabPurchasesCallbacks.push(callback);
+    }
     if (pabPurchasesLoading) {
       return;
     }
@@ -270,10 +276,12 @@ $(function () {
         pabPurchases = Array.isArray(list) ? list : [];
         pabPurchasesLoaded = true;
         renderPabPurchases();
+        populatePabPurchaseSelect();
         report('#pab-purchases-msg', pabPurchases.length === 0 ? 'No PaB purchases stored yet.' : '');
       })
       .fail(function (xhr) {
         pabPurchases = [];
+        populatePabPurchaseSelect();
         const $tbody = $('#pab-purchases tbody').empty();
         $tbody.append($('<tr></tr>').append(
           $('<td colspan="6" class="muted"></td>').text('Unable to load PaB purchases.')));
@@ -281,6 +289,9 @@ $(function () {
       })
       .always(function () {
         pabPurchasesLoading = false;
+        const callbacks = pabPurchasesCallbacks;
+        pabPurchasesCallbacks = [];
+        callbacks.forEach(function (fn) { fn(); });
       });
   }
 
@@ -340,6 +351,182 @@ $(function () {
       });
   });
 
+  function populatePabPurchaseSelect() {
+    const $select = $('#pab-parts-purchase').empty();
+    if (pabPurchases.length === 0) {
+      $select.append($('<option></option>').attr('value', '').text('No PaB purchases'));
+      $select.prop('disabled', true);
+      $('#pab-part-add').prop('disabled', true);
+      selectedPabPurchaseId = '';
+      return;
+    }
+    pabPurchases.forEach(function (purchase) {
+      $select.append($('<option></option>')
+        .attr('value', purchase.id)
+        .text((purchase.purchaseDate || '') + ' (#' + purchase.id + ')'));
+    });
+    $select.prop('disabled', false);
+    if (!findPabPurchase(selectedPabPurchaseId)) {
+      selectedPabPurchaseId = String(pabPurchases[0].id);
+    }
+    $select.val(selectedPabPurchaseId);
+    $('#pab-part-add').prop('disabled', false);
+  }
+
+  function findPabPart(id) {
+    return pabParts.find(function (part) {
+      return String(part.id) === String(id);
+    });
+  }
+
+  function pabColorChip(part) {
+    const colorId = part.partColor;
+    const label = part.colorName || (colorId == null ? '' : String(colorId));
+    const $chip = $('<span class="color-chip"></span>')
+      .attr('title', label)
+      .text(label)
+      .css('cursor', 'pointer')
+      .attr('tabindex', '0');
+    const hex = colorHex({ rgb: part.colorRgb });
+    if (hex) {
+      $chip.css({ 'background-color': hex, color: readableTextColor(hex) });
+    }
+    function openColor() {
+      if (colorId !== null && colorId !== undefined && colorId !== '') {
+        BrickColor.openColorInfo(colorId);
+      }
+    }
+    $chip.on('click', openColor);
+    $chip.on('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openColor();
+      }
+    });
+    return $chip;
+  }
+
+  function renderPabParts() {
+    const $tbody = $('#pab-parts tbody').empty();
+    if (!selectedPabPurchaseId) {
+      $tbody.append('<tr><td colspan="8" class="muted">No PaB purchase selected.</td></tr>');
+      return;
+    }
+    if (pabParts.length === 0) {
+      $tbody.append('<tr><td colspan="8" class="muted">No parts for this purchase yet.</td></tr>');
+      return;
+    }
+    pabParts.forEach(function (part) {
+      const $row = $('<tr></tr>');
+      $row.append($('<td></td>').text(part.id == null ? '' : part.id));
+      $row.append($('<td></td>').text(part.paBPurchaseId == null ? '' : part.paBPurchaseId));
+      $row.append($('<td></td>').text(part.partNumber || ''));
+      $row.append($('<td></td>').text(part.partName || ''));
+      $row.append($('<td></td>').text(part.partCategory || ''));
+      $row.append($('<td></td>').append(pabColorChip(part)));
+      $row.append($('<td></td>').text(part.quantity == null ? '' : fmt.number(part.quantity)));
+
+      const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary pab-part-edit">Edit</button>')
+        .attr('data-pab-part-id', part.id));
+      $row.append($actions);
+      $tbody.append($row);
+    });
+  }
+
+  function loadPabParts() {
+    const request = ++pabPartsRequest;
+    if (!selectedPabPurchaseId) {
+      pabParts = [];
+      renderPabParts();
+      report('#pab-parts-msg', 'Add a PaB purchase first.');
+      return;
+    }
+    report('#pab-parts-msg', 'Loading PaB parts…');
+    BrickTools.api('GET', '/pab/purchases/' + encodeURIComponent(selectedPabPurchaseId) + '/parts')
+      .done(function (list) {
+        if (request !== pabPartsRequest) {
+          return;
+        }
+        pabParts = Array.isArray(list) ? list : [];
+        renderPabParts();
+        report('#pab-parts-msg', pabParts.length === 0 ? 'No parts stored for this purchase.' : '');
+      })
+      .fail(function (xhr) {
+        if (request !== pabPartsRequest) {
+          return;
+        }
+        pabParts = [];
+        renderPabParts();
+        report('#pab-parts-msg', BrickTools.errorOf(xhr));
+      });
+  }
+
+  function openPabPartForm(part) {
+    $('#pab-part-form-msg').text('');
+    $('#pab-part-id').val(part ? part.id : '');
+    $('#pab-part-title').text(part ? 'Edit PaB part' : 'Add PaB part');
+    $('#pab-part-number').val(part ? part.partNumber : '');
+    $('#pab-part-color').val(part && part.partColor != null ? part.partColor : '');
+    $('#pab-part-quantity').val(part && part.quantity != null ? part.quantity : 1);
+    $('#pab-part-modal').prop('hidden', false);
+    $('#pab-part-number').trigger('focus');
+  }
+
+  function closePabPartForm() {
+    $('#pab-part-modal').prop('hidden', true);
+  }
+
+  $('#pab-parts-purchase').on('change', function () {
+    selectedPabPurchaseId = String($(this).val() || '');
+    loadPabParts();
+  });
+
+  $('#pab-part-add').on('click', function () {
+    if (!selectedPabPurchaseId) {
+      return;
+    }
+    openPabPartForm(null);
+  });
+
+  $('#pab-part-cancel').on('click', closePabPartForm);
+
+  $('#pab-parts').on('click', '.pab-part-edit', function () {
+    openPabPartForm(findPabPart($(this).attr('data-pab-part-id')));
+  });
+
+  $('#pab-part-form').on('submit', function (event) {
+    event.preventDefault();
+    if (!selectedPabPurchaseId) {
+      $('#pab-part-form-msg').text('Select a PaB purchase first.');
+      return;
+    }
+    const id = $('#pab-part-id').val();
+    const color = parseInt($('#pab-part-color').val(), 10);
+    const quantity = parseInt($('#pab-part-quantity').val(), 10);
+    const body = {
+      partNumber: String($('#pab-part-number').val() || '').trim(),
+      partColor: isNaN(color) ? null : color,
+      quantity: isNaN(quantity) ? 1 : quantity
+    };
+    const $buttons = $('#pab-part-form button').prop('disabled', true);
+    $('#pab-part-form-msg').text('Saving…');
+    BrickTools.api(id ? 'PUT' : 'POST',
+        id ? '/pab/parts/' + encodeURIComponent(id)
+          : '/pab/purchases/' + encodeURIComponent(selectedPabPurchaseId) + '/parts', body)
+      .done(function () {
+        closePabPartForm();
+        loadPabParts();
+        loadPabPurchases();
+      })
+      .fail(function (xhr) {
+        $('#pab-part-form-msg').text(BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        $buttons.prop('disabled', false);
+      });
+  });
+
   $('#bo-parts-collection thead').on('click', 'th[data-key]', function () {
     sortBy(sortState, $(this).attr('data-key'));
     renderParts();
@@ -351,6 +538,17 @@ $(function () {
     }
     if (name === 'pab-purchases' && !pabPurchasesLoaded) {
       loadPabPurchases();
+    }
+    if (name === 'pab-parts') {
+      if (pabPurchasesLoaded) {
+        populatePabPurchaseSelect();
+        loadPabParts();
+      } else {
+        loadPabPurchases(function () {
+          populatePabPurchaseSelect();
+          loadPabParts();
+        });
+      }
     }
   });
 

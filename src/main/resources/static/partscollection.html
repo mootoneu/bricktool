@@ -52,7 +52,30 @@
     </section>
 
     <section data-panel="pab-parts" hidden>
-      <p class="muted">PaB Parts — empty.</p>
+      <div class="toolbar">
+        <label>Purchase
+          <select id="pab-parts-purchase"></select>
+        </label>
+        <button type="button" id="pab-part-add" class="btn" disabled>Add part</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data" id="pab-parts">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Purchase</th>
+              <th>Part number</th>
+              <th>Part name</th>
+              <th>Category</th>
+              <th>Color</th>
+              <th>Quantity</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="pab-parts-msg" class="muted"></p>
     </section>
 
     <section data-panel="brickowl">
@@ -93,6 +116,27 @@
       <p id="pab-purchase-form-msg" class="warning"></p>
       <div class="form-actions">
         <button type="button" id="pab-purchase-cancel" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="pab-part-modal" class="modal" hidden>
+    <form id="pab-part-form">
+      <h2 id="pab-part-title">Add PaB part</h2>
+      <input type="hidden" id="pab-part-id">
+      <label>Part number
+        <input id="pab-part-number" required>
+      </label>
+      <label>Color id
+        <input id="pab-part-color" type="number" step="1" required>
+      </label>
+      <label>Quantity
+        <input id="pab-part-quantity" type="number" min="1" step="1" value="1" required>
+      </label>
+      <p id="pab-part-form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="pab-part-cancel" class="btn secondary">Cancel</button>
         <button type="submit" class="btn">Save</button>
       </div>
     </form>
