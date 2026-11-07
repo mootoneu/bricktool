@@ -289,14 +289,16 @@ $(function () {
     const $tbody = $('#bo-items tbody').empty();
     markSortedHeader('#bo-items', sortState.items);
     if (items.length === 0) {
-      $tbody.append('<tr><td colspan="9" class="muted">No items for this order.</td></tr>');
+      $tbody.append('<tr><td colspan="10" class="muted">No items for this order.</td></tr>');
       return;
     }
     sortRows(items, sortState.items).forEach(function (i) {
       const $row = $('<tr></tr>');
+      const name = BrickTools.getPartNameFromBOName(i.Name, i.ColorName);
+      $row.append(BrickTools.partImageCell(
+        BrickTools.partImageUrls(i.ItemNumbers, i.DesignIds), name));
       $row.append($('<td></td>').text(i.Type));
-      $row.append($('<td></td>').text(BrickTools.getPartNameFromBOName(i.
-        Name, i.ColorName)));
+      $row.append($('<td></td>').text(name));
       $row.append(renderColorCell(i));
       $row.append($('<td></td>').text(i.DesignIds));
       $row.append($('<td></td>').text(i.ItemNumbers));
