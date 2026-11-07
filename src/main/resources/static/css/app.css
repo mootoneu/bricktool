@@ -312,3 +312,22 @@ table.data th.actions-col { width: 18%; }
 }
 .site-label { font-size: .8rem; font-weight: 600; line-height: 1.2; }
 .form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.part-explorer { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.part-category-tree {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+  max-height: 70vh; overflow: auto; background: #fff;
+}
+.part-category-group { margin-bottom: 4px; }
+.part-category-group > summary { cursor: pointer; font-weight: 600; padding: 5px 6px; }
+.part-category-list { display: flex; flex-direction: column; gap: 2px; padding-left: 12px; }
+.part-category-item {
+  text-align: left; background: none; border: 0; border-radius: 6px;
+  padding: 6px 8px; cursor: pointer; font: inherit; color: var(--text);
+}
+.part-category-item:hover { background: #f0f7ff; }
+.part-category-item.active { background: var(--primary); color: #fff; }
+@media (max-width: 800px) {
+  .part-explorer { grid-template-columns: 1fr; }
+  .part-category-tree { max-height: 40vh; }
+}

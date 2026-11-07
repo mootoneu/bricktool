@@ -11,6 +11,7 @@ import com.bricktools.other.OtherImageService;
 import com.bricktools.pab.PabPartRequest;
 import com.bricktools.pab.PabPurchaseRequest;
 import com.bricktools.pab.PabService;
+import com.bricktools.part.PartService;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
 import com.bricktools.rebrickable.RebrickableService;
@@ -67,12 +68,14 @@ public class ApiController {
   private final WishlistService wishlist;
   private final ColorService colors;
   private final PabService pab;
+  private final PartService partService;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
-                       NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab) {
+                       NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab,
+                       PartService partService) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -88,6 +91,7 @@ public class ApiController {
     this.wishlist = wishlist;
     this.colors = colors;
     this.pab = pab;
+    this.partService = partService;
   }
 
   /**
@@ -576,5 +580,34 @@ public class ApiController {
       @Parameter(name = "id", description = "PaB part ID") @PathVariable int id,
       @RequestBody PabPartRequest request) throws IOException {
     pab.updatePart(id, request);
+  }
+
+  @GetMapping(path = "/parts/categories", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List part categories",
+      description = "Returns the visible Brick Tools part categories grouped by category group."
+  )
+  public List<Map<String, Object>> partCategories() throws IOException {
+    return partService.categories();
+  }
+
+  @GetMapping(path = "/parts/categories/{categoryId}/main-parts", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List main parts",
+      description = "Returns the main parts of a Brick Tools part category."
+  )
+  public List<Map<String, Object>> mainParts(
+      @Parameter(name = "categoryId", description = "Part category ID") @PathVariable int categoryId)
+      throws IOException {
+    return partService.mainParts(categoryId);
+  }
+
+  @PostMapping(path = "/parts/main-parts/generate", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Generate main parts",
+      description = "Rebuilds data/bt/main_parts.csv from the Rebrickable parts and the Brick Tools part categories."
+  )
+  public Map<String, Object> generateMainParts() throws IOException {
+    return partService.generateMainParts();
   }
 }

@@ -324,7 +324,7 @@ Relationships:
 
 ### Part Color
 
-The data.bt.Color
+The data.bt.Color enable to have all the data for the color from all vendors in a single object
 
 | Field Name | Type | Description |
 | :--- | :--- | :--- |
@@ -342,6 +342,40 @@ The data.bt.Color
 | ColorHex | String | The hexadecimal representation of the color |
 | ContrastColorHex | String | Represents a contrasting color of ColorHex to be used as foreground color when ColorHex is used as a background color |
 | Tags | String | Comma separated list of tag in [Chrome, Speckle, Milky, Metallic, Glitter, Transparent, Pearl, Opal] |
+
+### BrickTool's Part Categories
+
+The data model data.bt.PartCategories is based on data.re.part_categories and add new fields.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| Id | integer (PK) | Part Category Id |
+| Name | String | Category name |
+| Group | String | Group name of part categories |
+| Hidden | boolean | Indicate that the category should not be show in to the user |
+
+Relationships:
+- data.re.parts.part_cat_id = data.bt.PartCategories.Id
+- data.re.part_categories.id = data.bt.PartCategories.Id
+
+### Main Part data
+
+The data model data.bt.MainParts contains the main Lego parts. It is constructed as a filtered view from data.re.parts
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| PartNumber | String (PK) | |
+| Name | String | Part name |
+| CategoryId | integer (FK) | Id of data.bt.PartCategories |
+| Material | String | Name of material the part is made of |
+| HasAlternates | boolean | Indicates if the Part is linked to other part via data.re.part_relationships (default false) |
+| Stars | integer | An integer between 0 and 5 (default 2), that indicates how popular the part is |
+
+Relationships:
+- data.re.parts.id = data.bt.MainParts.Id
+- data.re.part_relationships.parent_part_num = data.bt.MainParts.Id
+- data.re.part_categories.id = data.bt.MainParts.CategoryId
+- data.bt.PartCategories.Id = data.bt.MainParts.CategoryId
 
 ### PaB purchases data
 

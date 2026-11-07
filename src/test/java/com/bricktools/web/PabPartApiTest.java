@@ -54,7 +54,7 @@ class PabPartApiTest {
 
     String partBody = mvc.perform(post("/api/pab/purchases/" + purchaseId + "/parts")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"3001\",\"partColor\":5,\"quantity\":20}"))
+            .content("{\"partNumber\":\"3001\",\"partColorId\":5,\"quantity\":20}"))
         .andExpect(status().isCreated())
         .andReturn().getResponse().getContentAsString();
     int partId = JsonPath.read(partBody, "$.id");
@@ -64,7 +64,7 @@ class PabPartApiTest {
         .andExpect(jsonPath("$[0].id").value(partId))
         .andExpect(jsonPath("$[0].paBPurchaseId").value(purchaseId))
         .andExpect(jsonPath("$[0].partNumber").value("3001"))
-        .andExpect(jsonPath("$[0].partColor").value(5))
+        .andExpect(jsonPath("$[0].partColorId").value(5))
         .andExpect(jsonPath("$[0].quantity").value(20))
         .andExpect(jsonPath("$[0].partName").value("Brick 2 x 4"))
         .andExpect(jsonPath("$[0].partCategory").value("Bricks"))
@@ -72,13 +72,13 @@ class PabPartApiTest {
         .andExpect(jsonPath("$[0].colorRgb").value("C91A09"));
 
     mvc.perform(put("/api/pab/parts/" + partId).contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"3002\",\"partColor\":1,\"quantity\":9}"))
+            .content("{\"partNumber\":\"3002\",\"partColorId\":1,\"quantity\":9}"))
         .andExpect(status().isNoContent());
 
     mvc.perform(get("/api/pab/purchases/" + purchaseId + "/parts"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].partNumber").value("3002"))
-        .andExpect(jsonPath("$[0].partColor").value(1))
+        .andExpect(jsonPath("$[0].partColorId").value(1))
         .andExpect(jsonPath("$[0].quantity").value(9))
         .andExpect(jsonPath("$[0].partName").value("Brick 2 x 3"))
         .andExpect(jsonPath("$[0].colorName").value("White"));
@@ -89,22 +89,22 @@ class PabPartApiTest {
     int purchaseId = createPurchase();
 
     mvc.perform(post("/api/pab/purchases/9999/parts").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"3001\",\"partColor\":5,\"quantity\":1}"))
+            .content("{\"partNumber\":\"3001\",\"partColorId\":5,\"quantity\":1}"))
         .andExpect(status().isBadRequest());
 
     mvc.perform(post("/api/pab/purchases/" + purchaseId + "/parts")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"9999\",\"partColor\":5,\"quantity\":1}"))
+            .content("{\"partNumber\":\"9999\",\"partColorId\":5,\"quantity\":1}"))
         .andExpect(status().isBadRequest());
 
     mvc.perform(post("/api/pab/purchases/" + purchaseId + "/parts")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"3001\",\"partColor\":99,\"quantity\":1}"))
+            .content("{\"partNumber\":\"3001\",\"partColorId\":99,\"quantity\":1}"))
         .andExpect(status().isBadRequest());
 
     mvc.perform(post("/api/pab/purchases/" + purchaseId + "/parts")
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"partNumber\":\"3001\",\"partColor\":5,\"quantity\":0}"))
+            .content("{\"partNumber\":\"3001\",\"partColorId\":5,\"quantity\":0}"))
         .andExpect(status().isBadRequest());
   }
 

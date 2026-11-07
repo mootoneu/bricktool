@@ -22,7 +22,28 @@
     </nav>
 
     <section data-panel="explorer" hidden>
-      <p class="muted">Part explorer — empty.</p>
+      <div class="part-explorer">
+        <div id="part-category-tree" class="part-category-tree"></div>
+        <div class="part-explorer-content">
+          <p id="part-explorer-msg" class="muted">Select a category.</p>
+          <div class="table-wrap">
+            <table class="data" id="main-parts" hidden>
+              <thead>
+                <tr>
+                  <th>Part number</th>
+                  <th>Name</th>
+                  <th>Category id</th>
+                  <th>Material</th>
+                  <th>Has alternates</th>
+                  <th>Stars</th>
+                  <th class="actions-col"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section data-panel="collection" hidden>

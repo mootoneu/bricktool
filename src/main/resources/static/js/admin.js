@@ -106,6 +106,20 @@ $(function () {
       });
   });
 
+  $('#mainparts-generate').on('click', function () {
+    const $button = $(this).prop('disabled', true);
+    $('#mainparts-msg').text('Generating main parts...');
+    BrickTools.api('POST', '/parts/main-parts/generate')
+      .done(function (r) {
+        $('#mainparts-msg').text('MainParts updated: ' + BrickTools.fmt.number(r.total) +
+          ' parts kept, ' + BrickTools.fmt.number(r.hiddenParts) + ' in hidden categories and ' +
+          BrickTools.fmt.number(r.childParts) + ' child parts excluded, ' +
+          BrickTools.fmt.number(r.withAlternates) + ' with alternates.');
+      })
+      .fail(function (xhr) { $('#mainparts-msg').text(BrickTools.errorOf(xhr)); })
+      .always(function () { $button.prop('disabled', false); });
+  });
+
   refreshRebrickable().fail(function (xhr) {
     $('#rb-msg').text(BrickTools.errorOf(xhr));
   });

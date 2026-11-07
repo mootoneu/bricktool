@@ -18,6 +18,11 @@ $(function () {
   let selectedPabPurchaseId = '';
   let pabParts = [];
   let pabPartsRequest = 0;
+  let partCategoryGroups = [];
+  let partCategoriesLoading = false;
+  let partCategoriesLoaded = false;
+  let selectedPartCategoryId = '';
+  let mainPartsRequest = 0;
 
   function compareValues(a, b, dir) {
     const x = a == null ? '' : String(a);
@@ -510,7 +515,7 @@ $(function () {
     const quantity = parseInt($('#pab-part-quantity').val(), 10);
     const body = {
       partNumber: String($('#pab-part-number').val() || '').trim(),
-      partColor: isNaN(color) ? null : color,
+      partColorId: isNaN(color) ? null : color,
       quantity: isNaN(quantity) ? 1 : quantity
     };
     const $buttons = $('#pab-part-form button').prop('disabled', true);
@@ -531,6 +536,120 @@ $(function () {
       });
   });
 
+  function partCategoryButton(category) {
+    return $('<button type="button" class="part-category-item"></button>')
+      .attr('data-category-id', category.id)
+      .text(category.name || '')
+      .toggleClass('active', String(category.id) === String(selectedPartCategoryId));
+  }
+
+  function renderPartCategoryTree() {
+    const $tree = $('#part-category-tree').empty();
+    if (partCategoryGroups.length === 0) {
+      $tree.append($('<p class="muted"></p>').text('No part categories available.'));
+      return;
+    }
+    partCategoryGroups.forEach(function (group) {
+      const categories = Array.isArray(group.categories) ? group.categories : [];
+      if (categories.length === 1) {
+        $tree.append(partCategoryButton(categories[0]));
+        return;
+      }
+      const $details = $('<details class="part-category-group"></details>').prop('open', true);
+      $details.append($('<summary></summary>').text(group.group || 'Other'));
+      const $list = $('<div class="part-category-list"></div>');
+      categories.forEach(function (category) {
+        $list.append(partCategoryButton(category));
+      });
+      $details.append($list);
+      $tree.append($details);
+    });
+  }
+
+  function loadPartCategories() {
+    if (partCategoriesLoading) {
+      return;
+    }
+    partCategoriesLoading = true;
+    report('#part-explorer-msg', 'Loading part categories…');
+    BrickTools.api('GET', '/parts/categories')
+      .done(function (list) {
+        partCategoryGroups = Array.isArray(list) ? list : [];
+        partCategoriesLoaded = true;
+        renderPartCategoryTree();
+        report('#part-explorer-msg',
+          partCategoryGroups.length === 0 ? 'No part categories available.' : 'Select a category.');
+      })
+      .fail(function (xhr) {
+        partCategoryGroups = [];
+        renderPartCategoryTree();
+        report('#part-explorer-msg', BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        partCategoriesLoading = false;
+      });
+  }
+
+  function renderMainParts(rows) {
+    const $tbody = $('#main-parts tbody').empty();
+    const $table = $('#main-parts');
+    if (rows.length === 0) {
+      $table.prop('hidden', true);
+      report('#part-explorer-msg', 'No main parts in this category.');
+      return;
+    }
+    rows.forEach(function (part) {
+      const $row = $('<tr></tr>');
+      $row.append($('<td></td>').text(part.partNumber || ''));
+      $row.append($('<td></td>').text(part.name || ''));
+      $row.append($('<td></td>').text(part.categoryId == null ? '' : part.categoryId));
+      $row.append($('<td></td>').text(part.material || ''));
+      $row.append($('<td></td>').text(part.hasAlternates ? 'Yes' : 'No'));
+      $row.append($('<td></td>').text(part.stars == null ? '' : fmt.number(part.stars)));
+
+      const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary add-to-collection">Add to collection</button>')
+        .attr('data-part-number', part.partNumber));
+      $row.append($actions);
+      $tbody.append($row);
+    });
+    $table.prop('hidden', false);
+    report('#part-explorer-msg',
+      fmt.number(rows.length) + ' main part' + (rows.length === 1 ? '' : 's') + '.');
+  }
+
+  function loadMainParts() {
+    const request = ++mainPartsRequest;
+    if (!selectedPartCategoryId) {
+      $('#main-parts').prop('hidden', true);
+      report('#part-explorer-msg', 'Select a category.');
+      return;
+    }
+    report('#part-explorer-msg', 'Loading main parts…');
+    $('#main-parts').prop('hidden', true);
+    BrickTools.api('GET', '/parts/categories/' + encodeURIComponent(selectedPartCategoryId) + '/main-parts')
+      .done(function (list) {
+        if (request !== mainPartsRequest) {
+          return;
+        }
+        renderMainParts(Array.isArray(list) ? list : []);
+      })
+      .fail(function (xhr) {
+        if (request !== mainPartsRequest) {
+          return;
+        }
+        $('#main-parts').prop('hidden', true);
+        report('#part-explorer-msg', BrickTools.errorOf(xhr));
+      });
+  }
+
+  $('#part-category-tree').on('click', '.part-category-item', function () {
+    selectedPartCategoryId = String($(this).attr('data-category-id'));
+    $('#part-category-tree .part-category-item').removeClass('active');
+    $(this).addClass('active');
+    loadMainParts();
+  });
+
   $('#bo-parts-collection thead').on('click', 'th[data-key]', function () {
     sortBy(sortState, $(this).attr('data-key'));
     renderParts();
@@ -539,6 +658,9 @@ $(function () {
   BrickTools.initTabs('main', function (name) {
     if (name === 'brickowl') {
       loadParts();
+    }
+    if (name === 'explorer' && !partCategoriesLoaded) {
+      loadPartCategories();
     }
     if (name === 'pab-purchases' && !pabPurchasesLoaded) {
       loadPabPurchases();

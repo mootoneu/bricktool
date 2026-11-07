@@ -63,7 +63,7 @@ class PabServiceTest {
     int first = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
     int second = service.create(new PabPurchaseRequest("2026/02/04", 1, 0, BigDecimal.ONE));
     Files.writeString(dir.resolve("bt/pab_parts.csv"),
-        "Id,PaBPurchaseId,PartNumber,PartColor,Quantity\n"
+        "Id,PaBPurchaseId,PartNumber,PartColorId,Quantity\n"
             + "1," + first + ",3001,5,20\n"
             + "2," + first + ",3002,5,30\n"
             + "3," + second + ",3003,1,7\n");
@@ -119,7 +119,7 @@ class PabServiceTest {
 
     assertThat(partId).isEqualTo(1);
     assertThat(Files.readString(dir.resolve("bt/pab_parts.csv")))
-        .startsWith("Id,PaBPurchaseId,PartNumber,PartColor,Quantity")
+        .startsWith("Id,PaBPurchaseId,PartNumber,PartColorId,Quantity")
         .contains("1," + purchaseId + ",3001,5,20");
 
     List<Map<String, Object>> parts = service.parts(purchaseId);
@@ -128,7 +128,7 @@ class PabServiceTest {
         .containsEntry("id", 1)
         .containsEntry("paBPurchaseId", purchaseId)
         .containsEntry("partNumber", "3001")
-        .containsEntry("partColor", 5)
+        .containsEntry("partColorId", 5)
         .containsEntry("quantity", 20)
         .containsEntry("partName", "Brick 2 x 4")
         .containsEntry("partCategory", "Bricks")
@@ -158,7 +158,7 @@ class PabServiceTest {
         .containsEntry("id", partId)
         .containsEntry("paBPurchaseId", purchaseId)
         .containsEntry("partNumber", "3002")
-        .containsEntry("partColor", 1)
+        .containsEntry("partColorId", 1)
         .containsEntry("quantity", 9)
         .containsEntry("partName", "Brick 2 x 3")
         .containsEntry("colorName", "White");
