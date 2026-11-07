@@ -16,6 +16,8 @@ import com.bricktools.part.PartImageService;
 import com.bricktools.part.PartService;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
+import com.bricktools.purchase.SetInventoryRequest;
+import com.bricktools.purchase.SetInventoryService;
 import com.bricktools.rebrickable.RebrickableService;
 import com.bricktools.setimg.SetImageBackfill;
 import com.bricktools.setimg.SetImageService;
@@ -61,6 +63,7 @@ public class ApiController {
   private final BackupService backup;
   private final BrickOwlService brickOwl;
   private final PurchaseService purchases;
+  private final SetInventoryService setInventories;
   private final NotificationService notifications;
   private final SetImageService setImages;
   private final SetImageBackfill backfill;
@@ -75,7 +78,8 @@ public class ApiController {
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
-                       PurchaseService purchases, NotificationService notifications, SetImageService setImages,
+                       PurchaseService purchases, SetInventoryService setInventories,
+                       NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab,
                        PartService partService, PartImageService partImages) {
@@ -85,6 +89,7 @@ public class ApiController {
     this.backup = backup;
     this.brickOwl = brickOwl;
     this.purchases = purchases;
+    this.setInventories = setInventories;
     this.notifications = notifications;
     this.setImages = setImages;
     this.backfill = backfill;
@@ -412,6 +417,83 @@ public class ApiController {
   @ApiResponse(responseCode = "204", description = "Purchase updated")
   public void updatePurchase(@Parameter(name = "id", description = "Purchase ID") @PathVariable int id, @RequestBody PurchaseRequest request) throws IOException {
     purchases.update(id, request);
+  }
+
+  /**
+   * Get the parts of a set with their expected and actual quantities.
+   */
+  @GetMapping(path = "/sets/{setNumber}/inventory", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Set Inventory",
+      description = "Returns the parts of a set, joined with their expected quantity from the "
+          + "Rebrickable inventory and their stored actual quantity."
+  )
+  public List<Map<String, Object>> setInventory(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber)
+      throws IOException {
+    return setInventories.list(setNumber);
+  }
+
+  /**
+   * Update the actual quantity of one part of a set.
+   */
+  @PutMapping(path = "/sets/{setNumber}/inventory/{partNumber}/{colorId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Update Set Inventory Part",
+      description = "Creates or updates the actual quantity of a part in the stored inventory of a set."
+  )
+  @ApiResponse(responseCode = "204", description = "Actual quantity updated")
+  public void updateSetInventoryPart(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber,
+      @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber,
+      @Parameter(name = "colorId", description = "Lego color ID") @PathVariable int colorId,
+      @RequestBody SetInventoryRequest request) throws IOException {
+    setInventories.updateActual(setNumber, partNumber, colorId, request == null ? null : request.actualQut());
+  }
+
+  /**
+   * Reset the actual quantity of every stored part of a set to 0.
+   */
+  @PostMapping(path = "/sets/{setNumber}/inventory/clear", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Clear Set Inventory Actual Quantities",
+      description = "Sets the actual quantity of every stored part of a set to 0."
+  )
+  public Map<String, Integer> clearSetInventory(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber)
+      throws IOException {
+    return Map.of("updated", setInventories.clear(setNumber));
+  }
+
+  /**
+   * Set the actual quantity of every expected part of a set to its expected quantity.
+   */
+  @PostMapping(path = "/sets/{setNumber}/inventory/fill", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Fill Set Inventory Actual Quantities",
+      description = "Sets the actual quantity of every expected part of a set to its expected quantity."
+  )
+  public Map<String, Integer> fillSetInventory(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber)
+      throws IOException {
+    return Map.of("updated", setInventories.fill(setNumber));
+  }
+
+  /**
+   * Remove the stored inventory rows of a set.
+   */
+  @DeleteMapping(path = "/sets/{setNumber}/inventory")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Delete Set Inventory",
+      description = "Removes every stored actual quantity of a set from data/bt/SetInventory.csv."
+  )
+  @ApiResponse(responseCode = "204", description = "Set inventory deleted")
+  public void deleteSetInventory(
+      @Parameter(name = "setNumber", description = "Lego set number") @PathVariable String setNumber)
+      throws IOException {
+    setInventories.delete(setNumber);
   }
 
   /**
