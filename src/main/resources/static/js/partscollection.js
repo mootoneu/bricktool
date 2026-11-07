@@ -22,7 +22,11 @@ $(function () {
   let partCategoriesLoading = false;
   let partCategoriesLoaded = false;
   let selectedPartCategoryId = '';
+  let mainParts = [];
   let mainPartsRequest = 0;
+  let hideZeroStars = true;
+  let mainPartsSearch = '';
+  const mainPartsSort = { key: 'stars', dir: -1 };
 
   function compareValues(a, b, dir) {
     const x = a == null ? '' : String(a);
@@ -555,7 +559,7 @@ $(function () {
         $tree.append(partCategoryButton(categories[0]));
         return;
       }
-      const $details = $('<details class="part-category-group"></details>').prop('open', true);
+      const $details = $('<details class="part-category-group"></details>');
       $details.append($('<summary></summary>').text(group.group || 'Other'));
       const $list = $('<div class="part-category-list"></div>');
       categories.forEach(function (category) {
@@ -590,22 +594,73 @@ $(function () {
       });
   }
 
-  function renderMainParts(rows) {
+  function starCell(part) {
+    const $cell = $('<td></td>');
+    const $stars = $('<span class="stars"></span>');
+    const value = Number(part.stars || 0);
+    $stars.append($('<button type="button" class="star star-zero"></button>')
+      .toggleClass('on', value === 0)
+      .attr('data-stars', 0)
+      .attr('aria-label', 'Set 0 stars (hidden)')
+      .attr('title', 'Set 0 stars (hidden)')
+      .append('<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">'
+        + '<path d="M2 2l20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+        + '<path d="M9.9 5.1A10.3 10.3 0 0 1 12 5c5.5 0 9.5 4.5 10 7-.2 1-1 2.4-2.2 3.6M6.6 6.6C4.3 8 2.7 10 2 12c.5 2.5 4.5 7 10 7 1.7 0 3.3-.4 4.7-1.1"'
+        + ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+        + '<path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+        + '</svg>'));
+    for (let n = 1; n <= 5; n++) {
+      $stars.append($('<button type="button" class="star"></button>')
+        .toggleClass('on', value >= n)
+        .attr('data-stars', n)
+        .attr('aria-label', n + (n === 1 ? ' star' : ' stars'))
+        .attr('title', 'Set ' + n + (n === 1 ? ' star' : ' stars'))
+        .text('★'));
+    }
+    $cell.append($stars);
+    return $cell;
+  }
+
+  function renderMainParts() {
     const $tbody = $('#main-parts tbody').empty();
     const $table = $('#main-parts');
-    if (rows.length === 0) {
+    const query = mainPartsSearch.trim().toLowerCase();
+    const filtered = mainParts.filter(function (part) {
+      if (hideZeroStars && Number(part.stars || 0) <= 0) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return String(part.partNumber || '').toLowerCase().includes(query)
+        || String(part.name || '').toLowerCase().includes(query);
+    });
+    const visible = sortRows(filtered, mainPartsSort);
+    markSortedHeader('#main-parts', mainPartsSort);
+    $('#main-parts-count').text(mainParts.length === 0 ? '' :
+      fmt.number(visible.length) + ' of ' + fmt.number(mainParts.length) + ' parts');
+
+    if (visible.length === 0) {
       $table.prop('hidden', true);
-      report('#part-explorer-msg', 'No main parts in this category.');
+      report('#part-explorer-msg', mainParts.length === 0
+        ? 'No main parts in this category.'
+        : 'No main parts match the current filters.');
       return;
     }
-    rows.forEach(function (part) {
-      const $row = $('<tr></tr>');
+
+    visible.forEach(function (part) {
+      const $row = $('<tr></tr>').attr('data-part-number', part.partNumber);
       $row.append($('<td></td>').text(part.partNumber || ''));
       $row.append($('<td></td>').text(part.name || ''));
-      $row.append($('<td></td>').text(part.categoryId == null ? '' : part.categoryId));
       $row.append($('<td></td>').text(part.material || ''));
-      $row.append($('<td></td>').text(part.hasAlternates ? 'Yes' : 'No'));
-      $row.append($('<td></td>').text(part.stars == null ? '' : fmt.number(part.stars)));
+
+      const $alternates = $('<td></td>');
+      if (part.hasAlternates) {
+        $alternates.append($('<button type="button" class="btn secondary main-part-alternates">View</button>')
+          .attr('data-part-number', part.partNumber));
+      }
+      $row.append($alternates);
+      $row.append(starCell(part));
 
       const $actions = $('<td class="row-actions"></td>');
       $actions.append($('<button type="button" class="btn secondary add-to-collection">Add to collection</button>')
@@ -614,14 +669,15 @@ $(function () {
       $tbody.append($row);
     });
     $table.prop('hidden', false);
-    report('#part-explorer-msg',
-      fmt.number(rows.length) + ' main part' + (rows.length === 1 ? '' : 's') + '.');
+    report('#part-explorer-msg', '');
   }
 
   function loadMainParts() {
     const request = ++mainPartsRequest;
     if (!selectedPartCategoryId) {
+      mainParts = [];
       $('#main-parts').prop('hidden', true);
+      $('#main-parts-count').text('');
       report('#part-explorer-msg', 'Select a category.');
       return;
     }
@@ -632,14 +688,71 @@ $(function () {
         if (request !== mainPartsRequest) {
           return;
         }
-        renderMainParts(Array.isArray(list) ? list : []);
+        mainParts = Array.isArray(list) ? list : [];
+        renderMainParts();
       })
       .fail(function (xhr) {
         if (request !== mainPartsRequest) {
           return;
         }
-        $('#main-parts').prop('hidden', true);
+        mainParts = [];
+        renderMainParts();
         report('#part-explorer-msg', BrickTools.errorOf(xhr));
+      });
+  }
+
+  function saveMainPartStars(partNumber, stars) {
+    BrickTools.api('PUT', '/parts/main-parts/' + encodeURIComponent(partNumber) + '/stars', { stars: stars })
+      .done(function () {
+        const part = mainParts.find(function (item) {
+          return String(item.partNumber) === String(partNumber);
+        });
+        if (part) {
+          part.stars = stars;
+        }
+        renderMainParts();
+      })
+      .fail(function (xhr) {
+        report('#part-explorer-msg', BrickTools.errorOf(xhr));
+      });
+  }
+
+  function closeMainPartAlternates() {
+    $('#main-part-alternates-modal').prop('hidden', true);
+  }
+
+  function openMainPartAlternates(partNumber) {
+    $('#main-part-alternates tbody').empty();
+    $('#main-part-alternates-title').text('Alternates of ' + partNumber);
+    $('#main-part-alternates-sub').text('Loading…');
+    $('#main-part-alternates-msg').text('');
+    $('#main-part-alternates-modal').prop('hidden', false);
+    $('#main-part-alternates-modal .modal-close').trigger('focus');
+
+    BrickTools.api('GET', '/parts/main-parts/' + encodeURIComponent(partNumber) + '/alternates')
+      .done(function (result) {
+        const rows = result && Array.isArray(result.alternates) ? result.alternates : [];
+        $('#main-part-alternates-title').text(
+          'Alternates of ' + (result && result.name ? result.name : partNumber));
+        $('#main-part-alternates-sub').text(partNumber);
+        if (rows.length === 0) {
+          $('#main-part-alternates-msg').text('No alternates found.');
+          return;
+        }
+        rows.forEach(function (row) {
+          $('#main-part-alternates tbody').append($('<tr></tr>')
+            .append($('<td></td>').text(row.relType || ''))
+            .append($('<td></td>').text(row.childPartNumber || ''))
+            .append($('<td></td>').text(row.childName || ''))
+            .append($('<td></td>').text(row.childCategoryId == null ? '' : row.childCategoryId))
+            .append($('<td></td>').text(row.childMaterial || ''))
+            .append($('<td></td>').text(row.parentPartNumber || ''))
+            .append($('<td></td>').text(row.parentName || '')));
+        });
+      })
+      .fail(function (xhr) {
+        $('#main-part-alternates-sub').text(partNumber);
+        $('#main-part-alternates-msg').text(BrickTools.errorOf(xhr));
       });
   }
 
@@ -648,6 +761,45 @@ $(function () {
     $('#part-category-tree .part-category-item').removeClass('active');
     $(this).addClass('active');
     loadMainParts();
+  });
+
+  $('#main-parts-hide-zero').on('change', function () {
+    hideZeroStars = this.checked;
+    renderMainParts();
+  });
+
+  $('#main-parts-search').on('input', function () {
+    mainPartsSearch = this.value;
+    renderMainParts();
+  });
+
+  $('#main-parts thead').on('click', 'th[data-key]', function () {
+    sortBy(mainPartsSort, $(this).attr('data-key'));
+    renderMainParts();
+  });
+
+  $('#main-parts').on('click', '.star', function () {
+    const partNumber = $(this).closest('tr').attr('data-part-number');
+    const stars = parseInt($(this).attr('data-stars'), 10);
+    if (partNumber && !isNaN(stars)) {
+      saveMainPartStars(partNumber, stars);
+    }
+  });
+
+  $('#main-parts').on('click', '.main-part-alternates', function () {
+    openMainPartAlternates($(this).attr('data-part-number'));
+  });
+
+  $('#main-part-alternates-modal').on('click', function (event) {
+    if (event.target === this) {
+      closeMainPartAlternates();
+    }
+  });
+  $('#main-part-alternates-modal').on('click', '.modal-close', closeMainPartAlternates);
+  $(document).on('keydown', function (event) {
+    if (event.key === 'Escape' && !$('#main-part-alternates-modal').prop('hidden')) {
+      closeMainPartAlternates();
+    }
   });
 
   $('#bo-parts-collection thead').on('click', 'th[data-key]', function () {

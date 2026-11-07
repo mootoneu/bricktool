@@ -176,6 +176,75 @@ public class PartService {
     return result;
   }
 
+  /**
+   * Sets the star rating of a main part.
+   */
+  public synchronized void updateStars(String partNumber, Integer stars) throws IOException {
+    if (stars == null || stars < 0 || stars > 5) {
+      throw new IllegalArgumentException("Stars must be between 0 and 5");
+    }
+    String key = clean(partNumber);
+    List<Map<String, String>> rows = new ArrayList<>();
+    boolean found = false;
+    for (Map<String, String> row : Csv.read(mainPartsFile)) {
+      Map<String, String> copy = new LinkedHashMap<>(row);
+      if (key.equals(clean(copy.get("PartNumber")))) {
+        copy.put("Stars", String.valueOf(stars));
+        found = true;
+      }
+      rows.add(copy);
+    }
+    if (!found) {
+      throw new IllegalArgumentException("Unknown main part " + key);
+    }
+    Csv.write(mainPartsFile, MAIN_PART_HEADERS, rows);
+  }
+
+  /**
+   * Returns the parts related to a main part through data.re.part_relationships, joined with the
+   * matching data.re.parts rows.
+   */
+  public Map<String, Object> alternates(String partNumber) throws IOException {
+    String key = clean(partNumber);
+    Map<String, Map<String, String>> catalog = new LinkedHashMap<>();
+    for (Map<String, String> part : Csv.read(partsFile)) {
+      String number = clean(part.get("part_num"));
+      if (!number.isEmpty()) {
+        catalog.put(number, part);
+      }
+    }
+    Map<String, String> main = catalog.get(key);
+
+    List<Map<String, Object>> alternates = new ArrayList<>();
+    for (Map<String, String> relationship : Csv.read(relationshipsFile)) {
+      if (!key.equals(clean(relationship.get("parent_part_num")))) {
+        continue;
+      }
+      String childNumber = clean(relationship.get("child_part_num"));
+      Map<String, String> child = catalog.getOrDefault(childNumber, Map.of());
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("relType", clean(relationship.get("rel_type")));
+      row.put("childPartNumber", childNumber);
+      row.put("childName", clean(child.get("name")));
+      row.put("childCategoryId", toInt(child.get("part_cat_id")));
+      row.put("childMaterial", clean(child.get("part_material")));
+      row.put("parentPartNumber", key);
+      row.put("parentName", main == null ? "" : clean(main.get("name")));
+      alternates.add(row);
+    }
+    alternates.sort(Comparator
+        .comparing((Map<String, Object> row) -> String.valueOf(row.get("childName")),
+            String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(row -> String.valueOf(row.get("childPartNumber")),
+            String.CASE_INSENSITIVE_ORDER));
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("partNumber", key);
+    result.put("name", main == null ? "" : clean(main.get("name")));
+    result.put("alternates", alternates);
+    return result;
+  }
+
   private static String validStars(String value) {
     Integer stars = toInt(value);
     return stars == null || stars < 0 || stars > 5 ? "2" : String.valueOf(stars);

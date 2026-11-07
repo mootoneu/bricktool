@@ -26,16 +26,24 @@
         <div id="part-category-tree" class="part-category-tree"></div>
         <div class="part-explorer-content">
           <p id="part-explorer-msg" class="muted">Select a category.</p>
+          <div class="toolbar main-parts-toolbar">
+            <label class="main-parts-filter">
+              <input type="checkbox" id="main-parts-hide-zero" checked>
+              Hide parts with 0 stars
+            </label>
+            <input type="search" id="main-parts-search" class="main-parts-search"
+                   placeholder="Search part number or name" aria-label="Search part number or name">
+            <span id="main-parts-count" class="muted"></span>
+          </div>
           <div class="table-wrap">
             <table class="data" id="main-parts" hidden>
               <thead>
                 <tr>
-                  <th>Part number</th>
-                  <th>Name</th>
-                  <th>Category id</th>
-                  <th>Material</th>
-                  <th>Has alternates</th>
-                  <th>Stars</th>
+                  <th class="sortable" data-key="partNumber">Part number</th>
+                  <th class="sortable" data-key="name">Name</th>
+                  <th class="sortable" data-key="material">Material</th>
+                  <th class="sortable" data-key="hasAlternates">Has alternates</th>
+                  <th class="sortable" data-key="stars">Stars</th>
                   <th class="actions-col"></th>
                 </tr>
               </thead>
@@ -165,6 +173,33 @@
         <button type="submit" class="btn">Save</button>
       </div>
     </form>
+  </div>
+
+  <div id="main-part-alternates-modal" class="modal" hidden>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="main-part-alternates-title">
+      <div class="modal-head">
+        <h2 id="main-part-alternates-title">Alternates</h2>
+        <button type="button" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <p id="main-part-alternates-sub" class="modal-sub"></p>
+      <div class="table-wrap">
+        <table class="data" id="main-part-alternates">
+          <thead>
+            <tr>
+              <th>Relation</th>
+              <th>Child part number</th>
+              <th>Child name</th>
+              <th>Child category id</th>
+              <th>Child material</th>
+              <th>Parent part number</th>
+              <th>Parent name</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="main-part-alternates-msg" class="warning"></p>
+    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

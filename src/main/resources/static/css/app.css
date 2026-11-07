@@ -331,3 +331,19 @@ table.data th.actions-col { width: 18%; }
   .part-explorer { grid-template-columns: 1fr; }
   .part-category-tree { max-height: 40vh; }
 }
+
+.main-parts-toolbar { gap: 12px; flex-wrap: wrap; }
+.main-parts-filter { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
+.main-parts-filter input { padding: 0; }
+.main-parts-search { flex: 1 1 220px; max-width: 360px; padding: 6px 8px; }
+.stars { display: inline-flex; gap: 1px; }
+.star {
+  background: none; border: 0; padding: 0 1px; cursor: pointer;
+  font-size: 1.15rem; line-height: 1; color: #d1d5db;
+}
+.star.on { color: #f59e0b; }
+.star:hover { color: #fbbf24; }
+.star-zero { display: inline-flex; align-items: center; padding: 0 3px; font-size: 0; }
+.star-zero svg { display: block; }
+.star-zero.on { color: #ef4444; }
+.star-zero:hover { color: #ef4444; }

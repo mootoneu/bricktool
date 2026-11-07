@@ -1,6 +1,7 @@
 package com.bricktools.part;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bricktools.config.BrickToolsProperties;
 import java.io.IOException;
@@ -105,6 +106,67 @@ class PartServiceTest {
     assertThat(service.mainParts(13))
         .extracting("partNumber")
         .containsExactly("5001");
+  }
+
+  @Test
+  void updateStarsPersistsTheNewValue() throws IOException {
+    service.generateMainParts();
+
+    service.updateStars("3001", 4);
+
+    assertThat(service.mainParts(11).get(0))
+        .containsEntry("partNumber", "3001")
+        .containsEntry("stars", 4);
+    assertThat(Files.readString(dir.resolve("bt/main_parts.csv")))
+        .contains("3001,Brick 2 x 4,11,Plastic,true,4");
+  }
+
+  @Test
+  void updateStarsRejectsInvalidValues() throws IOException {
+    service.generateMainParts();
+
+    assertThatThrownBy(() -> service.updateStars("3001", 6))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("between 0 and 5");
+    assertThatThrownBy(() -> service.updateStars("3001", -1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("between 0 and 5");
+    assertThatThrownBy(() -> service.updateStars("9999", 3))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unknown main part");
+  }
+
+  @Test
+  void alternatesJoinRelationshipsAndPartDetails() throws IOException {
+    service.generateMainParts();
+
+    Map<String, Object> result = service.alternates("3001");
+
+    assertThat(result)
+        .containsEntry("partNumber", "3001")
+        .containsEntry("name", "Brick 2 x 4");
+    List<Map<String, Object>> alternates = alternatesOf(result);
+    assertThat(alternates).hasSize(2);
+    assertThat(alternates).extracting("childPartNumber")
+        .containsExactlyInAnyOrder("3002", "3003");
+    assertThat(alternates).extracting("relType").containsExactlyInAnyOrder("P", "B");
+
+    Map<String, Object> alternate = alternates.stream()
+        .filter(row -> "3002".equals(row.get("childPartNumber")))
+        .findFirst()
+        .orElseThrow();
+    assertThat(alternate)
+        .containsEntry("relType", "P")
+        .containsEntry("childName", "Brick 2 x 3")
+        .containsEntry("childCategoryId", 11)
+        .containsEntry("childMaterial", "Plastic")
+        .containsEntry("parentPartNumber", "3001")
+        .containsEntry("parentName", "Brick 2 x 4");
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> alternatesOf(Map<String, Object> result) {
+    return (List<Map<String, Object>>) result.get("alternates");
   }
 
   @SuppressWarnings("unchecked")

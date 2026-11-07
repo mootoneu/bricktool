@@ -120,6 +120,19 @@ $(function () {
       .always(function () { $button.prop('disabled', false); });
   });
 
+  $('#partcolorurl-generate').on('click', function () {
+    const $button = $(this).prop('disabled', true);
+    $('#partcolorurl-msg').text('Generating part color URLs...');
+    BrickTools.api('POST', '/parts/part-color-urls/generate')
+      .done(function (r) {
+        $('#partcolorurl-msg').text('PartColorUrl updated: ' + BrickTools.fmt.number(r.kept) +
+          ' part/color pairs kept, ' + BrickTools.fmt.number(r.duplicates) + ' duplicate rows and ' +
+          BrickTools.fmt.number(r.noUrl) + ' rows without an image URL skipped.');
+      })
+      .fail(function (xhr) { $('#partcolorurl-msg').text(BrickTools.errorOf(xhr)); })
+      .always(function () { $button.prop('disabled', false); });
+  });
+
   refreshRebrickable().fail(function (xhr) {
     $('#rb-msg').text(BrickTools.errorOf(xhr));
   });

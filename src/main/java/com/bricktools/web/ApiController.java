@@ -11,6 +11,8 @@ import com.bricktools.other.OtherImageService;
 import com.bricktools.pab.PabPartRequest;
 import com.bricktools.pab.PabPurchaseRequest;
 import com.bricktools.pab.PabService;
+import com.bricktools.part.MainPartStarsRequest;
+import com.bricktools.part.PartImageService;
 import com.bricktools.part.PartService;
 import com.bricktools.purchase.PurchaseRequest;
 import com.bricktools.purchase.PurchaseService;
@@ -69,13 +71,14 @@ public class ApiController {
   private final ColorService colors;
   private final PabService pab;
   private final PartService partService;
+  private final PartImageService partImages;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
                        PurchaseService purchases, NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab,
-                       PartService partService) {
+                       PartService partService, PartImageService partImages) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -92,6 +95,7 @@ public class ApiController {
     this.colors = colors;
     this.pab = pab;
     this.partService = partService;
+    this.partImages = partImages;
   }
 
   /**
@@ -609,5 +613,60 @@ public class ApiController {
   )
   public Map<String, Object> generateMainParts() throws IOException {
     return partService.generateMainParts();
+  }
+
+  @PutMapping(path = "/parts/main-parts/{partNumber}/stars")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Update main part stars",
+      description = "Sets the star rating (0 to 5) of a main part."
+  )
+  @ApiResponse(responseCode = "204", description = "Main part stars updated")
+  public void updateMainPartStars(
+      @Parameter(name = "partNumber", description = "Main part number") @PathVariable String partNumber,
+      @RequestBody MainPartStarsRequest request) throws IOException {
+    partService.updateStars(partNumber, request.stars());
+  }
+
+  @GetMapping(path = "/parts/main-parts/{partNumber}/alternates", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List main part alternates",
+      description = "Returns the part relationships and related parts of a main part."
+  )
+  public Map<String, Object> mainPartAlternates(
+      @Parameter(name = "partNumber", description = "Main part number") @PathVariable String partNumber)
+      throws IOException {
+    return partService.alternates(partNumber);
+  }
+
+  @PostMapping(path = "/parts/part-color-urls/generate", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Generate part color URLs",
+      description = "Rebuilds data/bt/part_color_url.csv from the Rebrickable inventory parts. "
+          + "The first inventory row of each part/color pair with an image URL is kept."
+  )
+  public Map<String, Object> generatePartColorUrls() throws IOException {
+    return partImages.generatePartColorUrls();
+  }
+
+  @GetMapping(path = "/parts/{partNumber}/image", produces = "image/*")
+  @Operation(
+      summary = "Get Part Image",
+      description = "Returns the image of a part color, downloading it from the Rebrickable CDN "
+          + "into data/other/partimg/{colorId}/ when it is not stored yet."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "Part image not found")
+  public ResponseEntity<Resource> partImage(
+      @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber,
+      @Parameter(name = "colorId", description = "Lego color ID") @RequestParam int colorId)
+      throws IOException, InterruptedException {
+    Optional<Path> image = partImages.ensure(partNumber, colorId);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(partImages.contentType(image.get())))
+        .body(partImages.resource(image.get()));
   }
 }

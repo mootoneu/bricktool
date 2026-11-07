@@ -397,7 +397,7 @@ The data.bt.PaBParts represent the parts bought of a PaBPurchase. It has the fol
 | ---------- | ---------- | ---------- |
 | Id | interger (PK) | |
 | PaBPurchaseId | integer | Identifier of the PaBPurchase (FK)  |
-| PartNumber | integer | Lego part number (FK) |
+| PartNumber | String | Lego part number (FK) |
 | PartColorId | integer | Lego color number (FK) |
 | Quantity | integer | Amount of part purchased |
 
@@ -427,6 +427,23 @@ The family values can be a primary color or `Primary` or `Other`.
 
 Relationships:
 - data.bt.ColorTags.ColorId = data.re.colors.id
+
+### Part imageUrl data
+
+The data.bt.PartColorUrl that map the part number and Lego color id to an item number and an image url. It has the following fields:
+
+| Field Name | Type | Description |
+| ---------- | ---------- | ---------- |
+| PartNumber | String | Lego part number (FK) |
+| ColorId | integer | Lego color number (FK) |
+| ItemNumber | String | Lego number identifying a part of a certain color |
+| ImgUrl | String | Rebricable cdn url to download the image |
+
+The primary key of this model is the couple (PartNumber,ColorId)
+
+Relationships:
+- data.bt.PartColorUrl.PartNumber = data.re.parts.part_num
+- data.bt.PartColorUrl.ColorId = data.re.colors.id
 
 ## BrickOwl data
 
