@@ -422,15 +422,21 @@ $(function () {
   function renderPabParts() {
     const $tbody = $('#pab-parts tbody').empty();
     if (!selectedPabPurchaseId) {
-      $tbody.append('<tr><td colspan="8" class="muted">No PaB purchase selected.</td></tr>');
+      $tbody.append('<tr><td colspan="9" class="muted">No PaB purchase selected.</td></tr>');
       return;
     }
     if (pabParts.length === 0) {
-      $tbody.append('<tr><td colspan="8" class="muted">No parts for this purchase yet.</td></tr>');
+      $tbody.append('<tr><td colspan="9" class="muted">No parts for this purchase yet.</td></tr>');
       return;
     }
     pabParts.forEach(function (part) {
       const $row = $('<tr></tr>');
+      const imageUrl = part.partNumber
+        ? '/api/parts/' + encodeURIComponent(part.partNumber) + '/image' +
+          (part.partColorId == null || part.partColorId === ''
+            ? '' : '?colorId=' + encodeURIComponent(part.partColorId))
+        : '';
+      $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber));
       $row.append($('<td></td>').text(part.id == null ? '' : part.id));
       $row.append($('<td></td>').text(part.paBPurchaseId == null ? '' : part.paBPurchaseId));
       $row.append($('<td></td>').text(part.partNumber || ''));

@@ -336,7 +336,7 @@ table.data th.actions-col { width: 18%; }
 .main-parts-filter { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
 .main-parts-filter input { padding: 0; }
 .main-parts-search { flex: 1 1 220px; max-width: 360px; padding: 6px 8px; }
-.main-part-image-col, .main-part-image { width: 64px; }
+.main-part-image-col, .main-part-image, .part-image-col, .part-image { width: 64px; }
 .part-img { display: block; width: 56px; height: 56px; object-fit: contain; }
 .stars { display: inline-flex; gap: 1px; }
 .star {

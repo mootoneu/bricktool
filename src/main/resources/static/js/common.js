@@ -180,8 +180,35 @@
     return result.trim();
   }
 
+  /**
+   * Builds a table cell with a lazy-loaded part image. The first source is shown and, when it
+   * fails, the next one is tried; the image is hidden when no source can be loaded.
+   */
+  function partImageCell(sources, label) {
+    const $cell = $('<td class="part-image"></td>');
+    const urls = (Array.isArray(sources) ? sources : [sources]).filter(Boolean);
+    if (urls.length === 0) {
+      return $cell;
+    }
+    let next = 1;
+    const $img = $('<img class="part-img" loading="lazy" alt="">')
+      .attr('alt', label || '')
+      .attr('title', label || '')
+      .on('error', function () {
+        if (next < urls.length) {
+          this.src = urls[next++];
+        } else {
+          $(this).prop('hidden', true);
+        }
+      })
+      .attr('src', urls[0]);
+    $cell.append($img);
+    return $cell;
+  }
+
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs,
-    getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName
+    getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName,
+    partImageCell
   };
 })(window, jQuery);
