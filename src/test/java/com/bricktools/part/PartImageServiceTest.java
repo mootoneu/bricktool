@@ -28,6 +28,7 @@ class PartImageServiceTest {
   private TestHttpServer server;
   private final AtomicInteger photoRequests = new AtomicInteger();
   private final AtomicInteger pngRequests = new AtomicInteger();
+  private final AtomicInteger elementRequests = new AtomicInteger();
 
   @BeforeEach
   void setUp() throws IOException {
@@ -41,6 +42,10 @@ class PartImageServiceTest {
       send(exchange, 200, PNG);
     });
     server.handle("/photos/5/missing.jpg", exchange -> send(exchange, 404, new byte[0]));
+    server.handle("/elements/6166107.jpg", exchange -> {
+      elementRequests.incrementAndGet();
+      send(exchange, 200, JPEG);
+    });
 
     Files.createDirectories(dir.resolve("re"));
     Files.writeString(dir.resolve("re/inventory_parts.csv"), String.join("\n",
@@ -115,6 +120,23 @@ class PartImageServiceTest {
     assertThat(service.ensure("3001", null)).contains(dir.resolve("other/partimg/5/3001.jpg"));
     assertThat(photoRequests.get()).isEqualTo(1);
     assertThat(service.ensure("3003", null)).isEmpty();
+  }
+
+  @Test
+  void resolvesAnImageFromItsItemNumber() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.ensureByItemNumber("6166107"))
+        .contains(dir.resolve("other/partimg/7/3001.jpg"));
+    assertThat(service.ensureByItemNumber("3001-5-abc"))
+        .contains(dir.resolve("other/partimg/5/3001.jpg"));
+    assertThat(elementRequests.get()).isEqualTo(1);
+    assertThat(photoRequests.get()).isEqualTo(1);
+
+    assertThat(service.ensureByItemNumber("unknown")).isEmpty();
+    assertThatThrownBy(() -> service.ensureByItemNumber("../3001"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

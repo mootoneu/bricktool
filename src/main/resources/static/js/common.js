@@ -206,9 +206,40 @@
     return $cell;
   }
 
+  function itemImageUrls(itemNumbers) {
+    const seen = new Set();
+    return String(itemNumbers || '').split(',')
+      .map(function (value) { return value.trim(); })
+      .filter(function (value) {
+        if (!value || seen.has(value)) {
+          return false;
+        }
+        seen.add(value);
+        return true;
+      })
+      .map(function (value) {
+        return '/api/parts/items/' + encodeURIComponent(value) + '/image';
+      });
+  }
+
+  /**
+   * Returns the image sources of a BrickOwl item: the exact part/color images of its item numbers
+   * first, then a generic image of its first design id.
+   */
+  function partImageUrls(itemNumbers, designIds) {
+    const urls = itemImageUrls(itemNumbers);
+    const designId = String(designIds || '').split(',')
+      .map(function (value) { return value.trim(); })
+      .filter(Boolean)[0];
+    if (designId) {
+      urls.push('/api/parts/' + encodeURIComponent(designId) + '/image');
+    }
+    return urls;
+  }
+
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs,
     getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName,
-    partImageCell
+    partImageCell, itemImageUrls, partImageUrls
   };
 })(window, jQuery);

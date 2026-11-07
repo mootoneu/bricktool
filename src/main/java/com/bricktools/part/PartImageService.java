@@ -52,8 +52,11 @@ public class PartImageService {
 
   private Map<String, String> urlCache;
   private Map<String, Integer> firstColorCache;
+  private Map<String, PartColorKey> itemCache;
   private long urlCacheModified = Long.MIN_VALUE;
   private long lastDownloadEndedAt;
+
+  private record PartColorKey(String partNumber, int colorId) {}
 
   public PartImageService(BrickToolsProperties props) {
     Path data = props.dataPath();
@@ -101,6 +104,7 @@ public class PartImageService {
     Csv.write(partColorUrlFile, INDEX_HEADERS, rows);
     urlCache = null;
     firstColorCache = null;
+    itemCache = null;
 
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("total", total);
@@ -114,7 +118,7 @@ public class PartImageService {
    * Returns the stored image of a part color, if a jpg or png file already exists.
    */
   public synchronized Optional<Path> find(String partNumber, int colorId) {
-    if (!isValidPartNumber(partNumber) || colorId < 0) {
+    if (!isSafeId(partNumber) || colorId < 0) {
       return Optional.empty();
     }
     Path folder = imagesDir.resolve(String.valueOf(colorId));
@@ -134,7 +138,7 @@ public class PartImageService {
    */
   public synchronized Optional<Path> ensure(String partNumber, Integer colorId)
       throws IOException, InterruptedException {
-    if (!isValidPartNumber(partNumber)) {
+    if (!isSafeId(partNumber)) {
       throw new IllegalArgumentException("Invalid part number: " + partNumber);
     }
     if (colorId != null && colorId < 0) {
@@ -173,6 +177,23 @@ public class PartImageService {
     return Optional.of(target);
   }
 
+  /**
+   * Returns the image matching a Lego item number (element id). The part and color are read from
+   * data/bt/part_color_url.csv.
+   */
+  public synchronized Optional<Path> ensureByItemNumber(String itemNumber)
+      throws IOException, InterruptedException {
+    if (!isSafeId(itemNumber)) {
+      throw new IllegalArgumentException("Invalid item number: " + itemNumber);
+    }
+    urls();
+    PartColorKey partColor = itemCache.get(itemNumber);
+    if (partColor == null) {
+      return Optional.empty();
+    }
+    return ensure(partColor.partNumber(), partColor.colorId());
+  }
+
   public FileSystemResource resource(Path image) {
     return new FileSystemResource(image);
   }
@@ -199,17 +220,23 @@ public class PartImageService {
     if (urlCache == null || modified != urlCacheModified) {
       Map<String, String> urls = new HashMap<>();
       Map<String, Integer> firstColors = new HashMap<>();
+      Map<String, PartColorKey> items = new HashMap<>();
       for (Map<String, String> row : Csv.read(partColorUrlFile)) {
         String partNumber = clean(row.get("PartNumber"));
         String colorId = clean(row.get("ColorId"));
+        String itemNumber = clean(row.get("ItemNumber"));
         String url = clean(row.get("ImgUrl"));
         if (!partNumber.isEmpty() && !colorId.isEmpty() && !url.isEmpty()) {
           urls.put(key(partNumber, colorId), url);
           firstColors.merge(partNumber, toInt(colorId), Math::min);
+          if (!itemNumber.isEmpty()) {
+            items.putIfAbsent(itemNumber, new PartColorKey(partNumber, toInt(colorId)));
+          }
         }
       }
       urlCache = urls;
       firstColorCache = firstColors;
+      itemCache = items;
       urlCacheModified = modified;
     }
     return urlCache;
@@ -222,10 +249,10 @@ public class PartImageService {
     }
   }
 
-  private static boolean isValidPartNumber(String partNumber) {
-    return partNumber != null
-        && PART_NUMBER.matcher(partNumber).matches()
-        && !partNumber.contains("..");
+  private static boolean isSafeId(String value) {
+    return value != null
+        && PART_NUMBER.matcher(value).matches()
+        && !value.contains("..");
   }
 
   private static String itemNumber(String url) {

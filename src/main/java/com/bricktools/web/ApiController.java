@@ -671,4 +671,25 @@ public class ApiController {
         .contentType(MediaType.parseMediaType(partImages.contentType(image.get())))
         .body(partImages.resource(image.get()));
   }
+
+  @GetMapping(path = "/parts/items/{itemNumber}/image", produces = "image/*")
+  @Operation(
+      summary = "Get Part Image by Item Number",
+      description = "Returns the image matching a Lego item number (element id), using the part "
+          + "and color stored in data/bt/part_color_url.csv."
+  )
+  @ApiResponse(responseCode = "200", description = "Image returned")
+  @ApiResponse(responseCode = "404", description = "Part image not found")
+  public ResponseEntity<Resource> partImageByItemNumber(
+      @Parameter(name = "itemNumber", description = "Lego item number (element id)")
+      @PathVariable String itemNumber)
+      throws IOException, InterruptedException {
+    Optional<Path> image = partImages.ensureByItemNumber(itemNumber);
+    if (image.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(partImages.contentType(image.get())))
+        .body(partImages.resource(image.get()));
+  }
 }

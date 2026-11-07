@@ -172,5 +172,18 @@ class PartApiTest {
         .andExpect(status().isNotFound());
     mvc.perform(get("/api/parts/3001/image").param("colorId", "-1"))
         .andExpect(status().isBadRequest());
+
+    mvc.perform(get("/api/parts/items/3001-5-abc/image"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+        .andExpect(content().bytes(jpeg));
+
+    mvc.perform(get("/api/parts/items/14728c21.6-5-ghi/image"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_PNG))
+        .andExpect(content().bytes(png));
+
+    mvc.perform(get("/api/parts/items/unknown/image"))
+        .andExpect(status().isNotFound());
   }
 }
