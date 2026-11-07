@@ -20,6 +20,7 @@
     <nav class="tabs">
       <button type="button" data-tab="statistics" class="active">Statistics</button>
       <button type="button" data-tab="list">Purchases</button>
+      <button type="button" data-tab="set-inventory">Set Inventory</button>
     </nav>
 
     <section data-panel="statistics">
@@ -87,6 +88,32 @@
       <div class="table-wrap">
         <table class="data fit" id="purchases">
           <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-panel="set-inventory" hidden>
+      <div id="set-inventory-filters" class="filters set-inventory-toolbar">
+        <label>Set <select id="set-inventory-set"><option value="">Select a set…</option></select></label>
+        <label>Search <input id="set-inventory-search" type="search" placeholder="Part number, name, color…" autocomplete="off"></label>
+      </div>
+      <p id="set-inventory-msg" class="warning"></p>
+      <p id="set-inventory-summary" class="muted"></p>
+      <div class="table-wrap">
+        <table class="data" id="set-inventory">
+          <thead>
+            <tr>
+              <th class="part-image-col">Image</th>
+              <th class="sortable" data-key="partNumber">Part number</th>
+              <th class="sortable" data-key="partName">Part name</th>
+              <th class="sortable" data-key="partCategory">Category</th>
+              <th class="sortable" data-key="colorName">Color</th>
+              <th class="sortable" data-key="expectedQut">Expected qty</th>
+              <th class="sortable" data-key="actualQut">Actual qty</th>
+              <th>Status</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>

@@ -60,6 +60,14 @@ $(function () {
   let sortKey = 'purchaseDate';
   let sortDir = -1;
 
+  let setInventory = [];
+  let setInventorySet = '';
+  let setInventoryLoadedSet = '';
+  let setInventoryRequest = 0;
+  let setInventorySearch = '';
+  let setInventorySortKey = 'partName';
+  let setInventorySortDir = 1;
+
   function filterValue(key) {
     const $el = $(FILTERS[key]);
     return $el.is(':checkbox') ? $el.is(':checked') : $.trim($el.val() || '');
@@ -335,6 +343,187 @@ $(function () {
     render();
   }
 
+  function populateSetInventorySets() {
+    const $select = $('#set-inventory-set');
+    const current = setInventorySet || $select.val() || '';
+    const seen = new Set();
+    $select.empty().append($('<option></option>').val('').text('Select a set…'));
+    purchases.forEach(function (p) {
+      const number = String(p.setNumber || '').trim();
+      if (!number || seen.has(number)) {
+        return;
+      }
+      seen.add(number);
+      $select.append($('<option></option>').val(number)
+        .text(number + (p.name ? ' — ' + p.name : '')));
+    });
+    if (current && seen.has(current)) {
+      $select.val(current);
+    } else if (seen.size > 0) {
+      $select.val(Array.from(seen)[0]);
+    } else {
+      $select.val('');
+    }
+    setInventorySet = $select.val() || '';
+    $select.prop('disabled', seen.size === 0);
+  }
+
+  function ensureSetInventoryLoaded() {
+    if (!purchases.length) {
+      return;
+    }
+    if (!$('#set-inventory-set option').filter(function () { return this.value; }).length) {
+      populateSetInventorySets();
+    }
+    if (setInventorySet && setInventoryLoadedSet !== setInventorySet) {
+      loadSetInventory(setInventorySet);
+    }
+  }
+
+  function loadSetInventory(setNumber) {
+    const request = ++setInventoryRequest;
+    if (!setNumber) {
+      setInventory = [];
+      setInventoryLoadedSet = '';
+      renderSetInventory();
+      return;
+    }
+    $('#set-inventory-msg').text('Loading set parts…');
+    BrickTools.api('GET', '/sets/' + encodeURIComponent(setNumber) + '/inventory')
+      .done(function (list) {
+        if (request !== setInventoryRequest) {
+          return;
+        }
+        setInventory = Array.isArray(list) ? list : [];
+        setInventoryLoadedSet = setNumber;
+        $('#set-inventory-msg').text('');
+        renderSetInventory();
+      })
+      .fail(function (xhr) {
+        if (request !== setInventoryRequest) {
+          return;
+        }
+        setInventory = [];
+        setInventoryLoadedSet = '';
+        renderSetInventory();
+        $('#set-inventory-msg').text(BrickTools.errorOf(xhr));
+      });
+  }
+
+  function setInventoryImageUrl(part) {
+    if (!part.partNumber) {
+      return '';
+    }
+    return '/api/parts/' + encodeURIComponent(part.partNumber) + '/image' +
+      (part.colorId == null || part.colorId === ''
+        ? '' : '?colorId=' + encodeURIComponent(part.colorId));
+  }
+
+  function setInventoryColorChip(part) {
+    const label = part.colorName || (part.colorId == null ? '' : String(part.colorId));
+    const $chip = $('<span class="color-chip"></span>').attr('title', label).text(label);
+    const rgb = String(part.colorRgb || '').replace(/^#/, '');
+    if (/^[0-9a-fA-F]{6}$/.test(rgb)) {
+      const hex = '#' + rgb;
+      $chip.css({ 'background-color': hex, color: BrickTools.readableText(hex) });
+    }
+    return $chip;
+  }
+
+  function setInventoryStatus(part) {
+    const expected = Number(part.expectedQut) || 0;
+    const actual = Number(part.actualQut) || 0;
+    if (actual >= expected) {
+      return $('<span class="inventory-status complete"></span>').text('Complete');
+    }
+    return $('<span class="inventory-status missing"></span>').text((expected - actual) + ' missing');
+  }
+
+  function setInventorySummary() {
+    if (setInventory.length === 0) {
+      return '';
+    }
+    let complete = 0;
+    let missing = 0;
+    setInventory.forEach(function (part) {
+      const expected = Number(part.expectedQut) || 0;
+      const actual = Number(part.actualQut) || 0;
+      if (actual >= expected) {
+        complete++;
+      } else {
+        missing += expected - actual;
+      }
+    });
+    return complete + ' of ' + setInventory.length + ' parts complete' +
+      (missing > 0 ? ' — ' + missing + ' piece(s) missing' : '');
+  }
+
+  function setInventoryMatches(part, search) {
+    if (!search) {
+      return true;
+    }
+    return [part.partNumber, part.partName, part.partCategory, part.colorName, part.colorId]
+      .some(function (value) {
+        return String(value == null ? '' : value).toLowerCase().includes(search);
+      });
+  }
+
+  function compareSetInventory(a, b) {
+    const key = setInventorySortKey;
+    if (key === 'expectedQut' || key === 'actualQut') {
+      return ((Number(a[key]) || 0) - (Number(b[key]) || 0)) * setInventorySortDir;
+    }
+    const x = a[key] == null ? '' : String(a[key]);
+    const y = b[key] == null ? '' : String(b[key]);
+    if (x === '' && y === '') return 0;
+    if (x === '') return 1;
+    if (y === '') return -1;
+    return x.localeCompare(y, undefined, { numeric: true }) * setInventorySortDir;
+  }
+
+  function renderSetInventory() {
+    const $tbody = $('#set-inventory tbody').empty();
+    $('#set-inventory thead th[data-key]').removeClass('sort-asc sort-desc')
+      .filter('[data-key="' + setInventorySortKey + '"]')
+      .addClass(setInventorySortDir > 0 ? 'sort-asc' : 'sort-desc');
+
+    if (!setInventorySet) {
+      $tbody.append('<tr><td colspan="8" class="muted">Select a set to see its parts.</td></tr>');
+      $('#set-inventory-summary').text('');
+      return;
+    }
+    if (setInventory.length === 0) {
+      $tbody.append($('<tr></tr>').append(
+        $('<td colspan="8" class="muted"></td>').text('No inventory found for set ' + setInventorySet + '.')));
+      $('#set-inventory-summary').text('');
+      return;
+    }
+
+    const search = setInventorySearch.toLowerCase();
+    const rows = setInventory.filter(function (part) {
+      return setInventoryMatches(part, search);
+    }).sort(compareSetInventory);
+
+    if (rows.length === 0) {
+      $tbody.append('<tr><td colspan="8" class="muted">No parts match the filters.</td></tr>');
+    }
+    rows.forEach(function (part) {
+      const $row = $('<tr></tr>');
+      $row.append(BrickTools.partImageCell(setInventoryImageUrl(part), part.partName || part.partNumber));
+      $row.append($('<td></td>').text(part.partNumber || ''));
+      $row.append($('<td></td>').text(part.partName || ''));
+      $row.append($('<td></td>').text(part.partCategory || ''));
+      $row.append($('<td></td>').append(setInventoryColorChip(part)));
+      $row.append($('<td></td>').text(fmt.number(part.expectedQut)));
+      $row.append($('<td></td>').text(fmt.number(part.actualQut)));
+      $row.append($('<td></td>').append(setInventoryStatus(part)));
+      $tbody.append($row);
+    });
+    const summary = setInventorySummary();
+    $('#set-inventory-summary').text(summary +
+      (rows.length !== setInventory.length ? ' — showing ' + rows.length : ''));
+  }
+
   function buildHeader() {
     const $colgroup = $('<colgroup></colgroup>');
     COLUMNS.forEach(c => $colgroup.append($('<col>').css('width', c.width + '%')));
@@ -454,6 +643,11 @@ $(function () {
         populateFilterOptions();
         render();
         renderStatistics();
+        populateSetInventorySets();
+        if (!$('[data-panel="set-inventory"]').prop('hidden')
+            && setInventorySet && setInventoryLoadedSet !== setInventorySet) {
+          loadSetInventory(setInventorySet);
+        }
       })
       .fail(function (xhr) { $('#purchases-msg').text(BrickTools.errorOf(xhr)); });
   }
@@ -497,6 +691,24 @@ $(function () {
   $('#stat-filters').on('change', 'select', renderYearChart);
   $('#filter-reset').on('click', resetFilters);
 
+  $('#set-inventory-set').on('change', function () {
+    setInventorySet = $(this).val() || '';
+    setInventoryLoadedSet = '';
+    loadSetInventory(setInventorySet);
+  });
+
+  $('#set-inventory-search').on('input', function () {
+    setInventorySearch = this.value;
+    renderSetInventory();
+  });
+
+  $('#set-inventory thead').on('click', 'th[data-key]', function () {
+    const key = $(this).attr('data-key');
+    setInventorySortDir = setInventorySortKey === key ? -setInventorySortDir : 1;
+    setInventorySortKey = key;
+    renderSetInventory();
+  });
+
   $('#purchase-form').on('submit', function (e) {
     e.preventDefault();
     const id = $('#purchase-id').val();
@@ -527,7 +739,11 @@ $(function () {
   });
 
   buildHeader();
-  BrickTools.initTabs('main');
+  BrickTools.initTabs('main', function (name) {
+    if (name === 'set-inventory') {
+      ensureSetInventoryLoaded();
+    }
+  });
   load();
   loadOptions();
 });
