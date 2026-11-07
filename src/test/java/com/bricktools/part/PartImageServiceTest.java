@@ -108,6 +108,16 @@ class PartImageServiceTest {
   }
 
   @Test
+  void usesTheFirstAvailableColorWhenNoColorIsGiven() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.ensure("3001", null)).contains(dir.resolve("other/partimg/5/3001.jpg"));
+    assertThat(photoRequests.get()).isEqualTo(1);
+    assertThat(service.ensure("3003", null)).isEmpty();
+  }
+
+  @Test
   void keepsThePngExtensionOfTheSourceImage() throws Exception {
     PartImageService service = service();
     service.generatePartColorUrls();

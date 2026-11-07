@@ -51,6 +51,7 @@ public class PartImageService {
   private final HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 
   private Map<String, String> urlCache;
+  private Map<String, Integer> firstColorCache;
   private long urlCacheModified = Long.MIN_VALUE;
   private long lastDownloadEndedAt;
 
@@ -99,6 +100,7 @@ public class PartImageService {
     rows.sort(BY_PART_AND_COLOR);
     Csv.write(partColorUrlFile, INDEX_HEADERS, rows);
     urlCache = null;
+    firstColorCache = null;
 
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("total", total);
@@ -112,7 +114,7 @@ public class PartImageService {
    * Returns the stored image of a part color, if a jpg or png file already exists.
    */
   public synchronized Optional<Path> find(String partNumber, int colorId) {
-    if (!isValid(partNumber, colorId)) {
+    if (!isValidPartNumber(partNumber) || colorId < 0) {
       return Optional.empty();
     }
     Path folder = imagesDir.resolve(String.valueOf(colorId));
@@ -126,24 +128,32 @@ public class PartImageService {
   }
 
   /**
-   * Returns the image of a part color, downloading it from the Rebrickable CDN when needed. At most
-   * one download is started every {@value #DOWNLOAD_DELAY_MS} ms so the CDN is not overloaded.
+   * Returns the image of a part color, downloading it from the Rebrickable CDN when needed. When
+   * {@code colorId} is null the first color available for the part is used. At most one download is
+   * started every {@value #DOWNLOAD_DELAY_MS} ms so the CDN is not overloaded.
    */
-  public synchronized Optional<Path> ensure(String partNumber, int colorId)
+  public synchronized Optional<Path> ensure(String partNumber, Integer colorId)
       throws IOException, InterruptedException {
-    if (!isValid(partNumber, colorId)) {
-      throw new IllegalArgumentException("Invalid part number or color id: " + partNumber + "/" + colorId);
+    if (!isValidPartNumber(partNumber)) {
+      throw new IllegalArgumentException("Invalid part number: " + partNumber);
     }
-    Optional<Path> existing = find(partNumber, colorId);
+    if (colorId != null && colorId < 0) {
+      throw new IllegalArgumentException("Invalid color id: " + colorId);
+    }
+    int color = colorId == null ? firstColor(partNumber) : colorId;
+    if (color < 0) {
+      return Optional.empty();
+    }
+    Optional<Path> existing = find(partNumber, color);
     if (existing.isPresent()) {
       return existing;
     }
-    Optional<String> url = imageUrl(partNumber, colorId);
+    Optional<String> url = imageUrl(partNumber, color);
     if (url.isEmpty()) {
       return Optional.empty();
     }
 
-    Path folder = imagesDir.resolve(String.valueOf(colorId));
+    Path folder = imagesDir.resolve(String.valueOf(color));
     String extension = extensionOf(url.get());
     Path target = folder.resolve(partNumber + "." + extension);
     Path partial = folder.resolve(partNumber + ".part");
@@ -177,20 +187,29 @@ public class PartImageService {
     return Optional.ofNullable(urls().get(key(partNumber, String.valueOf(colorId))));
   }
 
+  private int firstColor(String partNumber) throws IOException {
+    urls();
+    Integer colorId = firstColorCache.get(partNumber);
+    return colorId == null ? -1 : colorId;
+  }
+
   private Map<String, String> urls() throws IOException {
     long modified = Files.isRegularFile(partColorUrlFile)
         ? Files.getLastModifiedTime(partColorUrlFile).toMillis() : -1;
     if (urlCache == null || modified != urlCacheModified) {
       Map<String, String> urls = new HashMap<>();
+      Map<String, Integer> firstColors = new HashMap<>();
       for (Map<String, String> row : Csv.read(partColorUrlFile)) {
         String partNumber = clean(row.get("PartNumber"));
         String colorId = clean(row.get("ColorId"));
         String url = clean(row.get("ImgUrl"));
         if (!partNumber.isEmpty() && !colorId.isEmpty() && !url.isEmpty()) {
           urls.put(key(partNumber, colorId), url);
+          firstColors.merge(partNumber, toInt(colorId), Math::min);
         }
       }
       urlCache = urls;
+      firstColorCache = firstColors;
       urlCacheModified = modified;
     }
     return urlCache;
@@ -203,9 +222,8 @@ public class PartImageService {
     }
   }
 
-  private static boolean isValid(String partNumber, int colorId) {
+  private static boolean isValidPartNumber(String partNumber) {
     return partNumber != null
-        && colorId >= 0
         && PART_NUMBER.matcher(partNumber).matches()
         && !partNumber.contains("..");
   }

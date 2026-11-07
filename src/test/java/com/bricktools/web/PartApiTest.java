@@ -158,6 +158,11 @@ class PartApiTest {
         .andExpect(content().contentType(MediaType.IMAGE_JPEG))
         .andExpect(content().bytes(jpeg));
 
+    mvc.perform(get("/api/parts/3001/image"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+        .andExpect(content().bytes(jpeg));
+
     mvc.perform(get("/api/parts/14728c21.6/image").param("colorId", "5"))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.IMAGE_PNG))

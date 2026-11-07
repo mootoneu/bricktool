@@ -621,6 +621,17 @@ $(function () {
     return $cell;
   }
 
+  function partImageCell(part) {
+    const $cell = $('<td class="main-part-image"></td>');
+    $('<img class="part-img" loading="lazy" alt="">')
+      .attr('src', '/api/parts/' + encodeURIComponent(part.partNumber) + '/image')
+      .attr('alt', part.name || part.partNumber)
+      .attr('title', part.name || part.partNumber)
+      .on('error', function () { $(this).prop('hidden', true); })
+      .appendTo($cell);
+    return $cell;
+  }
+
   function renderMainParts() {
     const $tbody = $('#main-parts tbody').empty();
     const $table = $('#main-parts');
@@ -650,6 +661,7 @@ $(function () {
 
     visible.forEach(function (part) {
       const $row = $('<tr></tr>').attr('data-part-number', part.partNumber);
+      $row.append(partImageCell(part));
       $row.append($('<td></td>').text(part.partNumber || ''));
       $row.append($('<td></td>').text(part.name || ''));
       $row.append($('<td></td>').text(part.material || ''));

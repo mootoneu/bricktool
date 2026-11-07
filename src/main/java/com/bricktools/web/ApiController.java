@@ -652,14 +652,16 @@ public class ApiController {
   @GetMapping(path = "/parts/{partNumber}/image", produces = "image/*")
   @Operation(
       summary = "Get Part Image",
-      description = "Returns the image of a part color, downloading it from the Rebrickable CDN "
-          + "into data/other/partimg/{colorId}/ when it is not stored yet."
+      description = "Returns the image of a part color (or of the first available color when colorId "
+          + "is omitted), downloading it from the Rebrickable CDN into data/other/partimg/{colorId}/ "
+          + "when it is not stored yet."
   )
   @ApiResponse(responseCode = "200", description = "Image returned")
   @ApiResponse(responseCode = "404", description = "Part image not found")
   public ResponseEntity<Resource> partImage(
       @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber,
-      @Parameter(name = "colorId", description = "Lego color ID") @RequestParam int colorId)
+      @Parameter(name = "colorId", description = "Lego color ID; the first available color is used when omitted")
+      @RequestParam(required = false) Integer colorId)
       throws IOException, InterruptedException {
     Optional<Path> image = partImages.ensure(partNumber, colorId);
     if (image.isEmpty()) {
