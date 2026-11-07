@@ -140,6 +140,36 @@ class PartImageServiceTest {
   }
 
   @Test
+  void fallsBackToAnotherColorWhenTheRequestedColorHasNoUrl() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.ensureWithFallback("3001", 9))
+        .contains(dir.resolve("other/partimg/5/3001.jpg"));
+    assertThat(photoRequests.get()).isEqualTo(1);
+  }
+
+  @Test
+  void returnsTheMissingImageWhenThePartHasNoImage() throws Exception {
+    Files.createDirectories(dir.resolve("other/partimg"));
+    Files.write(dir.resolve("other/partimg/part_img_missing.png"), PNG);
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.ensureWithFallback("3003", 5))
+        .contains(dir.resolve("other/partimg/part_img_missing.png"));
+    assertThat(service.ensureWithFallback("9999", null))
+        .contains(dir.resolve("other/partimg/part_img_missing.png"));
+    assertThat(service.missingImage())
+        .contains(dir.resolve("other/partimg/part_img_missing.png"));
+  }
+
+  @Test
+  void missingImageIsEmptyWhenTheFileIsAbsent() {
+    assertThat(service().missingImage()).isEmpty();
+  }
+
+  @Test
   void keepsThePngExtensionOfTheSourceImage() throws Exception {
     PartImageService service = service();
     service.generatePartColorUrls();

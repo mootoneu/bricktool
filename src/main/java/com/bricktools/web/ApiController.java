@@ -654,16 +654,17 @@ public class ApiController {
       summary = "Get Part Image",
       description = "Returns the image of a part color (or of the first available color when colorId "
           + "is omitted), downloading it from the Rebrickable CDN into data/other/partimg/{colorId}/ "
-          + "when it is not stored yet."
+          + "when it is not stored yet. When the part/color pair has no image URL, another color of "
+          + "the part is used; when the part has no image at all, the missing part image is returned."
   )
   @ApiResponse(responseCode = "200", description = "Image returned")
-  @ApiResponse(responseCode = "404", description = "Part image not found")
+  @ApiResponse(responseCode = "404", description = "Part image and missing image not found")
   public ResponseEntity<Resource> partImage(
       @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber,
       @Parameter(name = "colorId", description = "Lego color ID; the first available color is used when omitted")
       @RequestParam(required = false) Integer colorId)
       throws IOException, InterruptedException {
-    Optional<Path> image = partImages.ensure(partNumber, colorId);
+    Optional<Path> image = partImages.ensureWithFallback(partNumber, colorId);
     if (image.isEmpty()) {
       return ResponseEntity.notFound().build();
     }

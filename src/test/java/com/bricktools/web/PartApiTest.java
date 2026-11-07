@@ -169,9 +169,17 @@ class PartApiTest {
         .andExpect(content().bytes(png));
 
     mvc.perform(get("/api/parts/3001/image").param("colorId", "6"))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+        .andExpect(content().bytes(jpeg));
     mvc.perform(get("/api/parts/3001/image").param("colorId", "-1"))
         .andExpect(status().isBadRequest());
+
+    Files.write(dataDir.resolve("other/partimg/part_img_missing.png"), png);
+    mvc.perform(get("/api/parts/4001/image").param("colorId", "5"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_PNG))
+        .andExpect(content().bytes(png));
 
     mvc.perform(get("/api/parts/items/3001-5-abc/image"))
         .andExpect(status().isOk())

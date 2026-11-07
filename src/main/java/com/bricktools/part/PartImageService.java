@@ -40,6 +40,7 @@ public class PartImageService {
       "jpeg", "image/jpeg",
       "png", "image/png");
   private static final String DEFAULT_EXTENSION = "jpg";
+  private static final String MISSING_IMAGE = "part_img_missing.png";
   private static final Comparator<Map<String, String>> BY_PART_AND_COLOR = Comparator
       .comparing((Map<String, String> row) -> clean(row.get("PartNumber")),
           String.CASE_INSENSITIVE_ORDER)
@@ -175,6 +176,35 @@ public class PartImageService {
       Files.deleteIfExists(partial);
     }
     return Optional.of(target);
+  }
+
+  /**
+   * Returns the image of a part color with a fallback. When the part/color pair has no image URL,
+   * the first other color of the part that has an image is used. When the part has no image at
+   * all, the missing part image is returned.
+   */
+  public synchronized Optional<Path> ensureWithFallback(String partNumber, Integer colorId)
+      throws IOException, InterruptedException {
+    Optional<Path> image = ensure(partNumber, colorId);
+    if (image.isPresent()) {
+      return image;
+    }
+    int fallback = firstColor(partNumber);
+    if (fallback >= 0) {
+      image = ensure(partNumber, fallback);
+      if (image.isPresent()) {
+        return image;
+      }
+    }
+    return missingImage();
+  }
+
+  /**
+   * Returns the missing part image stored in data/other/partimg, if it exists.
+   */
+  public Optional<Path> missingImage() {
+    Path image = imagesDir.resolve(MISSING_IMAGE);
+    return Files.isRegularFile(image) ? Optional.of(image) : Optional.empty();
   }
 
   /**
