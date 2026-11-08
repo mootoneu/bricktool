@@ -7,7 +7,7 @@ $(function () {
 
   const COLUMNS = [
     { key: 'imageUrl', label: 'Image', image: true, width: 5 },
-    { key: 'id', label: 'Purchase Id', width: 4 },
+    { key: 'id', label: 'Purchase Id', width: 3 },
     { key: 'setNumber', label: 'Set Number', width: 5.5 },
     { key: 'name', label: 'Name', width: 6 },
     { key: 'numParts', label: 'Total parts', fmt: fmt.number, width: 5 },
@@ -15,15 +15,15 @@ $(function () {
     { key: 'theme', label: 'Theme', theme: true, width: 5.5 },
     { key: 'officialPrice', label: 'Official Price', fmt: fmt.money, priceFetch: true, width: 5.5 },
     { key: 'price', label: 'Price', fmt: fmt.money, width: 5.5 },
-    { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 5 },
+    { key: 'promo', label: 'Promo', fmt: fmt.percent, width: 4 },
     { key: 'purchaseDate', label: 'Date', width: 7 },
     { key: 'vendor', label: 'Vendor', logo: true, width: 5.5 },
     { key: 'broughtBy', label: 'Buyer', avatar: true, width: 5 },
     { key: 'owner', label: 'Owner', avatar: true, width: 5 },
     { key: 'partsMissing', label: 'Parts missing', fmt: fmt.number, width: 5 },
-    { key: 'complete', label: 'Complete', fmt: fmt.percent, width: 5 },
+    { key: 'complete', label: 'Complete', fmt: fmt.percent, width: 4 },
     { key: 'owned', label: 'Owned ?', width: 3.5 },
-    { key: 'reason', label: 'Reason', width: 4 },
+    { key: 'reason', label: 'Reason', width: 3 },
     { key: 'links', label: 'Sites', links: true, width: 5 }
   ];
 
@@ -69,6 +69,8 @@ $(function () {
   let setInventoryBusy = false;
   let setInventorySortKey = 'partName';
   let setInventorySortDir = 1;
+  let pendingSetInventory = $.trim(
+    new URLSearchParams(window.location.search).get('set') || '');
 
   function filterValue(key) {
     const $el = $(FILTERS[key]);
@@ -359,6 +361,10 @@ $(function () {
       $select.append($('<option></option>').val(number)
         .text(number + (p.name ? ' — ' + p.name : '')));
     });
+    if (current && !seen.has(current)) {
+      seen.add(current);
+      $select.append($('<option></option>').val(current).text(current));
+    }
     if (current && seen.has(current)) {
       $select.val(current);
     } else if (seen.size > 0) {
@@ -380,6 +386,22 @@ $(function () {
     if (setInventorySet && setInventoryLoadedSet !== setInventorySet) {
       loadSetInventory(setInventorySet);
     }
+  }
+
+  function openSetInventory(setNumber) {
+    const number = $.trim(setNumber == null ? '' : String(setNumber));
+    if (!number) {
+      return;
+    }
+    const $select = $('#set-inventory-set');
+    if (!$select.find('option').filter(function () { return this.value === number; }).length) {
+      $select.append($('<option></option>').val(number).text(number));
+    }
+    $select.val(number);
+    setInventorySet = number;
+    setInventoryLoadedSet = number;
+    $('main [data-tab="set-inventory"]').trigger('click');
+    loadSetInventory(number);
   }
 
   function loadSetInventory(setNumber, successMessage) {
@@ -577,7 +599,7 @@ $(function () {
   function buildHeader() {
     const $colgroup = $('<colgroup></colgroup>');
     COLUMNS.forEach(c => $colgroup.append($('<col>').css('width', c.width + '%')));
-    $colgroup.append($('<col>').css('width', '5%'));
+    $colgroup.append($('<col>').css('width', '9%'));
     $('#purchases').prepend($colgroup);
 
     const $row = $('#purchases thead tr').empty();
@@ -588,7 +610,7 @@ $(function () {
         $row.append($('<th class="sortable"></th>').attr('data-key', c.key).text(c.label));
       }
     });
-    $row.append('<th></th>');
+    $row.append('<th class="actions-col"></th>');
     $('#purchases thead').on('click', 'th[data-key]', function () {
       const key = $(this).attr('data-key');
       sortDir = sortKey === key ? -sortDir : 1;
@@ -677,9 +699,16 @@ $(function () {
         }
         $tr.append($td);
       });
-      $tr.append($('<td></td>').append(
+      const $actions = $('<td class="row-actions"></td>');
+      $actions.append(
+        $('<button type="button" class="btn secondary">Inventory</button>')
+          .attr('title', 'Open set ' + (p.setNumber || '') + ' in Set Inventory')
+          .on('click', function () { openSetInventory(p.setNumber); })
+      );
+      $actions.append(
         $('<button type="button" class="btn secondary">Edit</button>').on('click', () => openForm(p))
-      ));
+      );
+      $tr.append($actions);
       $tbody.append($tr);
     });
     $('#filter-summary').text(rows.length + ' of ' + purchases.length + ' purchases');
@@ -694,7 +723,11 @@ $(function () {
         render();
         renderStatistics();
         populateSetInventorySets();
-        if (!$('[data-panel="set-inventory"]').prop('hidden')
+        if (pendingSetInventory) {
+          const pending = pendingSetInventory;
+          pendingSetInventory = '';
+          openSetInventory(pending);
+        } else if (!$('[data-panel="set-inventory"]').prop('hidden')
             && setInventorySet && setInventoryLoadedSet !== setInventorySet) {
           loadSetInventory(setInventorySet);
         }
@@ -828,6 +861,13 @@ $(function () {
       .always(function () {
         $input.prop('disabled', false);
       });
+  });
+
+  $(document).on('click', '#set-sites-inventory-link', function (e) {
+    e.preventDefault();
+    const number = $(this).attr('data-set-number');
+    BrickSets.closeSetSites();
+    openSetInventory(number);
   });
 
   $('#purchase-form').on('submit', function (e) {

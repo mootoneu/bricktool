@@ -122,6 +122,9 @@
             '<div id="set-sites-image" class="set-sites-image"></div>' +
             '<div id="set-sites-theme" class="set-sites-theme"></div>' +
             '<p id="set-sites-meta" class="set-sites-meta"></p>' +
+            '<div class="set-sites-links">' +
+              '<a id="set-sites-inventory-link" class="btn secondary" href="purchases.html#set-inventory">Open in Set Inventory</a>' +
+            '</div>' +
             '<div id="set-sites-actions" class="set-sites-actions"></div>' +
             '<p id="set-sites-action-msg" class="set-sites-action-msg message"></p>' +
           '</div>' +
@@ -198,6 +201,9 @@
       meta.push(data.year);
     }
     $('#set-sites-meta').text(meta.join(' · '));
+    $('#set-sites-inventory-link')
+      .attr('data-set-number', setNumber)
+      .attr('href', 'purchases.html?set=' + encodeURIComponent(setNumber) + '#set-inventory');
   }
 
   function renderSetAction() {

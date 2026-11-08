@@ -267,6 +267,7 @@ table.data th.actions-col { width: 18%; }
 .set-sites-theme .theme-chip { font-size: .85rem; }
 .set-sites-theme-name { font-size: .9rem; font-weight: 600; }
 .set-sites-meta { margin: 0; font-size: .95rem; }
+.set-sites-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .set-sites-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .set-sites-action-msg { margin: 0; font-size: .85rem; color: var(--muted); }
 .color-chip {
