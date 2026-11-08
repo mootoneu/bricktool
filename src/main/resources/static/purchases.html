@@ -97,6 +97,12 @@
       <div id="set-inventory-filters" class="filters set-inventory-toolbar">
         <label>Set <select id="set-inventory-set"><option value="">Select a set…</option></select></label>
         <label>Search <input id="set-inventory-search" type="search" placeholder="Part number, name, color…" autocomplete="off"></label>
+        <label class="filter-check"><span><input type="checkbox" id="set-inventory-hide-complete"> Hide complete parts</span></label>
+        <div class="filter-actions">
+          <button type="button" id="set-inventory-clear" class="btn secondary">Clear actual</button>
+          <button type="button" id="set-inventory-fill" class="btn secondary">Set actual = expected</button>
+          <button type="button" id="set-inventory-delete" class="btn danger">Delete inventory</button>
+        </div>
       </div>
       <p id="set-inventory-msg" class="warning"></p>
       <p id="set-inventory-summary" class="muted"></p>

@@ -65,6 +65,8 @@ $(function () {
   let setInventoryLoadedSet = '';
   let setInventoryRequest = 0;
   let setInventorySearch = '';
+  let setInventoryHideComplete = false;
+  let setInventoryBusy = false;
   let setInventorySortKey = 'partName';
   let setInventorySortDir = 1;
 
@@ -380,7 +382,7 @@ $(function () {
     }
   }
 
-  function loadSetInventory(setNumber) {
+  function loadSetInventory(setNumber, successMessage) {
     const request = ++setInventoryRequest;
     if (!setNumber) {
       setInventory = [];
@@ -396,7 +398,7 @@ $(function () {
         }
         setInventory = Array.isArray(list) ? list : [];
         setInventoryLoadedSet = setNumber;
-        $('#set-inventory-msg').text('');
+        $('#set-inventory-msg').text(successMessage || '');
         renderSetInventory();
       })
       .fail(function (xhr) {
@@ -483,24 +485,29 @@ $(function () {
 
   function renderSetInventory() {
     const $tbody = $('#set-inventory tbody').empty();
+    updateSetInventoryButtons();
     $('#set-inventory thead th[data-key]').removeClass('sort-asc sort-desc')
       .filter('[data-key="' + setInventorySortKey + '"]')
       .addClass(setInventorySortDir > 0 ? 'sort-asc' : 'sort-desc');
 
     if (!setInventorySet) {
       $tbody.append('<tr><td colspan="8" class="muted">Select a set to see its parts.</td></tr>');
-      $('#set-inventory-summary').text('');
+      updateSetInventorySummary(0);
       return;
     }
     if (setInventory.length === 0) {
       $tbody.append($('<tr></tr>').append(
         $('<td colspan="8" class="muted"></td>').text('No inventory found for set ' + setInventorySet + '.')));
-      $('#set-inventory-summary').text('');
+      updateSetInventorySummary(0);
       return;
     }
 
     const search = setInventorySearch.toLowerCase();
     const rows = setInventory.filter(function (part) {
+      if (setInventoryHideComplete
+          && (Number(part.actualQut) || 0) >= (Number(part.expectedQut) || 0)) {
+        return false;
+      }
       return setInventoryMatches(part, search);
     }).sort(compareSetInventory);
 
@@ -524,9 +531,47 @@ $(function () {
       $row.append($('<td class="inventory-status-cell"></td>').append(setInventoryStatus(part)));
       $tbody.append($row);
     });
+    updateSetInventorySummary(rows.length);
+  }
+
+  function updateSetInventoryButtons() {
+    const noSet = !setInventorySet || setInventoryBusy;
+    $('#set-inventory-clear, #set-inventory-delete').prop('disabled', noSet);
+    $('#set-inventory-fill').prop('disabled', noSet || setInventory.length === 0);
+  }
+
+  function updateSetInventorySummary(visibleCount) {
+    const count = visibleCount == null
+      ? $('#set-inventory tbody tr').filter(function () {
+          return $(this).find('td.muted').length === 0;
+        }).length
+      : visibleCount;
     const summary = setInventorySummary();
     $('#set-inventory-summary').text(summary +
-      (rows.length !== setInventory.length ? ' — showing ' + rows.length : ''));
+      (count !== setInventory.length ? ' — showing ' + count : ''));
+  }
+
+  function runSetInventoryAction(path, method, loadingMessage, successMessage, confirmMessage) {
+    if (!setInventorySet) {
+      return;
+    }
+    if (confirmMessage && !window.confirm(confirmMessage)) {
+      return;
+    }
+    setInventoryBusy = true;
+    updateSetInventoryButtons();
+    $('#set-inventory-msg').text(loadingMessage);
+    BrickTools.api(method, '/sets/' + encodeURIComponent(setInventorySet) + path)
+      .done(function () {
+        loadSetInventory(setInventorySet, successMessage);
+      })
+      .fail(function (xhr) {
+        $('#set-inventory-msg').text(BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        setInventoryBusy = false;
+        updateSetInventoryButtons();
+      });
   }
 
   function buildHeader() {
@@ -707,6 +752,30 @@ $(function () {
     renderSetInventory();
   });
 
+  $('#set-inventory-hide-complete').on('change', function () {
+    setInventoryHideComplete = this.checked;
+    renderSetInventory();
+  });
+
+  $('#set-inventory-clear').on('click', function () {
+    runSetInventoryAction('/inventory/clear', 'POST',
+      'Clearing actual quantities…', 'Actual quantities cleared.',
+      'Clear the actual quantity of every part in set ' + setInventorySet + '?');
+  });
+
+  $('#set-inventory-fill').on('click', function () {
+    runSetInventoryAction('/inventory/fill', 'POST',
+      'Setting actual quantities to expected…', 'Actual quantities set to expected.',
+      'Set the actual quantity of every part in set ' + setInventorySet +
+        ' to its expected quantity?');
+  });
+
+  $('#set-inventory-delete').on('click', function () {
+    runSetInventoryAction('/inventory', 'DELETE',
+      'Deleting the set inventory…', 'Set inventory deleted.',
+      'Delete the stored inventory for set ' + setInventorySet + '?');
+  });
+
   $('#set-inventory thead').on('click', 'th[data-key]', function () {
     const key = $(this).attr('data-key');
     setInventorySortDir = setInventorySortKey === key ? -setInventorySortDir : 1;
@@ -744,9 +813,13 @@ $(function () {
       .done(function () {
         part.actualQut = value;
         $('#set-inventory-msg').text('');
+        if (setInventoryHideComplete && value >= (Number(part.expectedQut) || 0)) {
+          renderSetInventory();
+          return;
+        }
         $input.closest('tr').find('td.inventory-status-cell')
           .empty().append(setInventoryStatus(part));
-        $('#set-inventory-summary').text(setInventorySummary());
+        updateSetInventorySummary();
       })
       .fail(function (xhr) {
         $input.val(previous);
