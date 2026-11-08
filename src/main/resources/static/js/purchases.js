@@ -515,8 +515,13 @@ $(function () {
       $row.append($('<td></td>').text(part.partCategory || ''));
       $row.append($('<td></td>').append(setInventoryColorChip(part)));
       $row.append($('<td></td>').text(fmt.number(part.expectedQut)));
-      $row.append($('<td></td>').text(fmt.number(part.actualQut)));
-      $row.append($('<td></td>').append(setInventoryStatus(part)));
+      $row.append($('<td></td>').append(
+        $('<input type="number" class="set-inventory-actual" min="0" step="1">')
+          .attr('title', 'Actual quantity')
+          .attr('data-part-number', part.partNumber)
+          .attr('data-color-id', part.colorId)
+          .val(Number(part.actualQut) || 0)));
+      $row.append($('<td class="inventory-status-cell"></td>').append(setInventoryStatus(part)));
       $tbody.append($row);
     });
     const summary = setInventorySummary();
@@ -707,6 +712,49 @@ $(function () {
     setInventorySortDir = setInventorySortKey === key ? -setInventorySortDir : 1;
     setInventorySortKey = key;
     renderSetInventory();
+  });
+
+  $('#set-inventory').on('change', '.set-inventory-actual', function () {
+    const $input = $(this);
+    const partNumber = $input.attr('data-part-number');
+    const colorId = $input.attr('data-color-id');
+    const part = setInventory.find(function (item) {
+      return String(item.partNumber) === String(partNumber)
+        && String(item.colorId) === String(colorId);
+    });
+    if (!part) {
+      return;
+    }
+    const value = parseInt($input.val(), 10);
+    if (isNaN(value) || value < 0) {
+      $('#set-inventory-msg').text('Actual quantity must be a non-negative integer.');
+      $input.val(Number(part.actualQut) || 0);
+      return;
+    }
+    const previous = Number(part.actualQut) || 0;
+    if (value === previous) {
+      $('#set-inventory-msg').text('');
+      return;
+    }
+    $input.prop('disabled', true);
+    BrickTools.api('PUT',
+      '/sets/' + encodeURIComponent(setInventorySet) + '/inventory/' +
+      encodeURIComponent(partNumber) + '/' + encodeURIComponent(colorId),
+      { actualQut: value })
+      .done(function () {
+        part.actualQut = value;
+        $('#set-inventory-msg').text('');
+        $input.closest('tr').find('td.inventory-status-cell')
+          .empty().append(setInventoryStatus(part));
+        $('#set-inventory-summary').text(setInventorySummary());
+      })
+      .fail(function (xhr) {
+        $input.val(previous);
+        $('#set-inventory-msg').text(BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        $input.prop('disabled', false);
+      });
   });
 
   $('#purchase-form').on('submit', function (e) {
