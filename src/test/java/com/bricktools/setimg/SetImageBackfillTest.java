@@ -79,7 +79,7 @@ class SetImageBackfillTest {
         new BrickToolsProperties.BrickOwl("", ""));
     SetImageService images = new SetImageService(props);
     return new SetImageBackfill(images, new PurchaseService(props, images, new ThemeImageService(props),
-        new OtherImageService(props), new PeopleService(props)));
+        new OtherImageService(props), new PeopleService(props, new OtherImageService(props))));
   }
 
   private static SetImageBackfill.Progress awaitFinished(SetImageBackfill backfill) throws InterruptedException {

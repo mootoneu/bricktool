@@ -32,7 +32,6 @@ public class PurchaseService {
   private static final Pattern SET_NUMBER = Pattern.compile("[A-Za-z0-9-]+");
   private static final Pattern COLOR = Pattern.compile("#[0-9A-Fa-f]{3,8}");
   private static final String VENDOR_IMAGE_BASE = "/api/vendorimg/";
-  private static final String PEOPLE_IMAGE_BASE = "/api/peopleimg/";
 
   private static final Logger log = LoggerFactory.getLogger(PurchaseService.class);
 
@@ -42,7 +41,6 @@ public class PurchaseService {
   private final Path themeDetailsFile;
   private final Path pricesFile;
   private final Path vendorImagesFile;
-  private final Path peopleImagesFile;
   private final SetImageService setImages;
   private final ThemeImageService themeImages;
   private final OtherImageService otherImages;
@@ -57,7 +55,6 @@ public class PurchaseService {
     this.themeDetailsFile = data.resolve("bt/themes.csv");
     this.pricesFile = data.resolve("bw/setprices.csv");
     this.vendorImagesFile = data.resolve("other/vendor/vendors.csv");
-    this.peopleImagesFile = data.resolve("other/people/people.csv");
     this.setImages = setImages;
     this.themeImages = themeImages;
     this.otherImages = otherImages;
@@ -80,7 +77,7 @@ public class PurchaseService {
     }
     Set<String> availableThemeImages = themeImages.available();
     Map<String, String> vendorImages = imageUrls(vendorImagesFile, otherImages.available("vendor"), VENDOR_IMAGE_BASE);
-    Map<String, String> peopleImages = imageUrls(peopleImagesFile, otherImages.available("people"), PEOPLE_IMAGE_BASE);
+    Map<String, String> peopleImages = people.imageUrls();
     Map<String, String> peopleColors = people.colors();
     Map<String, String> prices = new HashMap<>();
     for (Map<String, String> price : Csv.read(pricesFile)) {

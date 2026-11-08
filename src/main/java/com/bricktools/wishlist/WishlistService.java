@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -42,17 +43,25 @@ public class WishlistService {
         .distinct()
         .toList();
     Map<String, Map<String, Object>> details = newSets.details(setNumbers);
+    Map<String, String> peopleImages = people.imageUrls();
+    Map<String, String> peopleColors = people.colors();
 
     List<Map<String, Object>> result = new ArrayList<>();
     for (Map<String, String> row : rows) {
       String setNumber = clean(row.get("SetNumber"));
+      String member = clean(row.get("Member"));
+      String buyer = clean(row.get("Buyer"));
       Map<String, Object> entry = new LinkedHashMap<>();
       entry.put("id", toInt(row.get("Id")));
       entry.put("setNumber", setNumber);
       entry.put("wishlistDate", clean(row.get("WishlistDate")));
-      entry.put("member", clean(row.get("Member")));
+      entry.put("member", member);
+      entry.put("memberImageUrl", peopleImages.get(key(member)));
+      entry.put("memberColor", peopleColors.get(key(member)));
       entry.put("priority", clean(row.get("Priority")));
-      entry.put("buyer", clean(row.get("Buyer")));
+      entry.put("buyer", buyer);
+      entry.put("buyerImageUrl", peopleImages.get(key(buyer)));
+      entry.put("buyerColor", peopleColors.get(key(buyer)));
       entry.putAll(details.getOrDefault(setNumber, Map.of()));
       entry.put("setNumber", setNumber);
       result.add(entry);
@@ -181,6 +190,10 @@ public class WishlistService {
 
   private static String clean(String value) {
     return value == null ? "" : value.trim();
+  }
+
+  private static String key(String value) {
+    return clean(value).toLowerCase(Locale.ROOT);
   }
 
   private static Integer toInt(String value) {

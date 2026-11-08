@@ -133,6 +133,28 @@ $(function () {
     return $chip;
   }
 
+  function personCell(name, imageUrl, color) {
+    const $cell = $('<td></td>');
+    if (imageUrl) {
+      const $image = $('<img loading="lazy">')
+        .addClass('person-img')
+        .attr('src', imageUrl)
+        .attr('alt', name || '')
+        .attr('title', name || '');
+      if (color) {
+        $image.css('border-color', color);
+      }
+      $cell.append($image);
+    } else {
+      const $tag = BrickTools.tag(name);
+      if (color && $tag) {
+        $tag.css('border', '2px solid ' + color);
+      }
+      $cell.append($tag);
+    }
+    return $cell;
+  }
+
   function loadAll() {
     return $.when(
       BrickTools.api('GET', catalogueUrl()),
@@ -471,8 +493,8 @@ $(function () {
       $tr.append($('<td></td>').text(entry.numParts == null ? '' : fmt.number(entry.numParts)));
       $tr.append($('<td></td>').append(themeChip(entry.theme, entry.themeImageUrl, entry.themeColor)));
       $tr.append($('<td></td>').text(entry.officialPrice == null ? '' : fmt.money(entry.officialPrice)));
-      $tr.append($('<td></td>').text(entry.member || ''));
-      $tr.append($('<td></td>').text(entry.buyer || ''));
+      $tr.append(personCell(entry.member, entry.memberImageUrl, entry.memberColor));
+      $tr.append(personCell(entry.buyer, entry.buyerImageUrl, entry.buyerColor));
       $tr.append($('<td></td>').append(
         $('<span class="priority"></span>')
           .addClass('priority-' + String(entry.priority || '').toLowerCase())

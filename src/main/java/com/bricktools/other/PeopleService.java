@@ -17,11 +17,14 @@ import org.springframework.stereotype.Service;
 public class PeopleService {
 
   private static final Pattern COLOR = Pattern.compile("#[0-9A-Fa-f]{3,8}");
+  private static final String PEOPLE_IMAGE_BASE = "/api/peopleimg/";
 
   private final Path peopleFile;
+  private final OtherImageService images;
 
-  public PeopleService(BrickToolsProperties props) {
+  public PeopleService(BrickToolsProperties props, OtherImageService images) {
     this.peopleFile = props.dataPath().resolve("other/people/people.csv");
+    this.images = images;
   }
 
   public synchronized List<String> names() throws IOException {
@@ -33,6 +36,19 @@ public class PeopleService {
       }
     }
     return List.copyOf(names);
+  }
+
+  public synchronized Map<String, String> imageUrls() throws IOException {
+    Map<String, String> urls = new LinkedHashMap<>();
+    Set<String> available = images.available("people");
+    for (Map<String, String> person : Csv.read(peopleFile)) {
+      String name = clean(person.get("name"));
+      String image = clean(person.get("image"));
+      if (!name.isEmpty() && available.contains(image)) {
+        urls.putIfAbsent(key(name), PEOPLE_IMAGE_BASE + image);
+      }
+    }
+    return urls;
   }
 
   public synchronized Map<String, String> colors() throws IOException {

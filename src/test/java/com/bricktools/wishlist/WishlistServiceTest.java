@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bricktools.config.BrickToolsProperties;
+import com.bricktools.other.OtherImageService;
 import com.bricktools.other.PeopleService;
 import com.bricktools.setimg.SetImageService;
 import com.bricktools.theme.ThemeImageService;
@@ -38,6 +39,9 @@ class WishlistServiceTest {
             + "Duncan,Duncan.webp,#2563eb\n"
             + "Eglantine,Eglantine.webp,#db2777\n"
             + "Alice,Default.webp,#059669\n");
+    Files.writeString(dir.resolve("other/people/Duncan.webp"), "webp", StandardCharsets.UTF_8);
+    Files.writeString(dir.resolve("other/people/Eglantine.webp"), "webp", StandardCharsets.UTF_8);
+    Files.writeString(dir.resolve("other/people/Default.webp"), "webp", StandardCharsets.UTF_8);
     Files.writeString(dir.resolve("re/sets.csv"),
         "set_num,name,year,theme_id,num_parts,img_url\n"
             + "75192-1,Millennium Falcon," + currentYear + ",171,7541,https://cdn.example/75192-1.jpg\n");
@@ -54,7 +58,8 @@ class WishlistServiceTest {
 
     BrickToolsProperties props = props();
     NewSetService newSets = new NewSetService(props, new SetImageService(props), new ThemeImageService(props));
-    service = new WishlistService(props, newSets, new PeopleService(props));
+    service = new WishlistService(props, newSets,
+        new PeopleService(props, new OtherImageService(props)));
   }
 
   @Test
@@ -145,10 +150,15 @@ class WishlistServiceTest {
     assertThat(Files.readString(dir.resolve("bt/wishlist.csv")))
         .startsWith("Id,SetNumber,WishlistDate,Member,Priority,Buyer")
         .contains("1,75192,2026/02/03,Duncan,High,Eglantine");
-    assertThat(service.list().get(0)).containsEntry("buyer", "Eglantine");
+    assertThat(service.list().get(0)).containsEntry("buyer", "Eglantine")
+        .containsEntry("memberImageUrl", "/api/peopleimg/Duncan.webp")
+        .containsEntry("memberColor", "#2563eb")
+        .containsEntry("buyerImageUrl", "/api/peopleimg/Eglantine.webp")
+        .containsEntry("buyerColor", "#db2777");
 
     service.update(id, request("75192", "2026/02/03", "Duncan", "High", "Duncan"));
-    assertThat(service.list().get(0)).containsEntry("buyer", "Duncan");
+    assertThat(service.list().get(0)).containsEntry("buyer", "Duncan")
+        .containsEntry("buyerImageUrl", "/api/peopleimg/Duncan.webp");
   }
 
   @Test
