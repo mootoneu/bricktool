@@ -9,6 +9,25 @@
     { id: 'admin', label: 'Administration', href: 'admin.html' }
   ];
 
+  const LAST_PAGE_KEY = 'bricktools.lastPage';
+  const TAB_KEY_PREFIX = 'bricktools.tab.';
+
+  function storageGet(key) {
+    try {
+      return window.localStorage.getItem(key) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      // Storage may be unavailable (for example in private mode); persistence is optional.
+    }
+  }
+
   const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   const number = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 
@@ -92,12 +111,25 @@
   }
 
   function initHeader(activeId) {
+    if (activeId) {
+      const page = NAV.find(n => n.id === activeId);
+      if (page) {
+        storageSet(LAST_PAGE_KEY, page.href);
+      }
+    } else if (!new URLSearchParams(window.location.search).has('home')) {
+      const lastPage = storageGet(LAST_PAGE_KEY);
+      if (lastPage && NAV.some(n => n.href === lastPage)) {
+        window.location.replace(lastPage);
+        return;
+      }
+    }
+
     const links = NAV.map(n =>
       '<a href="' + n.href + '"' + (n.id === activeId ? ' class="active"' : '') + '>' + n.label + '</a>'
     ).join('');
 
     $('#app-header').html(
-      '<a class="brand" href="index.html">Brick Tools</a>' +
+      '<a class="brand" href="index.html?home=1">Brick Tools</a>' +
       '<nav>' + links + '</nav>' +
       '<div class="notifications">' +
       '<button type="button" class="bell" title="Notifications">&#128276;<span class="badge" hidden></span></button>' +
@@ -119,26 +151,45 @@
 
   function initTabs(container, onChange) {
     const $root = $(container);
-    $root.find('[data-tab]').on('click', function () {
-      const name = $(this).data('tab');
+    const tabKey = TAB_KEY_PREFIX + window.location.pathname;
+
+    function activate($tab) {
+      const name = String($tab.data('tab'));
       $root.find('[data-tab]').removeClass('active');
-      $(this).addClass('active');
+      $tab.addClass('active');
       $root.find('[data-panel]').prop('hidden', true);
       $root.find('[data-panel="' + name + '"]').prop('hidden', false);
+      storageSet(tabKey, name);
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '',
+          window.location.pathname + window.location.search + '#' + name);
+      }
       if (onChange) {
         onChange(name);
       }
+    }
+
+    $root.find('[data-tab]').on('click', function () {
+      activate($(this));
     });
 
-    const initial = String(window.location.hash || '').replace(/^#/, '');
-    if (initial) {
-      const $tab = $root.find('[data-tab]').filter(function () {
-        return String($(this).data('tab')) === initial;
-      });
-      if ($tab.length) {
-        $tab.first().trigger('click');
-      }
+    const hash = String(window.location.hash || '').replace(/^#/, '');
+    const wanted = hash || storageGet(tabKey);
+    if (!wanted) {
+      return;
     }
+    const $tab = $root.find('[data-tab]').filter(function () {
+      return String($(this).data('tab')) === wanted;
+    }).first();
+    if (!$tab.length) {
+      return;
+    }
+    if ($tab.hasClass('active')) {
+      // The page already initializes its default tab.
+      storageSet(tabKey, wanted);
+      return;
+    }
+    activate($tab);
   }
 
   function getCookie(name) {
