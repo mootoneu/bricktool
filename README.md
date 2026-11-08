@@ -1,181 +1,167 @@
 # Brick Tools
 
-Brick tools is a personal web application designed to provide several tools to assist the user to manage his Lego collection.
-This application is expected to be single user and self-hosted.
+Brick Tools is a personal web application designed to provide several tools to assist the user in managing their LEGO collection. This application is expected to be single-user and self-hosted.
 
-The application stack is:
+## Application Stack
 
-- Backend in Java + Spring Boot
-- Frontend in JQuery + D3.js
-- Data is stored in csv files, no cloud, no database
+- **Backend**: Java + Spring Boot
+- **Frontend**: jQuery + D3.js
+- **Data Storage**: CSV files (no cloud, no database)
 
-## Application features
+## Table of Contents
 
-The application features are split into individual web pages.
+- [Application Features](#application-features)
+  - [Landing Page](#landing-page)
+  - [Administration Page](#administration-page)
+  - [BrickOwl Page](#brickowl-page)
+  - [Parts Collection Page](#parts-collection-page)
+  - [Sets Purchase Page](#sets-purchase-page)
+  - [New Sets Page](#new-sets-page)
+  - [Colors](#colors)
+- [API Documentation](#api-documentation)
+- [Data Model](#data-model)
+- [Project Structure](#project-structure)
+- [Setup and Configuration](#setup-and-configuration)
+- [Contributing](#contributing)
+- [License](#license)
 
-All pages have the same header bar, that provides common functionnalities:
+## Application Features
 
-- Link to the feature pages
-- Notifications
+All pages share a common header bar that provides:
+- Links to all feature pages
+- Notification system
 
-### Landing page
+### Landing Page
 
-The landing page is the first page the user land on when starting the app.
-It provides link in a card to all features.
+The landing page is the first page users see when starting the application. It provides links in cards to all available features.
 
-### Administration page
+### Administration Page
 
-The administration page enable the user to perform several operation
+The administration page enables users to perform several operations.
 
-#### Rebrickable update
+#### Rebrickable Update
 
-Rebrickable is a website providing open data about Lego. As Lego release new sets, the rebrickable data is updated.
-BrickTools relies on rebrickable data for common Lego data such as sets, parts, themes, colors...
-This feature aims to enable the user to perform a data update, ensuring rebrickable data is kept up to date.
+Rebrickable is a website providing open data about LEGO. BrickTools relies on Rebrickable data for common LEGO data such as sets, parts, themes, and colors.
 
-Requirements:
+**Requirements:**
+- Displayed in a card in the Administration page
+- Provides an "Update data" button to start the download
+- Displays the date of the last download
+- Button is disabled if data has already been downloaded for the day
+- Shows notification when data is older than a month
 
-- This feature will be displayed in a card in the Administration page.
-- It provide an "update data" button to start the download of the rebrickable data (see [./doc/DataModel.md]).
-- It shall display the date of last download of the rebrickable data.
-- As the Rebrickable terms allows to download the data at most once a day, the "update data" button must be disabled if the data has already been downloaded for the day.
-- When the data is older than a month, a notification will be sent to remind the user to perform the update. Clicking that notification will redirect to this card. This event should be checked at server startup and then once a day.
+#### BrickWatch Sets Official Price Update
 
-#### BrickWatch sets official price update
+BrickWatch is a LEGO price tracking platform. BrickTools maintains a list of official LEGO prices based on BrickWatch data.
 
-BrickWatch is a Lego price tracking platform. Brick tools will maintain a list of official Lego prices based on BrickWatch data stored in external.brickwatch.setprices
-This feature aims to enable the user to perform that data update.
+**Requirements:**
+- User can enter a SetNumber and click "Fetch official price"
+- If the price is already stored, it displays the stored price
+- Otherwise, the price is scraped and stored
+- One-second delay between requests to prevent being banned
 
-Requirements:
+#### Brickonomics Official Price
 
-- This feature will be displayed in a card in the Administration page.
-- The user can enter a SetNumber and click the "Fetch official price" button
-  - If the price is already in setprice it displays the price stored
-  - Else the price is scrapped (see below) and stored in data.bw.setprices csv
+Alternative price source that fetches the retail price from Brickonomics.
 
-##### Scrapping set price data
+**Requirements:**
+- Price is read from: https://brickonomics.net/set/$SETNUMBER-1
+- Request sends cookies: country=fr and currency=EUR
+- At most one request per second is made
 
-Set data can be scrapped with the url <https://www.brickwatch.net/fr-FR/set/$SETNUMBER> where $SETNUMBER correspond to the SetNumber.
-The corresponding price is located in the table after the header "Information sur le prix", in the row starting with "Lego prix conseillé", in the last column.
-A one second delay must be implement to ensure two requests are not performed too fast from one another. This is essential to prevent a ban from BrickWatch.
+### BrickOwl Page
 
-#### Brickonomics official price
+BrickOwl allows purchasing LEGO sets, minifigures, and parts individually. This feature provides tracking of past orders.
 
-The Administration BrickWatch card also has a "Fetch price with brickonomics" button. It fetches the retail price from Brickonomics and saves it in data.bw.setprices csv, replacing any price already stored for the set. It is used instead of BrickWatch because BrickWatch bans scrapers.
+**Tabs:**
+- Statistics: Shows statistics about the orders
+- Update: Button to update data from BrickOwl
+- Orders: List of BrickOwl orders
+- Order Items: Items purchased in the selected order
 
-- The price is read from <https://brickonomics.net/set/$SETNUMBER-1>, in the "Retail price:" entry of the set details.
-- The request sends the cookies `country=fr` and `currency=EUR` so the price is in euros.
-- At most one request per second is made.
+### Parts Collection Page
 
-#### BrickOwl page
+Gathers BrickOwl items purchased across all orders. Shows one row per part with order information.
 
-BrickOwl is a website that allows to purchase Lego sets, minifigs and parts individualy. This feature aims to prodive a tracking of past orders from BrickOwl.
+**Data**: Exposed by GET /api/brickowl/parts
 
-The page should contain several tabs:
+### Sets Purchase Page
 
-- a tab that shows statistics about the orders
-- a tab with a button to update the data from BrickOwl.
-- a tab that displays a list of BrickOwl orders (data.bo.Order)
-- a tab that displays the items purchased in the selected BrickOwl order (data.bo.OrderItems)
+Provides tabs to display purchase data, add/edit purchases, and show statistics.
 
-##### BrickOwl Statistics tabs
+### New Sets Page
 
-This tab presents information about the orders such as:
+Presents recently released sets and a shared wishlist. The catalog is built from data.re.sets for a single release year.
 
-- a card with the total amount, pieces, minifigs and sets purchased.
-- a card with the average/median amount, pieces, price per pieces, price per kg, minifigs and sets purchased.
-- several cards with histograms grouped by Store, showing the respectively the amout, pieces, price per pieces, price per kg, minifigs and sets purchased each year.
-
-##### Update order data from BrickOwl
-
-BrickOwl provide a public API at <https://www.brickowl.com/api_docs>
-
-The GET endpoint <https://api.brickowl.com/v1/order/list> returns the list of BrickOwl orders. If any order have already been retrieved, it must be called with the parameter order_time to retrieve orders that are more recent than the one already retrieved.
-From that list, for each order_id, retrieve the data at:
-
- 1. <https://api.brickowl.com/v1/order/view> to get the full data of an order. The result must be stored in the data model data.bo.Order
- 2. <https://api.brickowl.com/v1/order/items> to get the list of BrickOwl items in that order. The results must be stored in the data model data.bo.OrderItem
-
-### Parts Collection page
-
-The Parts Collection page gathers the BrickOwl items purchased across all orders. Its BrickOwl tab shows one row per part, grouped by BrickOwl item (BOID), type and condition. Each row displays the part information, the list of orders containing it (each order id links to the BrickOwl order page) and the summed quantity over all those orders. Columns are sortable; the Orders column sorts by the number of orders containing the part.
-
-The data is exposed by `GET /api/brickowl/parts`.
-
-### Sets Purchase page
-
-The Sets Purchase page provides various tabs to display the purchase data, add and edit purchase data and show statistics about purchases.
-
-#### Sets Purchase list
-
-This tab shows the list of all purchases made by the user.
-It displays a table whose rows represent a set bought.
-Columns are sortable
-
-The columns are:
-
-| Column Name | Source | Unit/Format |
-| :--- | :--- |
-| Purchase Id | data.bt.PurchasedSet.Id | |
-| Set Number | data.bt.PurchasedSet.SetNumber| |
-| Name | data.re.sets.name| |
-| Total parts | data.re.sets.num_parts| |
-| Year | data.re.sets.year| |
-| Theme | data.re.themes.name | |
-| Official Price | data.bw.SetPrice.LegoPrice | € |
-| Price | data.bt.PurchasedSet.PurchasePrice | € |
-| Promo | data.bt.PurchasedSet.PurchasePrice/data.bw.SetPrice.LegoPrice| % |
-| Date | data.bt.PurchasedSet.PurchaseDate  | yyyy/MM/dd |
-| Vendor | data.bt.PurchasedSet.Vendor | colored label (enumeration) |
-| Buyer | data.bt.PurchasedSet.BroughtBy | colored label (enumeration) |
-| Owner | data.bt.PurchasedSet.Owner | colored label (enumeration) |
-| Parts missing | data.bt.PurchasedSet.PartMissings | |
-| Complete | 1 - (data.bt.PurchasedSet.PartMissings / data.re.sets.num_parts) | % |
-| Owned ? | data.bt.PurchasedSet.Owned | checkbox |
-| Reason | data.bt.PurchasedSet.Reason | |
-| Sites | | Open button showing the external websites for the set |
-| Image | data/bt/setsimg/$SetNumber.$Ext, downloaded once from data.re.sets.img_url | image |
-
-Vendor, Buyer and Owner are enumerations (see [./doc/DataModel.md](./doc/DataModel.md#enumerations)). The add/edit form proposes the existing values and accepts new ones.
-
-The Open button in the Sites column opens a modal showing the set name, image, theme, number, parts, official price and year, followed by a Save to wishlist or Buy button and the websites that document the set: Lego, Lego instructions, Rebrickable, BrickLink, BrickOwl, BrickWatch, Brickonomics, Amazon, Fnac and CDiscount. Each website is a clickable image that opens the set page in a new tab. The action button saves the set to the wishlist, or buys and removes it from the wishlist when it is already wishlisted.
-
-To join data:
-
-- data.bt.PurchasedSet.SetNumber = data.bw.SetPrice.SetNumber
-- data.bt.PurchasedSet.SetNumber + '-1' = data.re.sets.set_num
-- data.re.sets.theme_id = data.re.themes.id
-
-### New Sets page
-
-The New Sets page presents recently released sets and a shared wishlist. The catalogue is built from data.re.sets for a single release year. The current year is selected by default. A year selector with previous and next buttons at the top of the page switches between years; clicking the selected year opens a descending list of years from the current year down to 1970. The active filters are kept when the year changes, so a theme or price filter continues to apply to the newly selected year.
-
-Themes whose `hidden` column is true in data/bt/themes.csv are excluded from the catalogue: neither their theme card nor their sets are shown. This keeps utility and promotional themes (gear, books, storage, …) out of the page. Hidden themes are still resolved for existing wishlist entries, so an entry added before a theme was hidden keeps its name, theme image and price.
-
-The page has three tabs:
-
-- **Themes**: all themes having sets in the selected year, ordered alphabetically. Each theme is a card showing the theme image on its data.bt.themes.color_primary background. When the theme has no image, its name is displayed instead. Clicking a card opens the Sets tab filtered on that theme.
-- **Sets**: all sets of the selected year as cards with the set image, name, number, year, total parts, official price, theme image and a button to add or remove the set from the wishlist. The cards can be filtered by name, theme and official price, and by status: New, Purchased and Wishlisted are all shown by default, and each can be hidden independently. Clicking a card (outside its wishlist button) opens the same external websites modal as the Sets Purchase list. Wishlisted sets have a yellow card and purchased sets a green card; a set that is both is shown green.
-- **Wishlist**: the wishlisted sets in a table with name, year, total parts, theme image, official price, member, buyer, priority and wishlist date. The buyer is the family member who should buy the set in the future and is optional. The table can be filtered by name, theme, member, priority and official price. Each row can be edited, deleted, or bought: Buy records the set as a purchase using its official price, today's date and the wishlist member as owner, then removes it from the wishlist and opens the Sets Purchase list.
-
-The wishlist data model is described in [./doc/DataModel.md](./doc/DataModel.md#wishlist-data). Official prices come from data.bw.SetPrice; a set without a stored official price shows a dash until its price is fetched from the Administration page.
+**Features:**
+- Year selector with previous and next buttons
+- Themes tab with theme cards
+- Sets tab with set cards
+- Wishlist tab with wishlist table
 
 ### Colors
 
-Colors are shared by all pages through `color.js`:
+Colors are shared by all pages through color.js with functions for resolving and displaying color information.
 
-- `BrickColor.getLegoColorId(ext_system, ext_id)` resolves an identifier from an external system (`LE`, `BO`, `BL`, `LD`, …) to the Lego color id used by the application. It reads data/re/color_mappings.csv and caches the mapping.
-- `BrickColor.getColor(color_id)` resolves a color object (`id`, `name`, `rgb`, `isTrans`, `numParts`, `numSets`, `y1`, `y2`) from data/re/colors.csv. The file is cached after the first read.
-- Both methods return a promise, so they can be called before any color data has been loaded.
-- `BrickColor.openColorInfo(color_id)` opens a modal showing a chip with the color and a table of the Id and Name used by Lego (LE), BrickOwl (BO), BrickLink (BL) and LDraw (LD).
-- `BrickColor.openColorPicker(current_color_id, onSelect)` opens a modal showing the currently selected color with its chip and information, followed by a searchable list of colors. Confirming a choice calls `onSelect` with the selected color object.
+**API Endpoints:**
+- GET /api/colors
+- GET /api/color-mappings
 
-The colors are exposed by `GET /api/colors` and the external identifiers by `GET /api/color-mappings`. Both reference files are read once and kept in memory by the server.
+## API Documentation
 
-### API documentation
+The REST API is documented with OpenAPI (springdoc).
 
-The REST API is documented with OpenAPI (springdoc). When the application is running:
+- **Swagger UI**: http://localhost:8780/swagger-ui/index.html
+- **OpenAPI specification**: http://localhost:8780/v3/api-docs
 
-- Swagger UI: `http://localhost:8780/swagger-ui/index.html`
-- OpenAPI specification: `http://localhost:8780/v3/api-docs`
+## Data Model
 
+For detailed information about the data models used by BrickTools, see [DataModel.md](./doc/DataModel.md).
+
+## Project Structure
+
+```
+bricktools/
+├── src/                    # Application source code
+│   ├── main/
+│   │   ├── java/           # Java backend code
+│   │   ├── resources/      # Configuration and static resources
+│   │   │   ├── static/     # Frontend assets
+│   │   │   │   ├── js/      # JavaScript files
+│   │   │   │   ├── css/     # CSS stylesheets
+│   │   │   │   └── images/  # Image assets
+│   │   │   └── ...         # Other configuration files
+│   │   └── ...
+│   └── ...
+├── data/                   # CSV data files
+│   ├── bt/                 # BrickTools data
+│   ├── bo/                 # BrickOwl data
+│   ├── bw/                 # BrickWatch data
+│   ├── re/                 # Rebrickable data
+│   └── ...
+├── doc/                    # Documentation
+│   └── DataModel.md        # Data model documentation
+└── README.md               # This file
+```
+
+## Setup and Configuration
+
+To set up and run BrickTools:
+
+1. Clone the repository
+2. Ensure Java and Maven are installed
+3. Run `mvn spring-boot:run` to start the application
+4. Access the application at http://localhost:8780
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+- Follow the existing code style
+- Add appropriate comments to explain complex logic
+- Update documentation as needed
+- Test your changes thoroughly
+
+## License
+
+This project is for personal use and is self-hosted.
