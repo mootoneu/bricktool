@@ -234,6 +234,7 @@
    */
   function renderSets(preserve) {
     const target = preserve ? BrickTools.NewSetsShared.getRenderedSetCount() : 0;
+    const SET_PAGE_SIZE = BrickTools.NewSetsShared.SET_PAGE_SIZE;
     const filteredSetRows = filteredSets();
     BrickTools.NewSetsShared.setFilteredSetRows(filteredSetRows);
     BrickTools.NewSetsShared.setRenderedSetCount(0);

@@ -87,7 +87,7 @@
    * @returns {jQuery} Promise
    */
   function loadSetInventory(setNumber, successMessage) {
-    const request = ++BrickTools.PurchasesShared.getSetInventoryRequest();
+    const request = 1 + BrickTools.PurchasesShared.getSetInventoryRequest();
     BrickTools.PurchasesShared.setSetInventoryRequest(request);
     if (!setNumber) {
       BrickTools.PurchasesShared.setSetInventory([]);

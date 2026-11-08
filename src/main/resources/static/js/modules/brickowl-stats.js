@@ -102,7 +102,7 @@
       const d = byKey.get(store + '\u0000' + year);
       return d ? d[metric.key] || 0 : 0;
     };
-    const groups = years.map(function(year) ({
+    const groups = years.map(year => ({
       year: year,
       bars: stores.map(function(store) { 
         return { store: store, year: year, value: valueOf(store, year) }; 
