@@ -315,6 +315,7 @@
     }
     const $modal = ensureSiteModal();
     const request = ++siteRequest;
+    $modal.attr('data-set-number', value);
     siteContext = { setNumber: value, details: details || {}, entry: null };
     renderSetDetails(details, value);
     renderSiteLinks(value);

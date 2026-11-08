@@ -602,6 +602,36 @@ $(function () {
     BrickSets.openSetSites(setNumber, findSet(setNumber));
   });
 
+  function navigateSetModal(step) {
+    const $modal = $('#set-sites-modal');
+    if (!$modal.length || $modal.prop('hidden') || !$('[data-tab="sets"]').hasClass('active')) {
+      return false;
+    }
+    const current = String($modal.attr('data-set-number') || '');
+    const index = filteredSetRows.findIndex(set => String(set.setNumber) === current);
+    if (index === -1) {
+      return false;
+    }
+    const target = filteredSetRows[index + step];
+    if (!target) {
+      return false;
+    }
+    BrickSets.openSetSites(target.setNumber, findSet(target.setNumber));
+    return true;
+  }
+
+  $(document).on('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+      return;
+    }
+    if ($(e.target).closest('input, select, textarea, [contenteditable="true"]').length) {
+      return;
+    }
+    if (navigateSetModal(e.key === 'ArrowLeft' ? -1 : 1)) {
+      e.preventDefault();
+    }
+  });
+
   $('#set-cards').on('click', '.wishlist-toggle', function () {
     const setNumber = $(this).attr('data-set-number');
     const entry = wishlistBySet.get(setNumber);
