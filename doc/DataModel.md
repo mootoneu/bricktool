@@ -445,6 +445,19 @@ Relationships:
 - data.bt.PartColorUrl.PartNumber = data.re.parts.part_num
 - data.bt.PartColorUrl.ColorId = data.re.colors.id
 
+### Set Inventory data
+
+The data.bt.SetInventory. It has the following fields:
+
+| Field Name | Type | Description |
+| ---------- | ---------- | ---------- |
+| SetNumber | String | Lego set number (FK) |
+| PartNumber | String | Lego part number (FK) |
+| ColorId | integer | Lego color number (FK) |
+| ExpectedQut | integer | Quantity in the set |
+| ActualQut | integer | Total quantity in stock (should be <= ExpectedQut) |
+
+
 ## BrickOwl data
 
 BrickOwl provide a public API at <https://www.brickowl.com/api_docs>
