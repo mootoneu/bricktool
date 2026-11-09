@@ -7,6 +7,7 @@ This document describes the data models used by BrickTools and their relationshi
 - [LEGO Data Providers](#lego-data-providers)
 - [Data Storage Structure](#data-storage-structure)
 - [Rebrickable Data](#rebrickable-data)
+- [LEGO Data](#lego-data)
 - [BrickWatch Data](#brickwatch-data)
 - [BrickTools Data](#bricktools-data)
 - [BrickOwl Data](#brickowl-data)
@@ -329,6 +330,34 @@ parts
 part_categories
 └── parts
 ```
+
+---
+
+## LEGO Data
+
+Official data published by LEGO.
+
+### Pick-a-Brick Part Prices
+
+#### `data.le.PabPartPrice`
+
+Stores the Pick a Brick price of a LEGO part design in a given color.
+
+**Storage**: `data/le/pab_part_prices.csv`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| DesignId | string | LEGO design ID (part ID) |
+| ColorId | integer | LEGO color ID. Can be empty. |
+| Price | decimal | Pick a Brick price in euros |
+
+**Notes:**
+- The file has no unique key: the same `(DesignId, ColorId)` pair can appear several times, possibly with different prices
+- Every row is kept as published by LEGO
+
+**Relationships:**
+- `data.le.PabPartPrice.DesignId` = `data.re.parts.part_num` when the part exists in Rebrickable
+- `data.le.PabPartPrice.ColorId` = `data.bt.Color.LegoId` (which maps to `data.re.colors.id` through `data.bt.Color.ReId`)
 
 ---
 

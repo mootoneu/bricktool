@@ -5,6 +5,7 @@ import com.bricktools.brickonomics.BrickonomicsService;
 import com.bricktools.brickowl.BrickOwlService;
 import com.bricktools.brickwatch.BrickWatchService;
 import com.bricktools.color.ColorService;
+import com.bricktools.le.PabPartPriceService;
 import com.bricktools.notification.NotificationService;
 import com.bricktools.notification.NotificationService.Notification;
 import com.bricktools.other.OtherImageService;
@@ -77,6 +78,7 @@ public class ApiController {
   private final WishlistService wishlist;
   private final ColorService colors;
   private final PabService pab;
+  private final PabPartPriceService pabPartPrices;
   private final PartService partService;
   private final PartImageService partImages;
 
@@ -86,7 +88,7 @@ public class ApiController {
                        NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab,
-                       PartService partService, PartImageService partImages) {
+                       PabPartPriceService pabPartPrices, PartService partService, PartImageService partImages) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -103,6 +105,7 @@ public class ApiController {
     this.wishlist = wishlist;
     this.colors = colors;
     this.pab = pab;
+    this.pabPartPrices = pabPartPrices;
     this.partService = partService;
     this.partImages = partImages;
   }
@@ -670,6 +673,33 @@ public class ApiController {
       @Parameter(name = "id", description = "PaB part ID") @PathVariable int id,
       @RequestBody PabPartRequest request) throws IOException {
     pab.updatePart(id, request);
+  }
+
+  @GetMapping(path = "/le/pab-part-prices", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List PaB part prices",
+      description = "Returns every Pick a Brick part price stored in data/le/pab_part_prices.csv."
+  )
+  public List<Map<String, Object>> pabPartPrices() throws IOException {
+    return pabPartPrices.prices();
+  }
+
+  @GetMapping(path = "/le/pab-part-prices/{designId}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get PaB part prices by design ID",
+      description = "Returns the Pick a Brick prices of a LEGO design ID from "
+          + "data/le/pab_part_prices.csv."
+  )
+  @ApiResponse(responseCode = "200", description = "Prices returned")
+  @ApiResponse(responseCode = "404", description = "No price found for the design ID")
+  public ResponseEntity<List<Map<String, Object>>> pabPartPrices(
+      @Parameter(name = "designId", description = "LEGO design ID (part ID)") @PathVariable String designId)
+      throws IOException {
+    List<Map<String, Object>> prices = pabPartPrices.prices(designId);
+    if (prices.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(prices);
   }
 
   @GetMapping(path = "/parts/categories", produces = MediaType.APPLICATION_JSON_VALUE)
