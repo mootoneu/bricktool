@@ -20,6 +20,7 @@
         BrickTools.NewSetsCatalogue.indexWishlist();
         BrickTools.NewSetsShared.renderThemeFilters();
         BrickTools.NewSetsCatalogue.renderSets(true);
+        renderWishlistFilterOptions();
         renderWishlist();
       })
       .fail(function(xhr) { BrickTools.NewSetsShared.report('#newsets-msg', BrickTools.errorOf(xhr)); });
@@ -35,14 +36,56 @@
     const sortKey = BrickTools.NewSetsShared.getWishlistSortKey();
     const sortDir = BrickTools.NewSetsShared.getWishlistSortDir();
     
+    // Get filter values
+    const nameFilter = BrickTools.NewSetsShared.textValue('#wl-name').toLowerCase();
+    const themeFilter = BrickTools.NewSetsShared.textValue('#wl-theme');
+    const memberFilter = BrickTools.NewSetsShared.textValue('#wl-member-filter');
+    const priorityFilter = BrickTools.NewSetsShared.textValue('#wl-priority-filter');
+    const priceMin = BrickTools.NewSetsShared.numberValue('#wl-price-min');
+    const priceMax = BrickTools.NewSetsShared.numberValue('#wl-price-max');
+    
+    // Filter wishlist
+    let filtered = wishlist.filter(function(entry) {
+      // Name filter
+      if (nameFilter) {
+        const name = (entry.name || '').toLowerCase();
+        const setNumber = (entry.setNumber || '').toLowerCase();
+        if (!name.includes(nameFilter) && !setNumber.includes(nameFilter)) {
+          return false;
+        }
+      }
+      // Theme filter
+      if (themeFilter && entry.theme !== themeFilter) {
+        return false;
+      }
+      // Member filter
+      if (memberFilter && entry.member !== memberFilter) {
+        return false;
+      }
+      // Priority filter
+      if (priorityFilter && entry.priority !== priorityFilter) {
+        return false;
+      }
+      // Price filter
+      if (entry.officialPrice != null) {
+        if (priceMin != null && entry.officialPrice < priceMin) {
+          return false;
+        }
+        if (priceMax != null && entry.officialPrice > priceMax) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
     const $tbody = $('#wishlist tbody').empty();
-    if (wishlist.length === 0) {
-      $tbody.append('<tr><td colspan="8" class="muted">No sets in wishlist yet.</td></tr>');
+    if (filtered.length === 0) {
+      $tbody.append('<tr><td colspan="12" class="muted">No sets match the filters.</td></tr>');
       return;
     }
 
     // Sort wishlist
-    const sorted = wishlist.slice().sort(function(a, b) {
+    const sorted = filtered.slice().sort(function(a, b) {
       const key = sortKey;
       const x = a[key] == null ? '' : a[key];
       const y = b[key] == null ? '' : b[key];
@@ -60,28 +103,92 @@
     sorted.forEach(function(entry) {
       const $tr = $('<tr></tr>');
       
+      // Image column
+      const $imageTd = $('<td></td>');
+      if (entry.imageUrl) {
+        $imageTd.append($('<img class="set-img" alt="" loading="lazy">').attr('src', entry.imageUrl));
+      }
+      $tr.append($imageTd);
+      
       // Set number
       $tr.append($('<td></td>').text(entry.setNumber || ''));
       
       // Set name
       $tr.append($('<td></td>').text(entry.name || ''));
       
+      // Year
+      $tr.append($('<td></td>').text(entry.year || ''));
+      
+      // Total parts
+      $tr.append($('<td></td>').text(entry.numParts == null ? '' : fmt.number(entry.numParts)));
+      
       // Theme
       $tr.append($('<td></td>').text(entry.theme || ''));
       
-      // Date
-      $tr.append($('<td></td>').text(entry.wishlistDate || ''));
+      // Official Price
+      $tr.append($('<td></td>').text(entry.officialPrice == null ? '' : fmt.money(entry.officialPrice)));
       
-      // Member
-      const member = BrickTools.NewSetsShared.textValue('#wl-member');
-      const showMember = !member || entry.member === member;
-      $tr.append($('<td></td>').text(showMember ? (entry.member || '') : ''));
+      // Member (with image)
+      const memberFilter = BrickTools.NewSetsShared.textValue('#wl-member-filter');
+      const showMember = !memberFilter || entry.member === memberFilter;
+      if (showMember && entry.member) {
+        const memberImageUrl = entry.memberImageUrl;
+        const memberColor = entry.memberColor;
+        const $memberTd = $('<td></td>');
+        if (memberImageUrl) {
+          const $image = $('<img loading="lazy">')
+            .addClass('person-img')
+            .attr('src', memberImageUrl)
+            .attr('alt', entry.member)
+            .attr('title', entry.member);
+          if (memberColor) {
+            $image.css('border-color', memberColor);
+          }
+          $memberTd.append($image);
+        } else {
+          const $tag = BrickTools.tag(entry.member);
+          if (memberColor && $tag) {
+            $tag.css('border', '2px solid ' + memberColor);
+          }
+          $memberTd.append($tag);
+        }
+        $tr.append($memberTd);
+      } else {
+        $tr.append($('<td></td>'));
+      }
+      
+      // Buyer (with image)
+      if (entry.buyer) {
+        const buyerImageUrl = entry.buyerImageUrl;
+        const buyerColor = entry.buyerColor;
+        const $buyerTd = $('<td></td>');
+        if (buyerImageUrl) {
+          const $image = $('<img loading="lazy">')
+            .addClass('person-img')
+            .attr('src', buyerImageUrl)
+            .attr('alt', entry.buyer)
+            .attr('title', entry.buyer);
+          if (buyerColor) {
+            $image.css('border-color', buyerColor);
+          }
+          $buyerTd.append($image);
+        } else {
+          const $tag = BrickTools.tag(entry.buyer);
+          if (buyerColor && $tag) {
+            $tag.css('border', '2px solid ' + buyerColor);
+          }
+          $buyerTd.append($tag);
+        }
+        $tr.append($buyerTd);
+      } else {
+        $tr.append($('<td></td>'));
+      }
       
       // Priority
       $tr.append($('<td></td>').text(entry.priority || ''));
       
-      // Buyer
-      $tr.append($('<td></td>').text(entry.buyer || ''));
+      // Date
+      $tr.append($('<td></td>').text(entry.wishlistDate || ''));
       
       // Action buttons
       const $actions = $('<td class="row-actions"></td>');
@@ -100,7 +207,20 @@
       $tbody.append($tr);
     });
 
-    $('#wl-summary').text(wishlist.length + ' set(s) in wishlist');
+    $('#wl-summary').text(filtered.length + ' of ' + wishlist.length + ' set(s) in wishlist');
+  }
+
+  /**
+   * Render wishlist filter dropdowns (member and priority)
+   */
+  function renderWishlistFilterOptions() {
+    const options = BrickTools.NewSetsShared.getOptions();
+    if (options.members && options.members.length > 0) {
+      BrickTools.NewSetsShared.fillSelect('#wl-member-filter', options.members, true);
+    }
+    if (options.priorities && options.priorities.length > 0) {
+      BrickTools.NewSetsShared.fillSelect('#wl-priority-filter', options.priorities, true);
+    }
   }
 
   /**
@@ -215,9 +335,21 @@
    */
   function init() {
     // Wishlist filter
-    $('#wl-member').on('change', renderWishlist);
+    $('#wl-name').on('input', renderWishlist);
+    $('#wl-member-filter').on('change', renderWishlist);
     $('#wl-theme').on('change', renderWishlist);
-    $('#wl-priority').on('change', renderWishlist);
+    $('#wl-priority-filter').on('change', renderWishlist);
+    $('#wl-price-min').on('input', renderWishlist);
+    $('#wl-price-max').on('input', renderWishlist);
+    $('#wl-reset').on('click', function() {
+      $('#wl-name').val('');
+      $('#wl-theme').val('');
+      $('#wl-member-filter').val('');
+      $('#wl-priority-filter').val('');
+      $('#wl-price-min').val('');
+      $('#wl-price-max').val('');
+      renderWishlist();
+    });
 
     // Wishlist table sort
     $('#wishlist thead').on('click', 'th[data-key]', function() {

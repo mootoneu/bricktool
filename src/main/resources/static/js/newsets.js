@@ -17,6 +17,7 @@ $(function () {
       BrickTools.NewSetsCatalogue.renderSets(!BrickTools.NewSetsShared.getForceSetReset());
       BrickTools.NewSetsShared.setForceSetReset(false);
     } else if (name === 'wishlist') {
+      BrickTools.NewSetsWishlist.renderWishlistFilterOptions();
       BrickTools.NewSetsWishlist.renderWishlist();
     } else if (name === 'themes') {
       BrickTools.NewSetsCatalogue.renderThemes();

@@ -295,6 +295,7 @@
       renderThemeFilters();
       renderThemes();
       renderSets();
+      BrickTools.NewSetsWishlist.renderWishlistFilterOptions();
       BrickTools.NewSetsWishlist.renderWishlist();
       BrickTools.NewSetsShared.report('#newsets-msg', '');
     }).fail(function(xhr) {
@@ -344,7 +345,20 @@
     });
 
     // Set up set filters
-    $('#newsets-filters').on('input change', '#ns-name, #ns-theme, #ns-price-min, #ns-price-max, #ns-new, #ns-purchased, #ns-wishlisted', function() {
+    $('#set-filters').on('input change', '#ns-name, #ns-theme, #ns-price-min, #ns-price-max, #ns-new, #ns-purchased, #ns-wishlisted', function() {
+      renderSets();
+    });
+
+    // Set up reset filters button
+    $('#ns-reset').on('click', function() {
+      $('#ns-name').val('');
+      $('#ns-theme').val('');
+      $('#ns-price-min').val('');
+      $('#ns-price-max').val('');
+      $('#ns-new').prop('checked', true);
+      $('#ns-purchased').prop('checked', true);
+      $('#ns-wishlisted').prop('checked', true);
+      BrickTools.NewSetsShared.setForceSetReset(true);
       renderSets();
     });
 
@@ -354,8 +368,20 @@
       renderSets();
     });
 
+    // Set card click handler - open set modal
+    $('#set-cards').on('click', '.set-card', function() {
+      const setNumber = $(this).attr('data-set-number');
+      const catalog = BrickTools.NewSetsShared.getCatalog();
+      const set = catalog.sets.find(function(s) {
+        return String(s.setNumber) === String(setNumber);
+      }) || null;
+      BrickSets.openSetSites(setNumber, set);
+    });
+
     // Wishlist toggle buttons
-    $('#set-cards').on('click', '.wishlist-toggle', function() {
+    $('#set-cards').on('click', '.wishlist-toggle', function(e) {
+      // Stop propagation to prevent set-card click handler from firing
+      e.stopPropagation();
       const $button = $(this);
       const setNumber = $button.attr('data-set-number');
       const setName = $button.attr('data-set-name');

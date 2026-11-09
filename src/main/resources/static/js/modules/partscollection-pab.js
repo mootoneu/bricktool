@@ -241,7 +241,8 @@
         .text((purchase.purchaseDate || '') + ' (#' + purchase.id + ')'));
     });
     $select.prop('disabled', false);
-    if (!findPabPurchase(selectedPabPurchaseId)) {
+    // Only reset selectedPabPurchaseId if it's not set
+    if (!selectedPabPurchaseId) {
       selectedPabPurchaseId = String(pabPurchases[0].id);
     }
     $select.val(selectedPabPurchaseId);
@@ -318,7 +319,9 @@
 
     $('#pab-purchases').on('click', '.pab-parts-open', function () {
       selectedPabPurchaseId = String($(this).attr('data-pab-purchase-id'));
+      // Set the dropdown value immediately so it's correct when the tab opens
       $('.tabs [data-tab="pab-parts"]').trigger('click');
+      $('#pab-parts-purchase').val(selectedPabPurchaseId);
     });
 
     $('#pab-purchase-form').on('submit', function (event) {

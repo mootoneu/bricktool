@@ -25,9 +25,11 @@ $(function () {
     }
     if (name === 'pab-parts') {
       if (BrickTools.PartsCollectionPab.isPabLoaded()) {
+        BrickTools.PartsCollectionPab.populatePabPurchaseSelect();
         BrickTools.PartsCollectionPab.loadPabParts();
       } else {
         BrickTools.PartsCollectionPab.loadPabPurchases(function () {
+          BrickTools.PartsCollectionPab.populatePabPurchaseSelect();
           BrickTools.PartsCollectionPab.loadPabParts();
         });
       }

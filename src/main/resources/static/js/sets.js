@@ -107,6 +107,31 @@
     }
   }
 
+  function navigateSet(direction) {
+    if (!siteContext || !siteContext.setNumber) {
+      return;
+    }
+    // Check if we're on the newsets page with filtered sets
+    if (typeof BrickTools.NewSetsShared !== 'undefined') {
+      const filteredSets = BrickTools.NewSetsShared.getFilteredSetRows();
+      if (filteredSets && filteredSets.length > 0) {
+        const currentIndex = filteredSets.findIndex(function(set) {
+          return String(set.setNumber) === String(siteContext.setNumber);
+        });
+        if (currentIndex !== -1) {
+          const nextIndex = currentIndex + direction;
+          if (nextIndex >= 0 && nextIndex < filteredSets.length) {
+            const nextSet = filteredSets[nextIndex];
+            openSetSites(nextSet.setNumber, nextSet);
+          }
+        }
+        return;
+      }
+    }
+    // Fallback for other contexts (if not on newsets page)
+    // This would require a different approach for other pages
+  }
+
   function ensureSiteModal() {
     if ($siteModal) {
       return $siteModal;
@@ -140,8 +165,17 @@
     });
     $siteModal.on('click', '.modal-close', closeSetSites);
     $(document).on('keydown', function (e) {
-      if (e.key === 'Escape' && !$siteModal.prop('hidden')) {
+      if (!$siteModal || $siteModal.prop('hidden')) {
+        return;
+      }
+      if (e.key === 'Escape') {
         closeSetSites();
+      } else if (e.key === 'ArrowLeft') {
+        navigateSet(-1);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight') {
+        navigateSet(1);
+        e.preventDefault();
       }
     });
     $('body').append($siteModal);
