@@ -345,7 +345,10 @@
     });
 
     // Set up set filters
-    $('#set-filters').on('input change', '#ns-name, #ns-theme, #ns-price-min, #ns-price-max, #ns-new, #ns-purchased, #ns-wishlisted', function() {
+    $('#ns-name, #ns-theme, #ns-price-min, #ns-price-max').on('input', function() {
+      renderSets();
+    });
+    $('#ns-new, #ns-purchased, #ns-wishlisted').on('change', function() {
       renderSets();
     });
 

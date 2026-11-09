@@ -334,6 +334,9 @@
    * Initialize the wishlist module
    */
   function init() {
+    // Wishlist filter - populate filter options
+    renderWishlistFilterOptions();
+
     // Wishlist filter
     $('#wl-name').on('input', renderWishlist);
     $('#wl-member-filter').on('change', renderWishlist);
@@ -348,6 +351,7 @@
       $('#wl-priority-filter').val('');
       $('#wl-price-min').val('');
       $('#wl-price-max').val('');
+      renderWishlistFilterOptions();
       renderWishlist();
     });
 
