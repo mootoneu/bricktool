@@ -20,6 +20,7 @@
     <nav class="tabs">
       <button type="button" data-tab="statistics" class="active">Statistics</button>
       <button type="button" data-tab="list">Purchases</button>
+      <button type="button" data-tab="sets">Sets</button>
       <button type="button" data-tab="set-inventory">Set Inventory</button>
     </nav>
 
@@ -93,6 +94,29 @@
       </div>
     </section>
 
+    <section data-panel="sets" hidden>
+      <div id="ps-filters" class="filters">
+        <label>Purchase year
+          <span class="year-selector" role="group" aria-label="Purchase year">
+            <button type="button" id="ps-year-prev" class="btn secondary" title="Previous year"
+              aria-label="Previous year">&#8249;</button>
+            <select id="ps-year-value" class="year-selector-value" aria-label="Purchase year"></select>
+            <button type="button" id="ps-year-next" class="btn secondary" title="Next year"
+              aria-label="Next year">&#8250;</button>
+          </span>
+        </label>
+        <label>Name <input id="ps-name" type="search" placeholder="Contains…" autocomplete="off"></label>
+        <label>Theme <select id="ps-theme"><option value="">All</option></select></label>
+        <label>Official price min <input id="ps-price-min" type="number" min="0" step="0.01" placeholder="Min"></label>
+        <label>Official price max <input id="ps-price-max" type="number" min="0" step="0.01" placeholder="Max"></label>
+        <div class="filter-actions">
+          <button type="button" id="ps-reset" class="btn secondary">Reset filters</button>
+        </div>
+      </div>
+      <p id="ps-summary" class="muted"></p>
+      <div id="ps-cards" class="set-cards"></div>
+    </section>
+
     <section data-panel="set-inventory" hidden>
       <div id="set-inventory-filters" class="filters set-inventory-toolbar">
         <label>Set <select id="set-inventory-set"><option value="">Select a set…</option></select></label>
@@ -155,7 +179,9 @@
   <script src="js/common.js"></script>
   <script src="js/modules/part-info.js"></script>
   <script src="js/sets.js"></script>
+  <script src="js/modules/newsets-shared.js"></script>
   <script src="js/modules/purchases-shared.js"></script>
+  <script src="js/modules/purchases-sets.js"></script>
   <script src="js/modules/purchases-table.js"></script>
   <script src="js/modules/purchases-stats.js"></script>
   <script src="js/modules/purchases-inventory.js"></script>

@@ -164,6 +164,7 @@
         BrickTools.PurchasesShared.populateFilterOptions();
         render();
         BrickTools.PurchasesStats.renderStatistics();
+        BrickTools.PurchasesSets.render();
         BrickTools.PurchasesInventory.populateSetInventorySets();
         const pendingSetInventory = BrickTools.PurchasesShared.getPendingSetInventory();
         if (pendingSetInventory) {

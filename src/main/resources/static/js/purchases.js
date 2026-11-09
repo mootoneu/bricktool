@@ -12,10 +12,13 @@ $(function () {
   BrickTools.PurchasesTable.init();
   BrickTools.PurchasesStats.init();
   BrickTools.PurchasesInventory.init();
+  BrickTools.PurchasesSets.init();
 
   // Tab initialization
   BrickTools.initTabs('main', function(name) {
-    if (name === 'set-inventory') {
+    if (name === 'sets') {
+      BrickTools.PurchasesSets.render();
+    } else if (name === 'set-inventory') {
       BrickTools.PurchasesInventory.ensureSetInventoryLoaded();
     }
   });
