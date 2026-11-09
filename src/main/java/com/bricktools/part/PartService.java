@@ -218,6 +218,18 @@ public class PartService {
       }
     }
 
+    int categoryId = main == null
+        ? toInt(part.get("part_cat_id")) : toInt(main.get("CategoryId"));
+    String categoryName = "";
+    boolean categoryHidden = false;
+    for (Map<String, String> category : Csv.read(categoriesFile)) {
+      if (String.valueOf(categoryId).equals(clean(category.get("Id")))) {
+        categoryName = clean(category.get("Name"));
+        categoryHidden = isTrue(category.get("Hidden"));
+        break;
+      }
+    }
+
     Integer stars = main == null ? null : toInt(main.get("Stars"));
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("partNumber", key);
@@ -226,7 +238,9 @@ public class PartService {
     result.put("hasAlternates", hasAlternates);
     result.put("stars", stars == null ? 0 : stars);
     result.put("inMainParts", main != null);
-    result.put("categoryId", main == null ? toInt(part.get("part_cat_id")) : toInt(main.get("CategoryId")));
+    result.put("categoryId", categoryId);
+    result.put("categoryName", categoryName);
+    result.put("categoryHidden", categoryHidden);
     return result;
   }
 

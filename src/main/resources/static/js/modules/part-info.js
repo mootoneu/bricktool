@@ -59,6 +59,7 @@
           '<div class="part-info-top">' +
             '<div id="part-info-image" class="part-info-image"></div>' +
             '<div class="part-info-details">' +
+              '<div id="part-info-category" class="part-info-category"></div>' +
               '<div id="part-info-stars" class="part-info-stars"></div>' +
               '<div>' +
                 '<button type="button" id="part-info-add" class="btn">Add to collection</button>' +
@@ -86,6 +87,38 @@
     });
     $('body').append($modal);
     return $modal;
+  }
+
+  function showInExplorer(categoryId, partNumber) {
+    if (categoryId == null || categoryId === '') {
+      return;
+    }
+    const explorer = BrickTools.PartsCollectionExplorer;
+    if (explorer && $('main [data-tab="explorer"]').length) {
+      close();
+      $('main [data-tab="explorer"]').trigger('click');
+      explorer.showPart(categoryId, partNumber);
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set('explorerCategory', categoryId);
+    if (partNumber) {
+      params.set('explorerPart', partNumber);
+    }
+    window.location.href = 'partscollection.html?' + params.toString() + '#explorer';
+  }
+
+  function renderCategory() {
+    const $host = $('#part-info-category').empty();
+    if (!info || !info.categoryName || info.categoryHidden) {
+      return;
+    }
+    $host.append($('<button type="button" class="part-category-chip"></button>')
+      .text(info.categoryName)
+      .attr('title', 'Show ' + info.categoryName + ' in Part explorer')
+      .on('click', function () {
+        showInExplorer(info.categoryId, info.partNumber);
+      }));
   }
 
   function renderImage() {
@@ -186,6 +219,7 @@
       'Has alternates: ' + (info.hasAlternates ? 'Yes' : 'No'),
       'Material: ' + (info.material || '—')];
     $('#part-info-sub').text(meta.join(' · '));
+    renderCategory();
     renderImage();
     renderStars();
     renderColors();
@@ -260,6 +294,7 @@
     const $dialog = ensureModal();
     $('#part-info-title').text('Part ' + value);
     $('#part-info-sub').text('');
+    $('#part-info-category').empty();
     $('#part-info-stars').empty();
     $('#part-info-color-list').empty();
     $('#part-info-msg').text('');

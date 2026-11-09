@@ -177,7 +177,9 @@ class PartServiceTest {
         .containsEntry("hasAlternates", true)
         .containsEntry("stars", 2)
         .containsEntry("inMainParts", true)
-        .containsEntry("categoryId", 11);
+        .containsEntry("categoryId", 11)
+        .containsEntry("categoryName", "Bricks")
+        .containsEntry("categoryHidden", false);
   }
 
   @Test
@@ -192,7 +194,15 @@ class PartServiceTest {
         .containsEntry("hasAlternates", false)
         .containsEntry("stars", 0)
         .containsEntry("inMainParts", false)
-        .containsEntry("categoryId", 11);
+        .containsEntry("categoryId", 11)
+        .containsEntry("categoryName", "Bricks")
+        .containsEntry("categoryHidden", false);
+
+    Map<String, Object> hidden = service.info("9999");
+    assertThat(hidden)
+        .containsEntry("categoryId", 20)
+        .containsEntry("categoryName", "Duplo")
+        .containsEntry("categoryHidden", true);
 
     Map<String, Object> unknown = service.info("unknown");
     assertThat(unknown).isNull();

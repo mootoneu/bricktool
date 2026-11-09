@@ -37,6 +37,22 @@ $(function () {
     }
   });
 
+  // Open a category (and part) when navigating from the part information modal.
+  const params = new URLSearchParams(window.location.search);
+  const explorerCategory = params.get('explorerCategory');
+  if (explorerCategory) {
+    const explorerPart = params.get('explorerPart') || '';
+    params.delete('explorerCategory');
+    params.delete('explorerPart');
+    const query = params.toString();
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '',
+        window.location.pathname + (query ? '?' + query : '') + '#explorer');
+    }
+    $('[data-tab="explorer"]').trigger('click');
+    BrickTools.PartsCollectionExplorer.showPart(explorerCategory, explorerPart);
+  }
+
   // Initial load for default tab
   if (!BrickTools.PartsCollectionBrickOwl.isLoaded()) {
     BrickTools.PartsCollectionBrickOwl.refresh();

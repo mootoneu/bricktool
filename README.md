@@ -133,6 +133,7 @@ Clicking a part image in the Part explorer, the BrickOwl parts and order items t
 - Part image, using the part's default color
 - Part number, whether it has alternates, and material
 - Part name
+- Category chip with the category name; clicking it opens the Part explorer tab, expands the matching category group, selects the category, and highlights the part
 - Star rating (editable for main parts, read-only otherwise)
 - "Add to collection" button (placeholder, no action yet)
 - Available colors: every `PartNumber/ColorId` pair of `data.bt.PartColorUrl` is shown as a colored chip. The color currently used for the part image is highlighted; clicking another chip makes it the default image color.
@@ -142,7 +143,7 @@ The default color is stored in `data/bt/part_default_color.csv` and is used by `
 The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo`) and reused by every page that renders part images.
 
 **Endpoints:**
-- `GET /api/parts/{partNumber}/info` - Returns the name, material, alternates, stars, main-part flag, default color, and available colors of a part.
+- `GET /api/parts/{partNumber}/info` - Returns the name, material, alternates, stars, main-part flag, category, default color, and available colors of a part.
 - `PUT /api/parts/{partNumber}/default-color` - Stores the default image color. The body is `{ "colorId": 5 }`; the color must be available for the part.
 
 ### Sets Purchase Page

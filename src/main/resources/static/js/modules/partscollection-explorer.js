@@ -9,9 +9,11 @@
   let partCategoryGroups = [];
   let partCategoriesLoading = false;
   let partCategoriesLoaded = false;
+  let partCategoryCallbacks = [];
   let selectedPartCategoryId = '';
   let mainParts = [];
   let mainPartsRequest = 0;
+  let pendingPartHighlight = '';
   let hideZeroStars = true;
   let mainPartsSearch = '';
   const mainPartsSort = { key: 'stars', dir: -1 };
@@ -29,9 +31,32 @@
   }
 
   /**
-   * Load part categories from the API
+   * Run the callbacks waiting for the category tree to load.
    */
-  function loadPartCategories() {
+  function flushCategoryCallbacks() {
+    const callbacks = partCategoryCallbacks;
+    partCategoryCallbacks = [];
+    callbacks.forEach(function (callback) {
+      try {
+        callback();
+      } catch (error) {
+        // A failing callback must not prevent the others from running.
+      }
+    });
+  }
+
+  /**
+   * Load part categories from the API
+   * @param {Function} [callback] - Called once the categories have loaded (or failed to load)
+   */
+  function loadPartCategories(callback) {
+    if (typeof callback === 'function') {
+      partCategoryCallbacks.push(callback);
+    }
+    if (partCategoriesLoaded) {
+      flushCategoryCallbacks();
+      return;
+    }
     if (partCategoriesLoading) {
       return;
     }
@@ -44,11 +69,13 @@
         renderPartCategoryTree();
         BrickTools.PartsCollectionShared.report('#part-explorer-msg',
           partCategoryGroups.length === 0 ? 'No part categories available.' : 'Select a category.');
+        flushCategoryCallbacks();
       })
       .fail(function (xhr) {
         partCategoryGroups = [];
         renderPartCategoryTree();
         BrickTools.PartsCollectionShared.report('#part-explorer-msg', BrickTools.errorOf(xhr));
+        flushCategoryCallbacks();
       })
       .always(function () {
         partCategoriesLoading = false;
@@ -57,11 +84,14 @@
 
   /**
    * Load main parts for the selected category
+   * @param {string} [partNumber] - Part to scroll to and highlight once rendered
    */
-  function loadMainParts() {
+  function loadMainParts(partNumber) {
+    pendingPartHighlight = partNumber ? String(partNumber) : '';
     const request = ++mainPartsRequest;
     if (!selectedPartCategoryId) {
       mainParts = [];
+      pendingPartHighlight = '';
       $('#main-parts').prop('hidden', true);
       $('#main-parts-count').text('');
       BrickTools.PartsCollectionShared.report('#part-explorer-msg', 'Select a category.');
@@ -190,6 +220,8 @@
    */
   function renderMainParts() {
     const fmt = BrickTools.fmt;
+    const partToHighlight = pendingPartHighlight;
+    pendingPartHighlight = '';
     const $tbody = $('#main-parts tbody').empty();
     const $table = $('#main-parts');
     const query = mainPartsSearch.trim().toLowerCase();
@@ -239,6 +271,70 @@
     });
     $table.prop('hidden', false);
     BrickTools.PartsCollectionShared.report('#part-explorer-msg', '');
+    highlightPart(partToHighlight);
+  }
+
+  /**
+   * Scroll to a part row and briefly highlight it.
+   * @param {string} partNumber - The part number to highlight
+   */
+  function highlightPart(partNumber) {
+    if (!partNumber) {
+      return;
+    }
+    const $row = $('#main-parts tbody tr').filter(function () {
+      return String($(this).attr('data-part-number')) === partNumber;
+    }).first();
+    if (!$row.length) {
+      // The part exists in the category but is hidden by the current filters.
+      if ((hideZeroStars || mainPartsSearch) && mainParts.some(function (part) {
+        return String(part.partNumber) === partNumber;
+      })) {
+        hideZeroStars = false;
+        mainPartsSearch = '';
+        $('#main-parts-hide-zero').prop('checked', false);
+        $('#main-parts-search').val('');
+        pendingPartHighlight = partNumber;
+        renderMainParts();
+      }
+      return;
+    }
+    $row.addClass('highlight');
+    if ($row[0].scrollIntoView) {
+      $row[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    setTimeout(function () {
+      $row.removeClass('highlight');
+    }, 2500);
+  }
+
+  /**
+   * Select a category and show it in the explorer, optionally highlighting a part.
+   * @param {string|number} categoryId - Category to select
+   * @param {string} [partNumber] - Part to scroll to and highlight
+   */
+  function showPart(categoryId, partNumber) {
+    const id = String(categoryId == null ? '' : categoryId).trim();
+    if (!id) {
+      return;
+    }
+    const part = String(partNumber == null ? '' : partNumber).trim();
+    loadPartCategories(function () {
+      const $button = $('#part-category-tree .part-category-item').filter(function () {
+        return String($(this).attr('data-category-id')) === id;
+      }).first();
+      if (!$button.length) {
+        return;
+      }
+      const $group = $button.closest('details.part-category-group');
+      if ($group.length) {
+        $group.prop('open', true);
+      }
+      selectedPartCategoryId = id;
+      $('#part-category-tree .part-category-item').removeClass('active');
+      $button.addClass('active');
+      loadMainParts(part);
+    });
   }
 
   // ============================================================================
@@ -382,6 +478,7 @@
     loadPartCategories: loadPartCategories,
     loadMainParts: loadMainParts,
     renderMainParts: renderMainParts,
+    showPart: showPart,
     getPartCategoryGroups: function() { return partCategoryGroups; },
     getMainParts: function() { return mainParts; },
     getSelectedPartCategoryId: function() { return selectedPartCategoryId; },
