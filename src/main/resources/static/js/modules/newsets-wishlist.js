@@ -442,6 +442,7 @@
     init: init,
     reloadWishlist: reloadWishlist,
     renderWishlist: renderWishlist,
+    renderWishlistFilterOptions: renderWishlistFilterOptions,
     findSet: findSet,
     findWishlistEntry: findWishlistEntry,
     openWishlistForm: openWishlistForm,
