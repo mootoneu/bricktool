@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 
@@ -35,17 +36,30 @@ public class PabPartPriceService {
   }
 
   /**
-   * Return the Pick a Brick prices of a LEGO design ID.
+   * Return the Pick a Brick price per colorIds of a LEGO design ID, formatted in euros.
+   * When a color appears several times, the lowest price is kept.
    */
-  public synchronized List<Map<String, Object>> prices(String designId) throws IOException {
+  public synchronized Map<Integer, String> prices(String designId) throws IOException {
     String key = clean(designId);
-    List<Map<String, Object>> result = new ArrayList<>();
+    Map<Integer, Double> lowest = new LinkedHashMap<>();
     for (Map<String, String> row : Csv.read(pricesFile)) {
-      if (key.equals(clean(row.get("DesignId")))) {
-        result.add(toPrice(row));
+      if (!key.equals(clean(row.get("DesignId")))) {
+        continue;
+      }
+      Integer colorId = toInt(row.get("ColorId"));
+      Double price = toDouble(row.get("Price"));
+      if (colorId != null && price != null) {
+        lowest.merge(colorId, price, Math::min);
       }
     }
+
+    Map<Integer, String> result = new LinkedHashMap<>();
+    lowest.forEach((colorId, price) -> result.put(colorId, formatEuro(price)));
     return result;
+  }
+
+  private static String formatEuro(double price) {
+    return String.format(Locale.FRANCE, "%.2f €", price);
   }
 
   private static Map<String, Object> toPrice(Map<String, String> row) {

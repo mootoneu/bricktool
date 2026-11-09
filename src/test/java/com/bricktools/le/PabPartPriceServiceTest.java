@@ -38,13 +38,26 @@ class PabPartPriceServiceTest {
   }
 
   @Test
-  void pricesFiltersByDesignId() throws IOException {
+  void pricesFiltersByDesignIdAndFormatsEuros() throws IOException {
     assertThat(service.prices("18980"))
-        .containsExactly(
-            row("18980", 26, 0.18),
-            row("18980", 1, 0.18));
+        .containsEntry(26, "0,18 €")
+        .containsEntry(1, "0,18 €")
+        .hasSize(2);
     assertThat(service.prices("3001"))
-        .containsExactly(row("3001", 5, 0.12));
+        .containsEntry(5, "0,12 €")
+        .hasSize(1);
+  }
+
+  @Test
+  void duplicateColorKeepsTheLowestPrice() throws IOException {
+    Files.writeString(dir.resolve("le/pab_part_prices.csv"),
+        "DesignId,ColorId,Price\n"
+            + "49612,0,0.58\n"
+            + "49612,0,1.14\n");
+
+    assertThat(service.prices("49612"))
+        .containsEntry(0, "0,58 €")
+        .hasSize(1);
   }
 
   @Test

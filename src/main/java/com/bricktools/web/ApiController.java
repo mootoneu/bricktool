@@ -41,6 +41,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -675,6 +676,7 @@ public class ApiController {
     pab.updatePart(id, request);
   }
 
+  @CrossOrigin(origins = "*")
   @GetMapping(path = "/le/pab-part-prices", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(
       summary = "List PaB part prices",
@@ -684,18 +686,19 @@ public class ApiController {
     return pabPartPrices.prices();
   }
 
+  @CrossOrigin(origins = "*")
   @GetMapping(path = "/le/pab-part-prices/{designId}", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(
-      summary = "Get PaB part prices by design ID",
-      description = "Returns the Pick a Brick prices of a LEGO design ID from "
-          + "data/le/pab_part_prices.csv."
+      summary = "Get PaB part price per colorIds by design ID",
+      description = "Returns the Pick a Brick price per colorIds of a LEGO design ID from "
+          + "data/le/pab_part_prices.csv. Prices are formatted in euros."
   )
   @ApiResponse(responseCode = "200", description = "Prices returned")
   @ApiResponse(responseCode = "404", description = "No price found for the design ID")
-  public ResponseEntity<List<Map<String, Object>>> pabPartPrices(
+  public ResponseEntity<Map<Integer, String>> pabPartPrices(
       @Parameter(name = "designId", description = "LEGO design ID (part ID)") @PathVariable String designId)
       throws IOException {
-    List<Map<String, Object>> prices = pabPartPrices.prices(designId);
+    Map<Integer, String> prices = pabPartPrices.prices(designId);
     if (prices.isEmpty()) {
       return ResponseEntity.notFound().build();
     }

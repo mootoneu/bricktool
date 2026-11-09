@@ -52,13 +52,11 @@ class PabPartPriceApiTest {
   }
 
   @Test
-  void pricesAreFilteredByDesignId() throws Exception {
+  void pricesAreFilteredByDesignIdAndFormattedInEuros() throws Exception {
     mvc.perform(get("/api/le/pab-part-prices/18980"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(2))
-        .andExpect(jsonPath("$[0].designId").value("18980"))
-        .andExpect(jsonPath("$[0].colorId").value(26))
-        .andExpect(jsonPath("$[1].colorId").value(1));
+        .andExpect(jsonPath("$['26']").value("0,18 €"))
+        .andExpect(jsonPath("$['1']").value("0,18 €"));
   }
 
   @Test
