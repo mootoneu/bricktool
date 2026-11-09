@@ -126,6 +126,25 @@ Columns are sortable; the Orders column sorts by the number of orders containing
 
 Data is exposed by: `GET /api/brickowl/parts`
 
+#### Part Information Modal
+
+Clicking a part image in the Part explorer, the BrickOwl parts and order items tables, the PaB parts table, or the Set Inventory table opens a modal with the part details:
+
+- Part image, using the part's default color
+- Part number, whether it has alternates, and material
+- Part name
+- Star rating (editable for main parts, read-only otherwise)
+- "Add to collection" button (placeholder, no action yet)
+- Available colors: every `PartNumber/ColorId` pair of `data.bt.PartColorUrl` is shown as a colored chip. The color currently used for the part image is highlighted; clicking another chip makes it the default image color.
+
+The default color is stored in `data/bt/part_default_color.csv` and is used by `GET /api/parts/{partNumber}/image` when no `colorId` is given. When the part has no stored default, or the stored color is no longer available, the lowest available color is used.
+
+The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo`) and reused by every page that renders part images.
+
+**Endpoints:**
+- `GET /api/parts/{partNumber}/info` - Returns the name, material, alternates, stars, main-part flag, default color, and available colors of a part.
+- `PUT /api/parts/{partNumber}/default-color` - Stores the default image color. The body is `{ "colorId": 5 }`; the color must be available for the part.
+
 ### Sets Purchase Page
 
 The Sets Purchase page provides various tabs to display purchase data, add/edit purchase data, and show statistics about purchases.

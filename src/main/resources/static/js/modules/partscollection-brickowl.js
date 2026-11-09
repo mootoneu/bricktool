@@ -48,7 +48,8 @@
       const $row = $('<tr></tr>');
       const name = BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '');
       $row.append(BrickTools.partImageCell(
-        BrickTools.partImageUrls(part.itemNumbers, part.designIds), name));
+        BrickTools.partImageUrls(part.itemNumbers, part.designIds), name,
+        BrickTools.firstCommaValue(part.designIds)));
       $row.append($('<td></td>').text(part.type || ''));
       $row.append($('<td></td>').text(name));
       $row.append(BrickTools.PartsCollectionShared.renderColorCell(part));

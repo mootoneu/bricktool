@@ -231,6 +231,76 @@ class PartImageServiceTest {
   }
 
   @Test
+  void listsTheAvailableColorsOfAPart() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.colors("3001")).containsExactly(5, 7);
+    assertThat(service.colors("3002")).containsExactly(5);
+    assertThat(service.colors("9999")).isEmpty();
+    assertThat(service.colors("../3001")).isEmpty();
+  }
+
+  @Test
+  void theDefaultColorIsTheFirstAvailableColorUntilItIsChanged() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.defaultColor("3001")).isEqualTo(5);
+    assertThat(service.defaultColor("9999")).isEqualTo(-1);
+    assertThat(service.defaultColor("../3001")).isEqualTo(-1);
+
+    service.setDefaultColor("3001", 7);
+
+    assertThat(service.defaultColor("3001")).isEqualTo(7);
+    assertThat(Files.readString(dir.resolve("bt/part_default_color.csv")))
+        .startsWith("PartNumber,ColorId")
+        .contains("3001,7");
+  }
+
+  @Test
+  void theStoredDefaultColorIsUsedWhenNoColorIsGiven() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+    service.setDefaultColor("3001", 7);
+
+    assertThat(service.ensure("3001", null)).contains(dir.resolve("other/partimg/7/3001.jpg"));
+    assertThat(elementRequests.get()).isEqualTo(1);
+    assertThat(photoRequests.get()).isZero();
+  }
+
+  @Test
+  void anUnavailableDefaultColorFallsBackToTheFirstColor() throws Exception {
+    Files.createDirectories(dir.resolve("bt"));
+    Files.writeString(dir.resolve("bt/part_default_color.csv"),
+        "PartNumber,ColorId\n"
+            + "3001,9\n");
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThat(service.defaultColor("3001")).isEqualTo(5);
+  }
+
+  @Test
+  void setDefaultColorRejectsUnknownPartsAndColors() throws Exception {
+    PartImageService service = service();
+    service.generatePartColorUrls();
+
+    assertThatThrownBy(() -> service.setDefaultColor("3001", 9))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not available");
+    assertThatThrownBy(() -> service.setDefaultColor("9999", 5))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not available");
+    assertThatThrownBy(() -> service.setDefaultColor("3001", null))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> service.setDefaultColor("3001", -1))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> service.setDefaultColor("../3001", 5))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void waitsBetweenTwoDownloads() throws Exception {
     PartImageService service = service();
     service.generatePartColorUrls();

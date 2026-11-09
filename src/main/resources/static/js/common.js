@@ -233,9 +233,10 @@
 
   /**
    * Builds a table cell with a lazy-loaded part image. The first source is shown and, when it
-   * fails, the next one is tried; the image is hidden when no source can be loaded.
+   * fails, the next one is tried; the image is hidden when no source can be loaded. When a part
+   * number is given, clicking the image opens the part information modal.
    */
-  function partImageCell(sources, label) {
+  function partImageCell(sources, label, partNumber) {
     const $cell = $('<td class="part-image"></td>');
     const urls = (Array.isArray(sources) ? sources : [sources]).filter(Boolean);
     if (urls.length === 0) {
@@ -253,8 +254,23 @@
         }
       })
       .attr('src', urls[0]);
+    if (partNumber) {
+      $img.attr('data-part-number', partNumber)
+        .attr('tabindex', '0')
+        .attr('role', 'button')
+        .attr('aria-label', 'Part information for ' + (label || partNumber));
+    }
     $cell.append($img);
     return $cell;
+  }
+
+  /**
+   * Returns the first non-empty value of a comma-separated list.
+   */
+  function firstCommaValue(value) {
+    return String(value || '').split(',')
+      .map(function (item) { return item.trim(); })
+      .filter(Boolean)[0] || '';
   }
 
   function itemImageUrls(itemNumbers) {
@@ -291,6 +307,6 @@
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs,
     getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName,
-    partImageCell, itemImageUrls, partImageUrls
+    partImageCell, firstCommaValue, itemImageUrls, partImageUrls
   };
 })(window, jQuery);

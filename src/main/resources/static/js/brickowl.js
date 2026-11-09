@@ -8,6 +8,7 @@ $(function () {
   BrickTools.initHeader('brickowl');
 
   // Initialize all modules
+  BrickTools.PartInfo.init();
   BrickTools.BrickOwlStats.init();
   BrickTools.BrickOwlOrders.init();
 

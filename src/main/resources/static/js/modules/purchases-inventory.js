@@ -264,7 +264,8 @@
     }
     rows.forEach(function(part) {
       const $row = $('<tr></tr>');
-      $row.append(BrickTools.partImageCell(setInventoryImageUrl(part), part.partName || part.partNumber));
+      $row.append(BrickTools.partImageCell(setInventoryImageUrl(part),
+        part.partName || part.partNumber, part.partNumber));
       $row.append($('<td></td>').text(part.partNumber || ''));
       $row.append($('<td></td>').text(part.partName || ''));
       $row.append($('<td></td>').text(part.partCategory || ''));

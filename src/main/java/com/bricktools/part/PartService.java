@@ -177,6 +177,60 @@ public class PartService {
   }
 
   /**
+   * Returns the information shown in the part information modal. Main parts provide their name,
+   * material, alternates and stars; other Rebrickable parts fall back to data.re.parts and
+   * data.re.part_relationships. Returns null when the part is unknown.
+   */
+  public Map<String, Object> info(String partNumber) throws IOException {
+    String key = clean(partNumber);
+    if (key.isEmpty()) {
+      return null;
+    }
+
+    Map<String, String> main = null;
+    for (Map<String, String> row : Csv.read(mainPartsFile)) {
+      if (key.equals(clean(row.get("PartNumber")))) {
+        main = row;
+        break;
+      }
+    }
+    Map<String, String> part = null;
+    for (Map<String, String> row : Csv.read(partsFile)) {
+      if (key.equals(clean(row.get("part_num")))) {
+        part = row;
+        break;
+      }
+    }
+    if (main == null && part == null) {
+      return null;
+    }
+
+    boolean hasAlternates;
+    if (main != null) {
+      hasAlternates = isTrue(main.get("HasAlternates"));
+    } else {
+      hasAlternates = false;
+      for (Map<String, String> relationship : Csv.read(relationshipsFile)) {
+        if (key.equals(clean(relationship.get("parent_part_num")))) {
+          hasAlternates = true;
+          break;
+        }
+      }
+    }
+
+    Integer stars = main == null ? null : toInt(main.get("Stars"));
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("partNumber", key);
+    result.put("name", main == null ? clean(part.get("name")) : clean(main.get("Name")));
+    result.put("material", main == null ? clean(part.get("part_material")) : clean(main.get("Material")));
+    result.put("hasAlternates", hasAlternates);
+    result.put("stars", stars == null ? 0 : stars);
+    result.put("inMainParts", main != null);
+    result.put("categoryId", main == null ? toInt(part.get("part_cat_id")) : toInt(main.get("CategoryId")));
+    return result;
+  }
+
+  /**
    * Sets the star rating of a main part.
    */
   public synchronized void updateStars(String partNumber, Integer stars) throws IOException {

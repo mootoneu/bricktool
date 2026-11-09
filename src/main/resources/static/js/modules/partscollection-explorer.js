@@ -146,6 +146,10 @@
       .attr('src', '/api/parts/' + encodeURIComponent(part.partNumber) + '/image')
       .attr('alt', part.name || part.partNumber)
       .attr('title', part.name || part.partNumber)
+      .attr('data-part-number', part.partNumber)
+      .attr('tabindex', '0')
+      .attr('role', 'button')
+      .attr('aria-label', 'Part information for ' + (part.name || part.partNumber))
       .on('error', function () { $(this).prop('hidden', true); })
       .appendTo($cell);
     return $cell;

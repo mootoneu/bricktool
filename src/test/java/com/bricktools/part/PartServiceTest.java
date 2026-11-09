@@ -164,6 +164,40 @@ class PartServiceTest {
         .containsEntry("parentName", "Brick 2 x 4");
   }
 
+  @Test
+  void infoReturnsMainPartDetails() throws IOException {
+    service.generateMainParts();
+
+    Map<String, Object> info = service.info("3001");
+
+    assertThat(info)
+        .containsEntry("partNumber", "3001")
+        .containsEntry("name", "Brick 2 x 4")
+        .containsEntry("material", "Plastic")
+        .containsEntry("hasAlternates", true)
+        .containsEntry("stars", 2)
+        .containsEntry("inMainParts", true)
+        .containsEntry("categoryId", 11);
+  }
+
+  @Test
+  void infoFallsBackToRebrickablePartsForNonMainParts() throws IOException {
+    service.generateMainParts();
+
+    Map<String, Object> child = service.info("3002");
+    assertThat(child)
+        .containsEntry("partNumber", "3002")
+        .containsEntry("name", "Brick 2 x 3")
+        .containsEntry("material", "Plastic")
+        .containsEntry("hasAlternates", false)
+        .containsEntry("stars", 0)
+        .containsEntry("inMainParts", false)
+        .containsEntry("categoryId", 11);
+
+    Map<String, Object> unknown = service.info("unknown");
+    assertThat(unknown).isNull();
+  }
+
   @SuppressWarnings("unchecked")
   private static List<Map<String, Object>> alternatesOf(Map<String, Object> result) {
     return (List<Map<String, Object>>) result.get("alternates");

@@ -84,7 +84,8 @@
       const $row = $('<tr></tr>');
       const name = BrickTools.getPartNameFromBOName(i.Name, i.ColorName);
       $row.append(BrickTools.partImageCell(
-        BrickTools.partImageUrls(i.ItemNumbers, i.DesignIds), name));
+        BrickTools.partImageUrls(i.ItemNumbers, i.DesignIds), name,
+        BrickTools.firstCommaValue(i.DesignIds)));
       $row.append($('<td></td>').text(i.Type));
       $row.append($('<td></td>').text(name));
       $row.append(BrickTools.BrickOwlShared.renderColorCell(i));

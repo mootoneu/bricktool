@@ -206,7 +206,8 @@
           (part.partColorId == null || part.partColorId === ''
             ? '' : '?colorId=' + encodeURIComponent(part.partColorId))
         : '';
-      $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber));
+      $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber,
+        part.partNumber));
       $row.append($('<td></td>').text(part.id == null ? '' : part.id));
       $row.append($('<td></td>').text(part.paBPurchaseId == null ? '' : part.paBPurchaseId));
       $row.append($('<td></td>').text(part.partNumber || ''));

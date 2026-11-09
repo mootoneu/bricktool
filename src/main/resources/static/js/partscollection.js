@@ -8,6 +8,7 @@ $(function () {
   BrickTools.initHeader('partscollection');
 
   // Initialize all modules
+  BrickTools.PartInfo.init();
   BrickTools.PartsCollectionBrickOwl.init();
   BrickTools.PartsCollectionPab.init();
   BrickTools.PartsCollectionExplorer.init();

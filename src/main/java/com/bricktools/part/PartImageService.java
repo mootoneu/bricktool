@@ -17,7 +17,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,8 @@ public class PartImageService {
 
   private static final List<String> INDEX_HEADERS =
       List.of("PartNumber", "ColorId", "ItemNumber", "ImgUrl");
+  private static final List<String> DEFAULT_COLOR_HEADERS =
+      List.of("PartNumber", "ColorId");
   private static final Pattern PART_NUMBER = Pattern.compile("[A-Za-z0-9._-]+");
   private static final List<String> EXTENSIONS = List.of("jpg", "png");
   private static final Map<String, String> CONTENT_TYPES = Map.of(
@@ -48,13 +52,16 @@ public class PartImageService {
 
   private final Path inventoryPartsFile;
   private final Path partColorUrlFile;
+  private final Path defaultColorFile;
   private final Path imagesDir;
   private final HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 
   private Map<String, String> urlCache;
-  private Map<String, Integer> firstColorCache;
+  private Map<String, List<Integer>> colorsCache;
   private Map<String, PartColorKey> itemCache;
+  private Map<String, Integer> defaultColorCache;
   private long urlCacheModified = Long.MIN_VALUE;
+  private long defaultColorCacheModified = Long.MIN_VALUE;
   private long lastDownloadEndedAt;
 
   private record PartColorKey(String partNumber, int colorId) {}
@@ -63,6 +70,7 @@ public class PartImageService {
     Path data = props.dataPath();
     this.inventoryPartsFile = data.resolve("re/inventory_parts.csv");
     this.partColorUrlFile = data.resolve("bt/part_color_url.csv");
+    this.defaultColorFile = data.resolve("bt/part_default_color.csv");
     this.imagesDir = data.resolve("other/partimg");
   }
 
@@ -104,7 +112,7 @@ public class PartImageService {
     rows.sort(BY_PART_AND_COLOR);
     Csv.write(partColorUrlFile, INDEX_HEADERS, rows);
     urlCache = null;
-    firstColorCache = null;
+    colorsCache = null;
     itemCache = null;
 
     Map<String, Object> result = new LinkedHashMap<>();
@@ -145,7 +153,7 @@ public class PartImageService {
     if (colorId != null && colorId < 0) {
       throw new IllegalArgumentException("Invalid color id: " + colorId);
     }
-    int color = colorId == null ? firstColor(partNumber) : colorId;
+    int color = colorId == null ? defaultColor(partNumber) : colorId;
     if (color < 0) {
       return Optional.empty();
     }
@@ -189,7 +197,7 @@ public class PartImageService {
     if (image.isPresent()) {
       return image;
     }
-    int fallback = firstColor(partNumber);
+    int fallback = defaultColor(partNumber);
     if (fallback >= 0) {
       image = ensure(partNumber, fallback);
       if (image.isPresent()) {
@@ -197,6 +205,70 @@ public class PartImageService {
       }
     }
     return missingImage();
+  }
+
+  /**
+   * Returns the colors available for a part, read from data/bt/part_color_url.csv and sorted by
+   * color id.
+   */
+  public synchronized List<Integer> colors(String partNumber) throws IOException {
+    if (!isSafeId(partNumber)) {
+      return List.of();
+    }
+    urls();
+    return colorsCache.getOrDefault(partNumber, List.of());
+  }
+
+  /**
+   * Returns the default color of a part: the color stored in data/bt/part_default_color.csv when
+   * it is still available, or the first available color otherwise. Returns -1 when the part has
+   * no color.
+   */
+  public synchronized int defaultColor(String partNumber) throws IOException {
+    if (!isSafeId(partNumber)) {
+      return -1;
+    }
+    List<Integer> available = colors(partNumber);
+    if (available.isEmpty()) {
+      return -1;
+    }
+    Integer stored = defaultColors().get(partNumber);
+    return stored != null && available.contains(stored) ? stored : available.get(0);
+  }
+
+  /**
+   * Stores the default color of a part in data/bt/part_default_color.csv.
+   */
+  public synchronized void setDefaultColor(String partNumber, Integer colorId) throws IOException {
+    if (!isSafeId(partNumber)) {
+      throw new IllegalArgumentException("Invalid part number: " + partNumber);
+    }
+    if (colorId == null || colorId < 0) {
+      throw new IllegalArgumentException("Invalid color id: " + colorId);
+    }
+    if (!colors(partNumber).contains(colorId)) {
+      throw new IllegalArgumentException(
+          "Color " + colorId + " is not available for part " + partNumber);
+    }
+
+    Map<String, Integer> defaults = new LinkedHashMap<>(defaultColors());
+    if (Objects.equals(defaults.get(partNumber), colorId)) {
+      return;
+    }
+    defaults.put(partNumber, colorId);
+
+    List<Map<String, String>> rows = new ArrayList<>();
+    defaults.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+        .forEach(entry -> {
+          Map<String, String> row = new LinkedHashMap<>();
+          row.put("PartNumber", entry.getKey());
+          row.put("ColorId", String.valueOf(entry.getValue()));
+          rows.add(row);
+        });
+    Csv.write(defaultColorFile, DEFAULT_COLOR_HEADERS, rows);
+    defaultColorCache = null;
+    defaultColorCacheModified = Long.MIN_VALUE;
   }
 
   /**
@@ -238,10 +310,22 @@ public class PartImageService {
     return Optional.ofNullable(urls().get(key(partNumber, String.valueOf(colorId))));
   }
 
-  private int firstColor(String partNumber) throws IOException {
-    urls();
-    Integer colorId = firstColorCache.get(partNumber);
-    return colorId == null ? -1 : colorId;
+  private Map<String, Integer> defaultColors() throws IOException {
+    long modified = Files.isRegularFile(defaultColorFile)
+        ? Files.getLastModifiedTime(defaultColorFile).toMillis() : -1;
+    if (defaultColorCache == null || modified != defaultColorCacheModified) {
+      Map<String, Integer> defaults = new HashMap<>();
+      for (Map<String, String> row : Csv.read(defaultColorFile)) {
+        String partNumber = clean(row.get("PartNumber"));
+        String colorId = clean(row.get("ColorId"));
+        if (!partNumber.isEmpty() && !colorId.isEmpty()) {
+          defaults.put(partNumber, toInt(colorId));
+        }
+      }
+      defaultColorCache = defaults;
+      defaultColorCacheModified = modified;
+    }
+    return defaultColorCache;
   }
 
   private Map<String, String> urls() throws IOException {
@@ -249,7 +333,7 @@ public class PartImageService {
         ? Files.getLastModifiedTime(partColorUrlFile).toMillis() : -1;
     if (urlCache == null || modified != urlCacheModified) {
       Map<String, String> urls = new HashMap<>();
-      Map<String, Integer> firstColors = new HashMap<>();
+      Map<String, TreeSet<Integer>> colors = new HashMap<>();
       Map<String, PartColorKey> items = new HashMap<>();
       for (Map<String, String> row : Csv.read(partColorUrlFile)) {
         String partNumber = clean(row.get("PartNumber"));
@@ -257,15 +341,18 @@ public class PartImageService {
         String itemNumber = clean(row.get("ItemNumber"));
         String url = clean(row.get("ImgUrl"));
         if (!partNumber.isEmpty() && !colorId.isEmpty() && !url.isEmpty()) {
+          int color = toInt(colorId);
           urls.put(key(partNumber, colorId), url);
-          firstColors.merge(partNumber, toInt(colorId), Math::min);
+          colors.computeIfAbsent(partNumber, key -> new TreeSet<>()).add(color);
           if (!itemNumber.isEmpty()) {
-            items.putIfAbsent(itemNumber, new PartColorKey(partNumber, toInt(colorId)));
+            items.putIfAbsent(itemNumber, new PartColorKey(partNumber, color));
           }
         }
       }
+      Map<String, List<Integer>> colorLists = new HashMap<>();
+      colors.forEach((partNumber, values) -> colorLists.put(partNumber, List.copyOf(values)));
       urlCache = urls;
-      firstColorCache = firstColors;
+      colorsCache = colorLists;
       itemCache = items;
       urlCacheModified = modified;
     }

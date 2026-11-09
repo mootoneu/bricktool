@@ -48,11 +48,16 @@ class PartApiTest {
     Files.writeString(dataDir.resolve("re/part_relationships.csv"),
         "rel_type,child_part_num,parent_part_num\n"
             + "P,3002,3001\n");
+    Files.writeString(dataDir.resolve("re/colors.csv"),
+        "id,name,rgb,is_trans\n"
+            + "5,Red,C91A09,False\n"
+            + "6,Blue,0055BF,False\n");
     Files.writeString(dataDir.resolve("re/inventory_parts.csv"),
         "inventory_id,part_num,color_id,quantity,is_spare,img_url\n"
             + "1,3001,5,1,False,https://cdn.example.test/parts/photos/5/3001-5-abc.jpg\n"
-            + "2,3002,5,1,False,https://cdn.example.test/parts/photos/5/3002-5-def.png\n"
-            + "3,14728c21.6,5,1,False,https://cdn.example.test/parts/photos/5/14728c21.6-5-ghi.png\n");
+            + "2,3001,6,1,False,https://cdn.example.test/parts/photos/6/3001-6-xyz.png\n"
+            + "3,3002,5,1,False,https://cdn.example.test/parts/photos/5/3002-5-def.png\n"
+            + "4,14728c21.6,5,1,False,https://cdn.example.test/parts/photos/5/14728c21.6-5-ghi.png\n");
   }
 
   @Autowired
@@ -140,18 +145,21 @@ class PartApiTest {
 
   @Test
   void partColorUrlsCanBeGeneratedAndPartImagesServed() throws Exception {
+    Files.deleteIfExists(dataDir.resolve("bt/part_default_color.csv"));
     mvc.perform(post("/api/parts/part-color-urls/generate"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.total").value(3))
-        .andExpect(jsonPath("$.kept").value(3))
+        .andExpect(jsonPath("$.total").value(4))
+        .andExpect(jsonPath("$.kept").value(4))
         .andExpect(jsonPath("$.duplicates").value(0))
         .andExpect(jsonPath("$.noUrl").value(0));
 
     byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x10};
     byte[] png = {(byte) 0x89, 'P', 'N', 'G'};
     Files.createDirectories(dataDir.resolve("other/partimg/5"));
+    Files.createDirectories(dataDir.resolve("other/partimg/6"));
     Files.write(dataDir.resolve("other/partimg/5/3001.jpg"), jpeg);
     Files.write(dataDir.resolve("other/partimg/5/14728c21.6.png"), png);
+    Files.write(dataDir.resolve("other/partimg/6/3001.png"), png);
 
     mvc.perform(get("/api/parts/3001/image").param("colorId", "5"))
         .andExpect(status().isOk())
@@ -170,8 +178,8 @@ class PartApiTest {
 
     mvc.perform(get("/api/parts/3001/image").param("colorId", "6"))
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.IMAGE_JPEG))
-        .andExpect(content().bytes(jpeg));
+        .andExpect(content().contentType(MediaType.IMAGE_PNG))
+        .andExpect(content().bytes(png));
     mvc.perform(get("/api/parts/3001/image").param("colorId", "-1"))
         .andExpect(status().isBadRequest());
 
@@ -192,6 +200,46 @@ class PartApiTest {
         .andExpect(content().bytes(png));
 
     mvc.perform(get("/api/parts/items/unknown/image"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void partInformationListsColorsAndTheDefaultColorCanBeChanged() throws Exception {
+    mvc.perform(post("/api/parts/main-parts/generate"))
+        .andExpect(status().isOk());
+    mvc.perform(post("/api/parts/part-color-urls/generate"))
+        .andExpect(status().isOk());
+
+    mvc.perform(get("/api/parts/3001/info"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.partNumber").value("3001"))
+        .andExpect(jsonPath("$.name").value("Brick 2 x 4"))
+        .andExpect(jsonPath("$.material").value("Plastic"))
+        .andExpect(jsonPath("$.hasAlternates").value(true))
+        .andExpect(jsonPath("$.stars").value(2))
+        .andExpect(jsonPath("$.inMainParts").value(true))
+        .andExpect(jsonPath("$.defaultColorId").value(5))
+        .andExpect(jsonPath("$.colors.length()").value(2))
+        .andExpect(jsonPath("$.colors[0].colorId").value(5))
+        .andExpect(jsonPath("$.colors[0].name").value("Red"))
+        .andExpect(jsonPath("$.colors[0].rgb").value("C91A09"))
+        .andExpect(jsonPath("$.colors[1].colorId").value(6))
+        .andExpect(jsonPath("$.colors[1].name").value("Blue"));
+
+    mvc.perform(put("/api/parts/3001/default-color")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"colorId\":6}"))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(get("/api/parts/3001/info"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.defaultColorId").value(6));
+
+    mvc.perform(put("/api/parts/3001/default-color")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"colorId\":9}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(get("/api/parts/unknown/info"))
         .andExpect(status().isNotFound());
   }
 }

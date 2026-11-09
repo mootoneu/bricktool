@@ -642,6 +642,28 @@ Maps part number and color to image URLs.
 
 ---
 
+#### `data.bt.PartDefaultColor`
+
+Stores the color used by default for the image of a part. The part information modal writes this file when a color is selected.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| PartNumber | string (FK) | LEGO part number (references `data.re.parts.part_num`) |
+| ColorId | integer (FK) | LEGO color ID (references `data.re.colors.id`) |
+
+**Primary Key:** `PartNumber`
+
+**Storage**: `data/bt/part_default_color.csv`
+
+**Relationships:**
+- `data.bt.PartDefaultColor.PartNumber` = `data.re.parts.part_num`
+- `data.bt.PartDefaultColor.ColorId` = `data.re.colors.id`
+- The `(PartNumber, ColorId)` pair must exist in `data.bt.PartColorUrl`
+
+When a part has no entry, or its stored color is no longer available, the lowest available color is used.
+
+---
+
 ### Set Inventory
 
 #### `data.bt.SetInventory`

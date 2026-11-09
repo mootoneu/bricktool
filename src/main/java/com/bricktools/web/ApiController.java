@@ -12,6 +12,7 @@ import com.bricktools.pab.PabPartRequest;
 import com.bricktools.pab.PabPurchaseRequest;
 import com.bricktools.pab.PabService;
 import com.bricktools.part.MainPartStarsRequest;
+import com.bricktools.part.PartDefaultColorRequest;
 import com.bricktools.part.PartImageService;
 import com.bricktools.part.PartService;
 import com.bricktools.purchase.PurchaseRequest;
@@ -28,6 +29,9 @@ import com.bricktools.wishlist.WishlistService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -729,6 +733,68 @@ public class ApiController {
   )
   public Map<String, Object> generatePartColorUrls() throws IOException {
     return partImages.generatePartColorUrls();
+  }
+
+  @GetMapping(path = "/parts/{partNumber}/info", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Get Part Information",
+      description = "Returns the name, material, alternates, stars and available colors of a part. "
+          + "The available colors are the part/color pairs of data/bt/part_color_url.csv and the "
+          + "default color is the one used for the part image."
+  )
+  @ApiResponse(responseCode = "200", description = "Part information returned")
+  @ApiResponse(responseCode = "404", description = "Part not found")
+  public ResponseEntity<Map<String, Object>> partInfo(
+      @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber)
+      throws IOException {
+    Map<String, Object> info = partService.info(partNumber);
+    if (info == null) {
+      return ResponseEntity.notFound().build();
+    }
+    int defaultColor = partImages.defaultColor(partNumber);
+    info.put("defaultColorId", defaultColor < 0 ? null : defaultColor);
+    info.put("colors", partColors(partNumber));
+    return ResponseEntity.ok(info);
+  }
+
+  @PutMapping(path = "/parts/{partNumber}/default-color")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Set the default part color",
+      description = "Stores the color used by default for the part image in "
+          + "data/bt/part_default_color.csv. The color must be available in "
+          + "data/bt/part_color_url.csv."
+  )
+  @ApiResponse(responseCode = "204", description = "Default color updated")
+  @ApiResponse(responseCode = "400", description = "The color is not available for the part")
+  public void updatePartDefaultColor(
+      @Parameter(name = "partNumber", description = "Lego part number") @PathVariable String partNumber,
+      @RequestBody PartDefaultColorRequest request) throws IOException {
+    if (request == null || request.colorId() == null) {
+      throw new IllegalArgumentException("Color id is required");
+    }
+    partImages.setDefaultColor(partNumber, request.colorId());
+  }
+
+  private List<Map<String, Object>> partColors(String partNumber) throws IOException {
+    Map<Integer, Map<String, Object>> catalog = new HashMap<>();
+    for (Map<String, Object> color : colors.colors()) {
+      Object id = color.get("id");
+      if (id instanceof Integer colorId) {
+        catalog.put(colorId, color);
+      }
+    }
+    List<Map<String, Object>> result = new ArrayList<>();
+    for (Integer colorId : partImages.colors(partNumber)) {
+      Map<String, Object> color = catalog.get(colorId);
+      Map<String, Object> entry = new LinkedHashMap<>();
+      entry.put("colorId", colorId);
+      entry.put("name", color == null ? "" : color.get("name"));
+      entry.put("rgb", color == null ? "" : color.get("rgb"));
+      entry.put("isTrans", color != null && Boolean.TRUE.equals(color.get("isTrans")));
+      result.add(entry);
+    }
+    return result;
   }
 
   @GetMapping(path = "/parts/{partNumber}/image", produces = "image/*")

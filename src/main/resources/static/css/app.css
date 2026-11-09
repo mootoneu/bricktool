@@ -348,6 +348,9 @@ table.data th.actions-col { width: 18%; }
 .main-parts-search { flex: 1 1 220px; max-width: 360px; padding: 6px 8px; }
 .main-part-image-col, .main-part-image, .part-image-col, .part-image { width: 64px; }
 .part-img { display: block; width: 56px; height: 56px; object-fit: contain; }
+.part-img[data-part-number] { cursor: pointer; border-radius: 4px; }
+.part-img[data-part-number]:hover { background: #f0f7ff; }
+.part-img[data-part-number]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .stars { display: inline-flex; gap: 1px; }
 .star {
   background: none; border: 0; padding: 0 1px; cursor: pointer;
@@ -359,3 +362,29 @@ table.data th.actions-col { width: 18%; }
 .star-zero svg { display: block; }
 .star-zero.on { color: #ef4444; }
 .star-zero:hover { color: #ef4444; }
+.star.readonly { cursor: default; }
+.part-info-top { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin-top: 14px; }
+.part-info-image {
+  flex: 0 0 200px; display: flex; align-items: center; justify-content: center;
+  min-height: 180px; padding: 12px; background: #f9fafb;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.part-info-image img { display: block; max-width: 100%; max-height: 220px; object-fit: contain; }
+.part-info-details { flex: 1 1 260px; display: grid; gap: 12px; align-content: start; }
+.part-info-stars { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.part-info-colors { margin-top: 20px; }
+.part-info-colors h3 { margin: 0 0 10px; font-size: 1rem; }
+.part-info-color-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  max-height: 260px; overflow: auto; padding: 4px;
+}
+.part-color-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-width: 96px; padding: 6px 10px; border-radius: 999px;
+  border: 2px solid transparent; cursor: pointer;
+  font: inherit; font-size: .85rem; font-weight: 600; line-height: 1.2;
+}
+.part-color-chip:hover, .part-color-chip:focus-visible { border-color: var(--primary); }
+.part-color-chip.selected { border-color: var(--text); box-shadow: 0 0 0 2px #fff inset; }
+.part-color-chip:disabled { cursor: wait; opacity: .7; }
+.part-color-check { font-size: .9rem; font-weight: 700; }

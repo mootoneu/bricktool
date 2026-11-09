@@ -8,6 +8,7 @@ $(function () {
   BrickTools.initHeader('purchases');
 
   // Initialize all modules
+  BrickTools.PartInfo.init();
   BrickTools.PurchasesTable.init();
   BrickTools.PurchasesStats.init();
   BrickTools.PurchasesInventory.init();
