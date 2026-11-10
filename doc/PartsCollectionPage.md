@@ -30,8 +30,18 @@ The explorer is split into a category tree on the left and a main-parts table on
 **Category tree:**
 
 - Loaded from `GET /api/parts/categories`.
+- A **Search** entry is always shown at the top of the tree. It is a fake category that holds the results of a search across all categories.
 - Categories are grouped by part-category group. A group with a single category is shown directly; larger groups are collapsible `<details>` elements.
 - Clicking a category selects it (highlighted) and loads its main parts.
+
+**Search field:**
+
+- The field above the category tree searches the part number and name in all categories, including categories that are collapsed.
+- Typing selects the fake **Search** category automatically and lists the matching parts after a short delay; pressing Enter searches immediately.
+- The search is case-insensitive and matches fragments of the part number or name.
+- The API returns at most 500 parts and reports the total number of matches. The count line shows how many parts are displayed out of the total, and mentions when only the first results are loaded.
+- When the field is empty, the Search category asks for a part number or name.
+- The results table adds a **Category** column so the category of each part is visible.
 
 **Main parts table:**
 
@@ -40,6 +50,7 @@ The explorer is split into a category tree on the left and a main-parts table on
 | Image | Clicking opens the part information modal |
 | Part number | |
 | Name | |
+| Category | Shown only in the Search category |
 | Material | |
 | Has alternates | "View" button opens the alternates modal |
 | Stars | 0 to 5, editable; 0 means hidden |
@@ -48,8 +59,8 @@ The explorer is split into a category tree on the left and a main-parts table on
 Filters:
 
 - **Hide parts with 0 stars** (checked by default).
-- **Search** on part number or name.
-- The count shows "X of Y parts".
+- **Filter this category** narrows the parts already loaded in the selected category (or the search results).
+- The count shows "X of Y parts", or "X of Y parts matching ..." in the Search category.
 
 The table is sortable; the default sort is by stars, descending.
 
@@ -151,6 +162,7 @@ The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo
 | -------- | ------- |
 | `GET /api/parts/categories` | Part category tree used by the explorer |
 | `GET /api/parts/categories/{categoryId}/main-parts` | Main parts of a category |
+| `GET /api/parts/main-parts/search?query=` | Search main parts by number or name across all categories (at most 500 results) |
 | `PUT /api/parts/main-parts/{partNumber}/stars` | Save a star rating |
 | `GET /api/parts/main-parts/{partNumber}/alternates` | Alternates of a main part |
 | `GET /api/parts/{partNumber}/info` | Name, material, alternates, stars, main-part flag, category, default color, and available colors |

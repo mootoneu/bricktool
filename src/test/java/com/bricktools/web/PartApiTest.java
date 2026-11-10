@@ -90,6 +90,28 @@ class PartApiTest {
   }
 
   @Test
+  void mainPartsCanBeSearchedAcrossCategories() throws Exception {
+    mvc.perform(post("/api/parts/main-parts/generate"))
+        .andExpect(status().isOk());
+
+    mvc.perform(get("/api/parts/main-parts/search").param("query", "4"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.query").value("4"))
+        .andExpect(jsonPath("$.total").value(2))
+        .andExpect(jsonPath("$.parts.length()").value(2))
+        .andExpect(jsonPath("$.parts[0].partNumber").value("4001"))
+        .andExpect(jsonPath("$.parts[0].categoryName").value("Baseplates"))
+        .andExpect(jsonPath("$.parts[1].partNumber").value("3001"))
+        .andExpect(jsonPath("$.parts[1].categoryName").value("Bricks"))
+        .andExpect(jsonPath("$.parts[1].hasAlternates").value(true));
+
+    mvc.perform(get("/api/parts/main-parts/search").param("query", " "))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0))
+        .andExpect(jsonPath("$.parts.length()").value(0));
+  }
+
+  @Test
   void mainPartStarsCanBeUpdated() throws Exception {
     mvc.perform(post("/api/parts/main-parts/generate"))
         .andExpect(status().isOk());

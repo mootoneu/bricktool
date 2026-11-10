@@ -23,7 +23,11 @@
 
     <section data-panel="explorer" hidden>
       <div class="part-explorer">
-        <div id="part-category-tree" class="part-category-tree"></div>
+        <div class="part-explorer-sidebar">
+          <input type="search" id="part-category-search" class="part-category-search"
+                 placeholder="Search all parts" aria-label="Search all parts by number or name">
+          <div id="part-category-tree" class="part-category-tree"></div>
+        </div>
         <div class="part-explorer-content">
           <p id="part-explorer-msg" class="muted">Select a category.</p>
           <div class="toolbar main-parts-toolbar">
@@ -32,7 +36,7 @@
               Hide parts with 0 stars
             </label>
             <input type="search" id="main-parts-search" class="main-parts-search"
-                   placeholder="Search part number or name" aria-label="Search part number or name">
+                   placeholder="Filter this category" aria-label="Filter this category by part number or name">
             <span id="main-parts-count" class="muted"></span>
           </div>
           <div class="table-wrap">
@@ -42,6 +46,7 @@
                   <th class="main-part-image-col">Image</th>
                   <th class="sortable" data-key="partNumber">Part number</th>
                   <th class="sortable" data-key="name">Name</th>
+                  <th class="sortable main-part-category-col" data-key="categoryName" hidden>Category</th>
                   <th class="sortable" data-key="material">Material</th>
                   <th class="sortable" data-key="hasAlternates">Has alternates</th>
                   <th class="sortable" data-key="stars">Stars</th>

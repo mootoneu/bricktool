@@ -725,6 +725,18 @@ public class ApiController {
     return partService.mainParts(categoryId);
   }
 
+  @GetMapping(path = "/parts/main-parts/search", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Search main parts",
+      description = "Searches the main parts by part number or name across all categories. "
+          + "Returns at most 500 parts with the total number of matches."
+  )
+  public Map<String, Object> searchMainParts(
+      @Parameter(name = "query", description = "Part number or name fragment")
+      @RequestParam String query) throws IOException {
+    return partService.searchMainParts(query);
+  }
+
   @PostMapping(path = "/parts/main-parts/generate", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(
       summary = "Generate main parts",

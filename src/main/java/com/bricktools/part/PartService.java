@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -23,6 +25,7 @@ public class PartService {
 
   private static final List<String> MAIN_PART_HEADERS =
       List.of("PartNumber", "Name", "CategoryId", "Material", "HasAlternates", "Stars");
+  private static final int SEARCH_LIMIT = 500;
   private static final Comparator<Map<String, String>> BY_NAME = Comparator
       .comparing((Map<String, String> row) -> clean(row.get("Name")), String.CASE_INSENSITIVE_ORDER)
       .thenComparing(row -> clean(row.get("PartNumber")), String.CASE_INSENSITIVE_ORDER);
@@ -173,6 +176,57 @@ public class PartService {
       entry.put("stars", toInt(row.get("Stars")));
       result.add(entry);
     }
+    return result;
+  }
+
+  /**
+   * Searches the main parts by part number or name across all categories. The query is matched
+   * case-insensitively; an empty query returns no part. At most {@value #SEARCH_LIMIT} parts are
+   * returned, while the total number of matches is reported.
+   */
+  public Map<String, Object> searchMainParts(String query) throws IOException {
+    String cleaned = clean(query);
+    Map<String, String> categoryNames = new HashMap<>();
+    for (Map<String, String> category : Csv.read(categoriesFile)) {
+      categoryNames.put(clean(category.get("Id")), clean(category.get("Name")));
+    }
+
+    String needle = cleaned.toLowerCase(Locale.ROOT);
+    List<Map<String, String>> rows = new ArrayList<>();
+    if (!needle.isEmpty()) {
+      for (Map<String, String> row : Csv.read(mainPartsFile)) {
+        String number = clean(row.get("PartNumber"));
+        String name = clean(row.get("Name"));
+        if (number.toLowerCase(Locale.ROOT).contains(needle)
+            || name.toLowerCase(Locale.ROOT).contains(needle)) {
+          rows.add(row);
+        }
+      }
+    }
+    rows.sort(BY_NAME);
+
+    List<Map<String, Object>> parts = new ArrayList<>();
+    for (Map<String, String> row : rows) {
+      if (parts.size() >= SEARCH_LIMIT) {
+        break;
+      }
+      String categoryId = clean(row.get("CategoryId"));
+      Map<String, Object> entry = new LinkedHashMap<>();
+      entry.put("partNumber", clean(row.get("PartNumber")));
+      entry.put("name", clean(row.get("Name")));
+      entry.put("categoryId", toInt(categoryId));
+      entry.put("categoryName", categoryNames.getOrDefault(categoryId, ""));
+      entry.put("material", clean(row.get("Material")));
+      entry.put("hasAlternates", isTrue(row.get("HasAlternates")));
+      entry.put("stars", toInt(row.get("Stars")));
+      parts.add(entry);
+    }
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("query", cleaned);
+    result.put("total", rows.size());
+    result.put("limit", SEARCH_LIMIT);
+    result.put("parts", parts);
     return result;
   }
 

@@ -109,6 +109,42 @@ class PartServiceTest {
   }
 
   @Test
+  void searchMainPartsMatchesNamesAndNumbersAcrossCategories() throws IOException {
+    service.generateMainParts();
+
+    Map<String, Object> result = service.searchMainParts("brick");
+
+    assertThat(result)
+        .containsEntry("query", "brick")
+        .containsEntry("total", 2)
+        .containsEntry("limit", 500);
+    assertThat(partsOf(result))
+        .extracting("partNumber")
+        .containsExactly("3001", "5001");
+    assertThat(partsOf(result).get(0))
+        .containsEntry("name", "Brick 2 x 4")
+        .containsEntry("categoryName", "Bricks")
+        .containsEntry("material", "Plastic")
+        .containsEntry("hasAlternates", true)
+        .containsEntry("stars", 2);
+    assertThat(partsOf(result).get(1))
+        .containsEntry("categoryName", "Technic Bricks");
+
+    Map<String, Object> byNumber = service.searchMainParts("4001");
+    assertThat(byNumber).containsEntry("total", 1);
+    assertThat(partsOf(byNumber))
+        .extracting("partNumber")
+        .containsExactly("4001");
+
+    assertThat(service.searchMainParts("BRICK")).containsEntry("total", 2);
+    assertThat(service.searchMainParts("  "))
+        .containsEntry("total", 0)
+        .containsEntry("query", "");
+    assertThat(partsOf(service.searchMainParts("  "))).isEmpty();
+    assertThat(service.searchMainParts("zzz")).containsEntry("total", 0);
+  }
+
+  @Test
   void updateStarsPersistsTheNewValue() throws IOException {
     service.generateMainParts();
 
@@ -206,6 +242,11 @@ class PartServiceTest {
 
     Map<String, Object> unknown = service.info("unknown");
     assertThat(unknown).isNull();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> partsOf(Map<String, Object> result) {
+    return (List<Map<String, Object>>) result.get("parts");
   }
 
   @SuppressWarnings("unchecked")
