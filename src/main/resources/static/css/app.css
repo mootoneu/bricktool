@@ -351,6 +351,13 @@ table.data th.actions-col { width: 18%; }
 .main-parts-filter { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; }
 .main-parts-filter input { padding: 0; }
 .main-parts-search { flex: 1 1 220px; max-width: 360px; padding: 6px 8px; }
+.selection-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.selection-toolbar .btn { padding: 4px 10px; font-size: .85rem; }
+.selection-stars { display: inline-flex; align-items: center; gap: 6px; }
+.main-part-select-col { width: 32px; text-align: center; }
+.main-part-select-col input { cursor: pointer; }
+#main-parts tbody tr.selected { background: #eef2ff; }
+#main-parts tbody tr.selected:hover { background: #e0e7ff; }
 .main-part-image-col, .main-part-image, .part-image-col, .part-image { width: 64px; }
 .part-img { display: block; width: 56px; height: 56px; object-fit: contain; }
 .part-img[data-part-number] { cursor: pointer; border-radius: 4px; }

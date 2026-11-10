@@ -39,10 +39,25 @@
                    placeholder="Filter this category" aria-label="Filter this category by part number or name">
             <span id="main-parts-count" class="muted"></span>
           </div>
+          <div id="main-parts-selection" class="selection-toolbar" hidden>
+            <span id="main-parts-selected-count" class="muted">0 parts selected</span>
+            <button type="button" id="main-parts-select-all" class="btn secondary">Select all visible</button>
+            <button type="button" id="main-parts-clear-selection" class="btn secondary">Clear selection</button>
+            <span class="selection-stars">
+              <span class="muted">Set stars</span>
+              <span id="main-parts-bulk-stars" class="stars" role="group"
+                    aria-label="Set stars for selected parts"></span>
+            </span>
+            <button type="button" id="main-parts-bulk-add" class="btn" disabled>Add to collection</button>
+          </div>
           <div class="table-wrap">
             <table class="data" id="main-parts" hidden>
               <thead>
                 <tr>
+                  <th class="main-part-select-col">
+                    <input type="checkbox" id="main-parts-select-all-visible"
+                           aria-label="Select all visible parts" title="Select all visible parts">
+                  </th>
                   <th class="main-part-image-col">Image</th>
                   <th class="sortable" data-key="partNumber">Part number</th>
                   <th class="sortable" data-key="name">Name</th>

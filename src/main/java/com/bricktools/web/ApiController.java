@@ -12,6 +12,7 @@ import com.bricktools.other.OtherImageService;
 import com.bricktools.pab.PabPartRequest;
 import com.bricktools.pab.PabPurchaseRequest;
 import com.bricktools.pab.PabService;
+import com.bricktools.part.MainPartStarsBulkRequest;
 import com.bricktools.part.MainPartStarsRequest;
 import com.bricktools.part.PartDefaultColorRequest;
 import com.bricktools.part.PartImageService;
@@ -757,6 +758,19 @@ public class ApiController {
       @Parameter(name = "partNumber", description = "Main part number") @PathVariable String partNumber,
       @RequestBody MainPartStarsRequest request) throws IOException {
     partService.updateStars(partNumber, request.stars());
+  }
+
+  @PutMapping(path = "/parts/main-parts/stars", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Update several main part stars",
+      description = "Sets the star rating (0 to 5) of several main parts at once. Unknown part "
+          + "numbers are ignored."
+  )
+  @ApiResponse(responseCode = "200", description = "Number of updated main parts returned")
+  public Map<String, Object> updateMainPartStars(
+      @RequestBody MainPartStarsBulkRequest request) throws IOException {
+    int updated = partService.updateStars(request.partNumbers(), request.stars());
+    return Map.of("updated", updated);
   }
 
   @GetMapping(path = "/parts/main-parts/{partNumber}/alternates", produces = MediaType.APPLICATION_JSON_VALUE)

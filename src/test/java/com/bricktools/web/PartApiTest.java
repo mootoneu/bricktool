@@ -147,6 +147,49 @@ class PartApiTest {
   }
 
   @Test
+  void severalMainPartStarsCanBeUpdated() throws Exception {
+    mvc.perform(post("/api/parts/main-parts/generate"))
+        .andExpect(status().isOk());
+
+    mvc.perform(put("/api/parts/main-parts/stars")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"partNumbers\":[\"3001\",\"4001\",\"unknown\"],\"stars\":4}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.updated").value(2));
+
+    mvc.perform(get("/api/parts/categories/11/main-parts"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].partNumber").value("3001"))
+        .andExpect(jsonPath("$[0].stars").value(4));
+    mvc.perform(get("/api/parts/categories/1/main-parts"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].partNumber").value("4001"))
+        .andExpect(jsonPath("$[0].stars").value(4));
+
+    // Restore the default stars so the shared test data stays consistent for the other tests.
+    mvc.perform(put("/api/parts/main-parts/stars")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"partNumbers\":[\"3001\",\"4001\"],\"stars\":2}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.updated").value(2));
+  }
+
+  @Test
+  void severalMainPartStarsRejectInvalidValues() throws Exception {
+    mvc.perform(post("/api/parts/main-parts/generate"))
+        .andExpect(status().isOk());
+
+    mvc.perform(put("/api/parts/main-parts/stars")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"partNumbers\":[\"3001\"],\"stars\":6}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(put("/api/parts/main-parts/stars")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"partNumbers\":[],\"stars\":3}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void mainPartAlternatesJoinRelationshipsAndParts() throws Exception {
     mvc.perform(post("/api/parts/main-parts/generate"))
         .andExpect(status().isOk());

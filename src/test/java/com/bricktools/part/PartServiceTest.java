@@ -173,6 +173,38 @@ class PartServiceTest {
   }
 
   @Test
+  void updateStarsForSeveralPartsPersistsTheNewValue() throws IOException {
+    service.generateMainParts();
+
+    int updated = service.updateStars(List.of("3001", "4001", "unknown"), 5);
+
+    assertThat(updated).isEqualTo(2);
+    assertThat(service.mainParts(11).get(0)).containsEntry("stars", 5);
+    assertThat(service.mainParts(1).get(0)).containsEntry("stars", 5);
+    assertThat(Files.readString(dir.resolve("bt/main_parts.csv")))
+        .contains("3001,Brick 2 x 4,11,Plastic,true,5")
+        .contains("4001,Baseplate 32 x 32,1,Plastic,false,5");
+  }
+
+  @Test
+  void updateStarsForSeveralPartsRejectsInvalidInput() throws IOException {
+    service.generateMainParts();
+
+    assertThatThrownBy(() -> service.updateStars(List.of("3001"), 6))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("between 0 and 5");
+    assertThatThrownBy(() -> service.updateStars(List.of("3001"), null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("between 0 and 5");
+    assertThatThrownBy(() -> service.updateStars(List.of(), 3))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("No part numbers");
+    assertThatThrownBy(() -> service.updateStars(List.of(" "), 3))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("No part numbers");
+  }
+
+  @Test
   void alternatesJoinRelationshipsAndPartDetails() throws IOException {
     service.generateMainParts();
 

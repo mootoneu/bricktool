@@ -323,6 +323,44 @@ public class PartService {
   }
 
   /**
+   * Sets the star rating of several main parts at once. Unknown part numbers are ignored.
+   *
+   * @return the number of main parts that were updated
+   */
+  public synchronized int updateStars(List<String> partNumbers, Integer stars) throws IOException {
+    if (stars == null || stars < 0 || stars > 5) {
+      throw new IllegalArgumentException("Stars must be between 0 and 5");
+    }
+    Set<String> keys = new HashSet<>();
+    if (partNumbers != null) {
+      for (String partNumber : partNumbers) {
+        String key = clean(partNumber);
+        if (!key.isEmpty()) {
+          keys.add(key);
+        }
+      }
+    }
+    if (keys.isEmpty()) {
+      throw new IllegalArgumentException("No part numbers provided");
+    }
+
+    int updated = 0;
+    List<Map<String, String>> rows = new ArrayList<>();
+    for (Map<String, String> row : Csv.read(mainPartsFile)) {
+      Map<String, String> copy = new LinkedHashMap<>(row);
+      if (keys.contains(clean(copy.get("PartNumber")))) {
+        copy.put("Stars", String.valueOf(stars));
+        updated++;
+      }
+      rows.add(copy);
+    }
+    if (updated > 0) {
+      Csv.write(mainPartsFile, MAIN_PART_HEADERS, rows);
+    }
+    return updated;
+  }
+
+  /**
    * Returns the parts related to a main part through data.re.part_relationships, joined with the
    * matching data.re.parts rows.
    */

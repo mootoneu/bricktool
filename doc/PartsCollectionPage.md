@@ -47,6 +47,7 @@ The explorer is split into a category tree on the left and a main-parts table on
 
 | Column | Notes |
 | ------ | ----- |
+| Select | Selection checkbox; the header checkbox selects or clears all visible parts |
 | Image | Clicking opens the part information modal |
 | Part number | |
 | Name | |
@@ -65,6 +66,15 @@ Filters:
 The table is sortable; the default sort is by stars, descending.
 
 **Star rating:** clicking a star saves it with `PUT /api/parts/main-parts/{partNumber}/stars` and the body `{ "stars": 3 }`. The change is reflected immediately.
+
+**Selection:** the checkbox column selects individual parts. A selection toolbar above the table shows how many parts are selected and provides:
+
+- **Select all visible**: adds every part currently shown (after the filters) to the selection.
+- **Clear selection**: removes every selected part.
+- **Set stars**: the 0-to-5 star buttons apply the rating to every selected part at once with `PUT /api/parts/main-parts/stars` and the body `{ "partNumbers": ["3001", "3002"], "stars": 3 }`.
+- **Add to collection**: applies the (currently placeholder) add-to-collection action to every selected part at once. The same action is used by the row button.
+
+Selecting or clearing a part updates the header checkbox, which is indeterminate when only some visible parts are selected. The selection is kept when sorting or filtering, but it is cleared when the selected category changes (including when a new cross-category search runs).
 
 **Alternates modal:** opens from the "View" button and calls `GET /api/parts/main-parts/{partNumber}/alternates`. It shows the relation type, the child part (number, name, category id, material), and the parent part (number and name). The modal closes with the close button, a click outside, or Escape.
 
@@ -165,6 +175,7 @@ The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo
 | `GET /api/parts/categories/{categoryId}/main-parts` | Main parts of a category |
 | `GET /api/parts/main-parts/search?query=` | Search main parts by number or name across all categories (at most 500 results) |
 | `PUT /api/parts/main-parts/{partNumber}/stars` | Save a star rating |
+| `PUT /api/parts/main-parts/stars` | Save the same star rating for several parts; body `{ "partNumbers": [...], "stars": 3 }` |
 | `GET /api/parts/main-parts/{partNumber}/alternates` | Alternates of a main part |
 | `GET /api/parts/{partNumber}/info` | Name, material, alternates, stars, main-part flag, category, default color, and available colors |
 | `PUT /api/parts/{partNumber}/default-color` | Store the default image color; body `{ "colorId": 5 }` |
