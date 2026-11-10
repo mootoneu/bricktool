@@ -8,7 +8,7 @@ The Administration page (`admin.html`) groups the maintenance operations of Bric
   - [Table of Contents](#table-of-contents)
   - [Page Contents](#page-contents)
   - [Rebrickable Update](#rebrickable-update)
-  - [BrickWatch Official Price](#brickwatch-official-price)
+  - [Lego Official Price](#lego-official-price)
     - [Fetching from BrickWatch](#fetching-from-brickwatch)
     - [Fetching from Brickonomics](#fetching-from-brickonomics)
   - [Set Images](#set-images)
@@ -52,9 +52,10 @@ Behaviour:
 
 The downloaded files are described in [DataModel.md](./DataModel.md#rebrickable-data).
 
-## BrickWatch Official Price
+## Lego Official Price
 
-BrickWatch is a LEGO price tracking platform. Brick Tools maintains a list of official LEGO prices based on BrickWatch data stored in `data.bw.SetPrice`.
+LEGO does not provide an API to retrieve official prices.
+BrickWatch and Brickonomics are a LEGO price tracking platform. Brick Tools maintains a list of official LEGO prices based on their data stored in `data.bw.SetPrice`.
 
 The card contains:
 
