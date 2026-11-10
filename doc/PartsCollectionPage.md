@@ -105,6 +105,7 @@ The **Add new purchase** button opens a form with the purchase date (defaults to
 Shows the parts of the selected PaB purchase.
 
 - The **Purchase** selector lists every PaB purchase as `date (#id)`. It is disabled when no purchase exists.
+- The **Previous** and **Next** buttons move the selection by one purchase in the selector order and load its parts. They are disabled at the first and last purchase, and both are disabled when no purchase exists.
 - **Add part** opens the part form for the selected purchase.
 - The table shows: image, Id, purchase Id, part number, part name, category, color chip, quantity, and an Edit action.
 - The color chip is clickable and opens the color information modal.

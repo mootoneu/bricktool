@@ -89,9 +89,14 @@
 
     <section data-panel="pab-parts" hidden>
       <div class="toolbar">
-        <label>Purchase
+        <div class="purchase-selector" role="group" aria-label="PaB purchase">
+          <label for="pab-parts-purchase">Purchase</label>
+          <button type="button" id="pab-parts-prev" class="btn secondary"
+                  title="Previous purchase" aria-label="Previous purchase">&#8249;</button>
           <select id="pab-parts-purchase"></select>
-        </label>
+          <button type="button" id="pab-parts-next" class="btn secondary"
+                  title="Next purchase" aria-label="Next purchase">&#8250;</button>
+        </div>
         <button type="button" id="pab-part-add" class="btn" disabled>Add part</button>
       </div>
       <div class="table-wrap">

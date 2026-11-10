@@ -225,6 +225,34 @@
   }
 
   /**
+   * Enable or disable the previous and next purchase buttons
+   */
+  function updatePabPurchaseNav() {
+    const ids = pabPurchases.map(function (purchase) { return String(purchase.id); });
+    const index = ids.indexOf(String(selectedPabPurchaseId));
+    const missing = index < 0;
+    $('#pab-parts-prev').prop('disabled', missing || index === 0);
+    $('#pab-parts-next').prop('disabled', missing || index === ids.length - 1);
+  }
+
+  /**
+   * Select the previous or next PaB purchase
+   * @param {number} direction - -1 for the previous purchase, 1 for the next
+   */
+  function stepPabPurchase(direction) {
+    const ids = pabPurchases.map(function (purchase) { return String(purchase.id); });
+    const index = ids.indexOf(String(selectedPabPurchaseId));
+    const next = index + direction;
+    if (index < 0 || next < 0 || next >= ids.length) {
+      return;
+    }
+    selectedPabPurchaseId = ids[next];
+    $('#pab-parts-purchase').val(selectedPabPurchaseId);
+    updatePabPurchaseNav();
+    loadPabParts();
+  }
+
+  /**
    * Populate the PaB purchase select dropdown
    */
   function populatePabPurchaseSelect() {
@@ -234,6 +262,7 @@
       $select.prop('disabled', true);
       $('#pab-part-add').prop('disabled', true);
       selectedPabPurchaseId = '';
+      updatePabPurchaseNav();
       return;
     }
     pabPurchases.forEach(function (purchase) {
@@ -248,6 +277,7 @@
     }
     $select.val(selectedPabPurchaseId);
     $('#pab-part-add').prop('disabled', false);
+    updatePabPurchaseNav();
   }
 
   // ============================================================================
@@ -323,6 +353,7 @@
       // Set the dropdown value immediately so it's correct when the tab opens
       $('.tabs [data-tab="pab-parts"]').trigger('click');
       $('#pab-parts-purchase').val(selectedPabPurchaseId);
+      updatePabPurchaseNav();
     });
 
     $('#pab-purchase-form').on('submit', function (event) {
@@ -356,7 +387,16 @@
     // PaB Parts event handlers
     $('#pab-parts-purchase').on('change', function () {
       selectedPabPurchaseId = String($(this).val() || '');
+      updatePabPurchaseNav();
       loadPabParts();
+    });
+
+    $('#pab-parts-prev').on('click', function () {
+      stepPabPurchase(-1);
+    });
+
+    $('#pab-parts-next').on('click', function () {
+      stepPabPurchase(1);
     });
 
     $('#pab-part-add').on('click', function () {

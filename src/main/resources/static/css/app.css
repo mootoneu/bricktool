@@ -176,6 +176,8 @@ table.data th.actions-col { width: 18%; }
 .priority-low { background: #e5e7eb; color: #374151; }
 
 .toolbar { display: flex; justify-content: space-between; align-items: center; }
+.purchase-selector { display: flex; align-items: center; gap: 8px; }
+.purchase-selector .btn { padding: 4px 10px; font-size: 1rem; line-height: 1.2; }
 
 .year-selector { display: flex; align-items: center; gap: 8px; }
 .year-selector .btn { padding: 4px 10px; font-size: 1rem; line-height: 1.2; }
