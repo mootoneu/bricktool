@@ -207,7 +207,7 @@
       $tbody.append($tr);
     });
 
-    $('#wl-summary').text(filtered.length + ' of ' + wishlist.length + ' set(s) in wishlist');
+    $('#wishlist-summary').text(filtered.length + ' of ' + wishlist.length + ' set(s) in wishlist');
   }
 
   /**
