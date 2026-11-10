@@ -188,7 +188,7 @@
       }
     });
 
-    $('#ps-filters').on('input change', 'input, select', render);
+    $('#ps-filters').on('input change', 'input, select:not(#ps-year-value)', render);
 
     $('#ps-reset').on('click', function() {
       $('#ps-name').val('');
