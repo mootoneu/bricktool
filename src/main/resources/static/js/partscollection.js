@@ -12,6 +12,7 @@ $(function () {
   BrickTools.PartsCollectionBrickOwl.init();
   BrickTools.PartsCollectionPab.init();
   BrickTools.PartsCollectionExplorer.init();
+  BrickTools.PartsCollectionStorage.init();
 
   // Tab initialization
   BrickTools.initTabs('main', function (name) {
@@ -20,6 +21,17 @@ $(function () {
     }
     if (name === 'explorer' && !BrickTools.PartsCollectionExplorer.isCategoriesLoaded()) {
       BrickTools.PartsCollectionExplorer.loadPartCategories();
+    }
+    if (name === 'storage' && !BrickTools.PartsCollectionStorage.isStoragesLoaded()) {
+      BrickTools.PartsCollectionStorage.loadStorages();
+    }
+    if (name === 'drawers') {
+      if (!BrickTools.PartsCollectionStorage.isStoragesLoaded()) {
+        BrickTools.PartsCollectionStorage.loadStorages();
+      }
+      if (!BrickTools.PartsCollectionStorage.isDrawersLoaded()) {
+        BrickTools.PartsCollectionStorage.loadDrawers();
+      }
     }
     if (name === 'pab-purchases' && !BrickTools.PartsCollectionPab.isPabLoaded()) {
       BrickTools.PartsCollectionPab.loadPabPurchases();

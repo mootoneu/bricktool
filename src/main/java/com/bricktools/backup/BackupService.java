@@ -28,6 +28,8 @@ public class BackupService {
       "bt/themes.csv",
       "bt/theme_colors.csv",
       "bt/part_default_color.csv",
+      "bt/part_storage.csv",
+      "bt/part_collection.csv",
       "bw/setprices.csv",
       "bo/orders.csv",
       "bo/order_items.csv",

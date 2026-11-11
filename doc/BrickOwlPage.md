@@ -70,9 +70,9 @@ The table lists the stored orders. All columns are sortable:
 | Paid | `data.bo.Order.PaidTotal` | € |
 | Refund | `data.bo.Order.RefundTotal` | € |
 | Total | `data.bo.Order.Total` | € (paid minus refund) |
-| Items | | "Items" button |
+| Actions | | "Items" and "Set active" buttons |
 
-Clicking the "Items" button, or anywhere on a row outside a link or button, opens the Order items tab for that order.
+Clicking the "Items" button, or anywhere on a row outside a link or button, opens the Order items tab for that order. **Set active** makes the order the active container; parts added with "Add to container" are written to `data/bo/order_items.csv` as local lines with the `Added` condition and the part's default color. Adding the same part and color again increments its quantity.
 
 **Endpoint:** `GET /api/brickowl/orders`
 

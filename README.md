@@ -38,7 +38,7 @@ All pages share a common header with links to every feature page, the active pag
 | [Landing page](src/main/resources/static/index.html) | Cards linking to every feature page. |
 | [Sets Purchase](./doc/SetPurchasePage.md) | Statistics, purchase list, purchased-set cards, and the parts inventory of a set. |
 | [BrickOwl](./doc/BrickOwlPage.md) | Statistics and history of BrickOwl orders and their items. |
-| [Parts Collection](./doc/PartsCollectionPage.md) | Part explorer with a cross-category search and multi-selection, Pick-a-Brick purchases and parts, and BrickOwl parts aggregated across orders. |
+| [Parts Collection](./doc/PartsCollectionPage.md) | Part explorer with a cross-category search and multi-selection, part storages and drawers, a collection search, Pick-a-Brick purchases and parts, and BrickOwl parts aggregated across orders. |
 | [New Sets](./doc/NewSetsPage.md) | Recently released sets by theme, with prices and a shared wishlist. |
 | [Administration](./doc/AdministrationPage.md) | Reference data updates, official price fetching, set image download, backups, and derived part files. |
 
@@ -46,7 +46,7 @@ All pages share a common header with links to every feature page, the active pag
 
 - **Sets Purchase**: tracks official price, paid price, promo, completeness, ownership, vendor, buyer, and owner. The **Sets** tab shows the purchased sets as cards filtered by purchase year. The **Set Inventory** tab records the parts actually owned for a set.
 - **BrickOwl**: fetches orders and items from the BrickOwl API, then shows totals, averages, per-store/per-year histograms, and the full order history.
-- **Parts Collection**: explores the part catalogue by category with star ratings and alternates, searches part numbers or names across all categories, and selects several parts to set their stars or add them to the collection at once; manages Pick-a-Brick purchases; lists BrickOwl items with their orders and total quantities. Part images open a shared information modal with the part category, stars, and available colors.
+- **Parts Collection**: explores the part catalogue by category with star ratings and alternates, searches part numbers or names across all categories, and selects several parts to set their stars or add them to the active container at once; manages physical part storages and drawers, searches the collection by part, color, category, or tag, manages Pick-a-Brick purchases; lists BrickOwl items with their orders and total quantities. Part images open a shared information modal with the part category, stars, and available colors.
 - **New Sets**: browses sets of a release year by theme or as cards, highlights purchased and wishlisted sets, and manages a wishlist with members, buyers, and priorities.
 - **Administration**: updates Rebrickable data (once a day), fetches official prices from BrickWatch or Brickonomics, downloads missing set images, creates CSV backups, and regenerates main parts and part color URLs.
 
@@ -54,10 +54,10 @@ All pages share a common header with links to every feature page, the active pag
 
 Detailed documentation lives in `doc/`:
 
-- [Common Features](./doc/CommonFeatures.md) - header, navigation, tabs, formatting, API access, tables, part images, colors, and remembered form values.
+- [Common Features](./doc/CommonFeatures.md) - header, navigation, tabs, active container, formatting, API access, tables, part images, colors, and remembered form values.
 - [Sets Purchase Page](./doc/SetPurchasePage.md) - statistics, purchases, sets, and set inventory tabs.
 - [BrickOwl Page](./doc/BrickOwlPage.md) - statistics, update, orders, and order items tabs.
-- [Parts Collection Page](./doc/PartsCollectionPage.md) - part explorer, Pick-a-Brick, BrickOwl parts, and the part information modal.
+- [Parts Collection Page](./doc/PartsCollectionPage.md) - part explorer, part storages and drawers, collection search, Pick-a-Brick, BrickOwl parts, and the part information modal.
 - [New Sets Page](./doc/NewSetsPage.md) - themes, sets, and wishlist tabs.
 - [Administration Page](./doc/AdministrationPage.md) - maintenance operations and their endpoints.
 - [Data Model](./doc/DataModel.md) - every CSV model, its fields, relationships, and storage location.

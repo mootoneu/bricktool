@@ -135,6 +135,34 @@ public class PabService {
     throw new IllegalArgumentException("Unknown PaB part id " + id);
   }
 
+  /**
+   * Adds one part to a purchase. When the same part and color are already stored, its quantity is
+   * incremented instead of creating a duplicate row.
+   *
+   * @return the id of the created or updated part
+   */
+  public synchronized int addPart(int purchaseId, String partNumber, int colorId) throws IOException {
+    requirePurchase(purchaseId);
+    Map<String, String> candidate = toPartRow(0, purchaseId,
+        new PabPartRequest(partNumber, colorId, 1));
+    List<Map<String, String>> rows = load(partsFile);
+    for (int i = 0; i < rows.size(); i++) {
+      Map<String, String> row = rows.get(i);
+      if (String.valueOf(purchaseId).equals(clean(row.get("PaBPurchaseId")))
+          && clean(candidate.get("PartNumber")).equals(clean(row.get("PartNumber")))
+          && clean(candidate.get("PartColorId")).equals(clean(row.get("PartColorId")))) {
+        Integer quantity = toInt(row.get("Quantity"));
+        row.put("Quantity", String.valueOf((quantity == null ? 0 : quantity) + 1));
+        Csv.write(partsFile, PART_HEADERS, rows);
+        return toInt(row.get("Id")) == null ? 0 : toInt(row.get("Id"));
+      }
+    }
+    int id = nextId(rows);
+    rows.add(toPartRow(id, purchaseId, new PabPartRequest(partNumber, colorId, 1)));
+    Csv.write(partsFile, PART_HEADERS, rows);
+    return id;
+  }
+
   private void requirePurchase(int purchaseId) throws IOException {
     for (Map<String, String> row : Csv.read(purchasesFile)) {
       if (String.valueOf(purchaseId).equals(clean(row.get("Id")))) {

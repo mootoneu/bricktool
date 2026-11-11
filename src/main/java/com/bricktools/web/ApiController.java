@@ -24,6 +24,11 @@ import com.bricktools.purchase.SetInventoryService;
 import com.bricktools.rebrickable.RebrickableService;
 import com.bricktools.setimg.SetImageBackfill;
 import com.bricktools.setimg.SetImageService;
+import com.bricktools.storage.AddToContainerRequest;
+import com.bricktools.storage.ContainerService;
+import com.bricktools.storage.PartCollectionRequest;
+import com.bricktools.storage.PartStorageRequest;
+import com.bricktools.storage.PartStorageService;
 import com.bricktools.theme.ThemeImageService;
 import com.bricktools.wishlist.NewSetService;
 import com.bricktools.wishlist.WishlistRequest;
@@ -83,6 +88,8 @@ public class ApiController {
   private final PabPartPriceService pabPartPrices;
   private final PartService partService;
   private final PartImageService partImages;
+  private final PartStorageService partStorages;
+  private final ContainerService containers;
 
   public ApiController(RebrickableService rebrickable, BrickWatchService brickWatch,
                        BrickonomicsService brickonomics, BackupService backup, BrickOwlService brickOwl,
@@ -90,7 +97,8 @@ public class ApiController {
                        NotificationService notifications, SetImageService setImages,
                        SetImageBackfill backfill, ThemeImageService themeImages, OtherImageService otherImages,
                        NewSetService newSets, WishlistService wishlist, ColorService colors, PabService pab,
-                       PabPartPriceService pabPartPrices, PartService partService, PartImageService partImages) {
+                       PabPartPriceService pabPartPrices, PartService partService, PartImageService partImages,
+                       PartStorageService partStorages, ContainerService containers) {
     this.rebrickable = rebrickable;
     this.brickWatch = brickWatch;
     this.brickonomics = brickonomics;
@@ -110,6 +118,8 @@ public class ApiController {
     this.pabPartPrices = pabPartPrices;
     this.partService = partService;
     this.partImages = partImages;
+    this.partStorages = partStorages;
+    this.containers = containers;
   }
 
   /**
@@ -899,5 +909,104 @@ public class ApiController {
     return ResponseEntity.ok()
         .contentType(MediaType.parseMediaType(partImages.contentType(image.get())))
         .body(partImages.resource(image.get()));
+  }
+
+  // ==========================================================================
+  // Part storage and collection
+  // ==========================================================================
+
+  @GetMapping(path = "/part-storage", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List part storages",
+      description = "Returns every physical part storage stored in data/bt/part_storage.csv."
+  )
+  public List<Map<String, Object>> partStorages() throws IOException {
+    return partStorages.storages();
+  }
+
+  @PostMapping(path = "/part-storage", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create part storage",
+      description = "Adds a physical part storage (furniture, box, cabinet, drawers, etc.)."
+  )
+  public Map<String, Object> createPartStorage(@RequestBody PartStorageRequest request)
+      throws IOException {
+    return partStorages.createStorage(request);
+  }
+
+  @PutMapping(path = "/part-storage/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Update part storage",
+      description = "Updates the model, drawer count, location, and description of a part storage."
+  )
+  public Map<String, Object> updatePartStorage(@PathVariable String id,
+                                               @RequestBody PartStorageRequest request)
+      throws IOException {
+    return partStorages.updateStorage(id, request);
+  }
+
+  @GetMapping(path = "/part-collection", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List part collection rows",
+      description = "Returns every rule of data/bt/part_collection.csv with its file index."
+  )
+  public List<Map<String, Object>> partCollection() throws IOException {
+    return partStorages.collectionRows();
+  }
+
+  @PostMapping(path = "/part-collection", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create part collection row",
+      description = "Declares that a set of parts and colors is stored in a storage drawer."
+  )
+  public Map<String, Object> createPartCollectionRow(@RequestBody PartCollectionRequest request)
+      throws IOException {
+    return partStorages.createCollectionRow(request);
+  }
+
+  @PutMapping(path = "/part-collection/{index}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Update part collection row",
+      description = "Replaces the part collection rule at the given file index."
+  )
+  public Map<String, Object> updatePartCollectionRow(@PathVariable int index,
+                                                     @RequestBody PartCollectionRequest request)
+      throws IOException {
+    return partStorages.updateCollectionRow(index, request);
+  }
+
+  @DeleteMapping(path = "/part-collection/{index}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+      summary = "Delete part collection row",
+      description = "Removes the part collection rule at the given file index."
+  )
+  public void deletePartCollectionRow(@PathVariable int index) throws IOException {
+    partStorages.deleteCollectionRow(index);
+  }
+
+  @GetMapping(path = "/part-collection/drawers", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List storage drawers",
+      description = "Returns one card per storage drawer with its resolved contents. When a query "
+          + "is given, only drawers containing a matching part are returned."
+  )
+  public List<Map<String, Object>> partCollectionDrawers(
+      @Parameter(name = "query", description = "Part number, name, color, category, or tag")
+      @RequestParam(required = false) String query)
+      throws IOException {
+    return partStorages.drawers(query);
+  }
+
+  @PostMapping(path = "/part-collection/add", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Add parts to a container",
+      description = "Adds parts to a part storage, a storage drawer, a PaB purchase, or a BrickOwl order."
+  )
+  public Map<String, Object> addPartsToContainer(@RequestBody AddToContainerRequest request)
+      throws IOException {
+    return containers.addParts(request);
   }
 }

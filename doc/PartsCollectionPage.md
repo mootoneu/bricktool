@@ -9,6 +9,8 @@ The Parts Collection page (`partscollection.html`) gathers the parts the user ow
   - [Page Contents](#page-contents)
   - [Part Explorer Tab](#part-explorer-tab)
   - [Collection Tab](#collection-tab)
+  - [Part Storage Tab](#part-storage-tab)
+  - [Storage Drawers Tab](#storage-drawers-tab)
   - [PaB Purchases Tab](#pab-purchases-tab)
   - [PaB Parts Tab](#pab-parts-tab)
   - [BrickOwl Tab](#brickowl-tab)
@@ -18,10 +20,14 @@ The Parts Collection page (`partscollection.html`) gathers the parts the user ow
 ## Page Contents
 
 - **Part explorer** tab: all existing parts organised by category.
-- **Collection** tab: placeholder for the future parts collection.
+- **Collection** tab: searches the part collection by part number, name, color, category, or tag and shows the matching drawers.
+- **Part storage** tab: the physical part storages (furniture, boxes, cabinets, etc.).
+- **Storage drawers** tab: one card per drawer with its contents.
 - **PaB Purchases** tab: Pick-a-Brick purchases (boxes and minifigures).
 - **PaB Parts** tab: the parts bought in a Pick-a-Brick purchase.
 - **BrickOwl** tab (default): all parts purchased on BrickOwl, aggregated across orders.
+
+The active container is described in [Common Features](./CommonFeatures.md#active-container).
 
 ## Part Explorer Tab
 
@@ -55,7 +61,7 @@ The explorer is split into a category tree on the left and a main-parts table on
 | Material | |
 | Has alternates | "View" button opens the alternates modal |
 | Stars | 0 to 5, editable; 0 means hidden |
-| | "Add to collection" button (placeholder) |
+| | "Add to container" button |
 
 Filters:
 
@@ -72,7 +78,7 @@ The table is sortable; the default sort is by stars, descending.
 - **Select all visible**: adds every part currently shown (after the filters) to the selection.
 - **Clear selection**: removes every selected part.
 - **Set stars**: the 0-to-5 star buttons apply the rating to every selected part at once with `PUT /api/parts/main-parts/stars` and the body `{ "partNumbers": ["3001", "3002"], "stars": 3 }`.
-- **Add to collection**: applies the (currently placeholder) add-to-collection action to every selected part at once. The same action is used by the row button.
+- **Add to container**: sends every selected part to the active container at once. The same action is used by the row button. When no container is active, a message asks the user to set one from the Collection, Part storage, or Storage drawers tab.
 
 Selecting or clearing a part updates the header checkbox, which is indeterminate when only some visible parts are selected. The selection is kept when sorting or filtering, but it is cleared when the selected category changes (including when a new cross-category search runs).
 
@@ -82,7 +88,71 @@ Selecting or clearing a part updates the header checkbox, which is indeterminate
 
 ## Collection Tab
 
-The tab is a placeholder and currently displays "Collection — empty.".
+The tab searches the part collection and shows the storage drawers that contain matching parts.
+
+- The search field matches the part number, part name, color name or id, category name or id, and free-text tags. It is case-insensitive and searches after a short delay; pressing Enter searches immediately.
+- Results are one card per matching drawer. Each card shows the storage id and drawer label, the storage model and location, and the parts that match the search.
+- When a drawer contains several matching parts, up to 200 are shown.
+- Each result card has **Set active** (sets the drawer as the active container) and **Add content** (opens the drawer content form). The content rules shown on the card can be edited or deleted in place.
+- Setting a drawer active loads the drawer list, so the header navigation can move through the drawers of the storage.
+- When nothing matches, a message explains that no drawer contains a matching part.
+- The search is exposed by `GET /api/part-collection/drawers?query=`.
+
+## Part Storage Tab
+
+Lists the physical part storages stored in `data/bt/part_storage.csv`.
+
+| Column | Source |
+| ------ | ------ |
+| Id | `Id` |
+| Model | `Model` (for example "IKEA Alex") |
+| Drawers | `DrawersCount` |
+| Location | `Location` |
+| Description | `Description` |
+| Rules | Number of part collection rows attached to the storage |
+
+Actions:
+
+- **Edit** opens the storage form.
+- **Set active** makes the storage the active container.
+
+The **Add storage** button opens the same form for a new storage. The form asks for the id, model, drawer count, location, and description. The id cannot be changed after creation. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
+
+**Endpoints:**
+
+- `GET /api/part-storage`
+- `POST /api/part-storage`
+- `PUT /api/part-storage/{id}`
+
+## Storage Drawers Tab
+
+Shows one card per drawer of every storage, including empty drawers.
+
+- Each card shows the storage id, the drawer label, and the storage model and location.
+- The drawer label is generated from `DrawersCount` (`A`, `B`, …, `Z`, `AA`, …). Extra labels found in the collection rows are also shown.
+- Each content rule of the drawer is displayed with its amount, part images, category chips (`§Category`), tag chips (`#tag`), and color chips. Part images open the part information modal.
+- **Add content** opens the content form prefilled with the storage and drawer.
+- **Edit** and **Delete** change or remove a content rule.
+- **Set active** makes the drawer the active container. The header then shows Previous and Next buttons to move through the drawers of the storage.
+
+The content form asks for the storage, drawer, parts, colors, and amount:
+
+- **Parts** is a semicolon-separated list of `<PartNumber>`, `§<Category>` (numeric id or case-insensitive name), and `#<Tag>` (matched against the part name and number).
+- **Colors** is a semicolon-separated list of color ids, `Any`, `Other` (parts not explicitly listed elsewhere), or `Decorated` (printed or patterned parts).
+- **Amount** is free text (for example `250`, `100s`, or `many`).
+
+A rule is unique per storage, drawer, parts, and colors. When the same part is added several times to the same drawer with `Any` colors, its amount is incremented.
+
+**Endpoints:**
+
+- `GET /api/part-collection`
+- `POST /api/part-collection`
+- `PUT /api/part-collection/{index}`
+- `DELETE /api/part-collection/{index}`
+- `GET /api/part-collection/drawers`
+- `POST /api/part-collection/add`
+
+The data models are described in [Part Collection](./DataModel.md#part-collection).
 
 ## PaB Purchases Tab
 
@@ -101,6 +171,7 @@ Actions:
 
 - **Parts** opens the PaB Parts tab for that purchase.
 - **Edit** opens the purchase form.
+- **Set active** makes the purchase the active container; parts added with "Add to container" use the part's default color.
 
 The **Add new purchase** button opens a form with the purchase date (defaults to today), box quantity, minifigure quantity, and price. The same form is used to edit an existing purchase.
 
@@ -160,7 +231,7 @@ Clicking a part image in the Part explorer, the BrickOwl parts and order items t
 - Part name.
 - Category chip with the category name; clicking it opens the Part explorer tab, expands the matching category group, selects the category, and highlights the part.
 - Star rating (editable for main parts, read-only otherwise).
-- "Add to collection" button (placeholder, no action yet).
+- "Add to container" button: adds the part to the active container. When no container is active, the modal asks the user to set one from the Parts Collection page.
 - Available colors: every `PartNumber/ColorId` pair of `data.bt.PartColorUrl` is shown as a colored chip. The color currently used for the part image is highlighted; clicking another chip makes it the default image color.
 
 The default color is stored in `data/bt/part_default_color.csv` and is used by `GET /api/parts/{partNumber}/image` when no `colorId` is given. When the part has no stored default, or the stored color is no longer available, the lowest available color is used.
@@ -188,5 +259,14 @@ The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo
 | `POST /api/pab/purchases/{purchaseId}/parts` | Add a part to a PaB purchase |
 | `PUT /api/pab/parts/{id}` | Update a PaB part |
 | `GET /api/brickowl/parts` | Aggregated BrickOwl parts |
+| `GET /api/part-storage` | List part storages |
+| `POST /api/part-storage` | Create a part storage |
+| `PUT /api/part-storage/{id}` | Update a part storage |
+| `GET /api/part-collection` | List the part collection rules with their file index |
+| `POST /api/part-collection` | Create a part collection rule |
+| `PUT /api/part-collection/{index}` | Update a part collection rule |
+| `DELETE /api/part-collection/{index}` | Delete a part collection rule |
+| `GET /api/part-collection/drawers?query=` | One card per drawer, optionally filtered by a part search |
+| `POST /api/part-collection/add` | Add parts to the active container |
 | `GET /api/le/pab-part-prices` | All LEGO Pick-a-Brick part prices |
 | `GET /api/le/pab-part-prices/{designId}` | PaB prices of a design, keyed by color id, in euros |

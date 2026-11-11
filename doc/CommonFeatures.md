@@ -9,6 +9,7 @@ This document describes the behaviour shared by every page of Brick Tools.
   - [Application Header](#application-header)
   - [Landing Page and Last Page](#landing-page-and-last-page)
   - [Tabs](#tabs)
+  - [Active Container](#active-container)
   - [Formatting](#formatting)
   - [API Access](#api-access)
   - [Tables](#tables)
@@ -41,6 +42,24 @@ The last visited feature page is stored in `localStorage` under `bricktools.last
 - On load, the URL hash has priority; otherwise the stored tab is restored. If neither exists, the page's default tab is used.
 - `onChange(name)` is called after a tab is activated. Pages use it to lazy-load the data of the newly visible tab.
 - Deep links such as `purchases.html#list` and `partscollection.html#explorer` work directly.
+
+## Active Container
+
+A container is where parts are added. Four container types are supported:
+
+- a **part storage** (furniture, box, cabinet, etc.);
+- a **storage drawer** of a part storage;
+- a **Pick-a-Brick purchase**;
+- a **BrickOwl order**.
+
+The active container is stored client-side in `localStorage` under `bricktools.activeContainer`. It is shown in the application header, left of the notifications widget, and is shared by every page.
+
+- Each container view has a **Set active** button: the Part storage table, the Storage drawers cards, the Collection search results, the PaB purchases table, and the BrickOwl orders table.
+- When the active container is a storage drawer, the header shows **Previous** and **Next** buttons that move through the drawers of the same storage.
+- The **×** button clears the active container.
+- "Add to container" buttons in the Part explorer, the selection toolbar, and the Part information modal send the selected part or parts to the active container. When no container is active, a message asks the user to set one first.
+- The header label and the helpers are exposed by `js/common.js`: `BrickTools.getActiveContainer()`, `BrickTools.setActiveContainer(container)`, `BrickTools.activeContainerLabel(container)`, and `BrickTools.addToActiveContainer(partNumbers)`.
+- Setting the active container triggers `bricktools:active-container-changed` on `document`; adding parts triggers `bricktools:container-parts-added`. Modules listen to these events to refresh their tables.
 
 ## Formatting
 

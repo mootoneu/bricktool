@@ -167,7 +167,10 @@
       return;
     }
     pabPurchases.forEach(function (purchase) {
-      const $row = $('<tr></tr>');
+      const active = BrickTools.getActiveContainer();
+      const isActive = active && active.type === 'pab'
+        && String(active.purchaseId) === String(purchase.id);
+      const $row = $('<tr></tr>').toggleClass('selected', Boolean(isActive));
       $row.append($('<td></td>').text(purchase.id == null ? '' : purchase.id));
       $row.append($('<td></td>').text(purchase.purchaseDate || ''));
       $row.append($('<td></td>').text(purchase.boxQuantity == null ? '' : fmt.number(purchase.boxQuantity)));
@@ -179,6 +182,8 @@
       $actions.append($('<button type="button" class="btn secondary pab-parts-open">Parts</button>')
         .attr('data-pab-purchase-id', purchase.id));
       $actions.append($('<button type="button" class="btn secondary pab-purchase-edit">Edit</button>')
+        .attr('data-pab-purchase-id', purchase.id));
+      $actions.append($('<button type="button" class="btn secondary pab-purchase-set-active">Set active</button>')
         .attr('data-pab-purchase-id', purchase.id));
       $row.append($actions);
       $tbody.append($row);
@@ -346,6 +351,27 @@
 
     $('#pab-purchases').on('click', '.pab-purchase-edit', function () {
       openPabPurchaseForm(findPabPurchase($(this).attr('data-pab-purchase-id')));
+    });
+
+    $('#pab-purchases').on('click', '.pab-purchase-set-active', function () {
+      const purchase = findPabPurchase($(this).attr('data-pab-purchase-id'));
+      if (!purchase) {
+        return;
+      }
+      BrickTools.setActiveContainer({
+        type: 'pab',
+        purchaseId: purchase.id,
+        detail: purchase.purchaseDate || ''
+      });
+      renderPabPurchases();
+      BrickTools.PartsCollectionShared.report('#pab-purchases-msg',
+        'Active container set to PaB purchase #' + purchase.id + '.');
+    });
+
+    $(document).on('bricktools:active-container-changed', function () {
+      if (pabPurchasesLoaded) {
+        renderPabPurchases();
+      }
     });
 
     $('#pab-purchases').on('click', '.pab-parts-open', function () {

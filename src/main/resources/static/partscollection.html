@@ -16,6 +16,8 @@
     <nav class="tabs">
       <button type="button" data-tab="explorer">Part explorer</button>
       <button type="button" data-tab="collection">Collection</button>
+      <button type="button" data-tab="storage">Part storage</button>
+      <button type="button" data-tab="drawers">Storage drawers</button>
       <button type="button" data-tab="pab-purchases">PaB Purchases</button>
       <button type="button" data-tab="pab-parts">PaB Parts</button>
       <button type="button" data-tab="brickowl" class="active">BrickOwl</button>
@@ -48,7 +50,7 @@
               <span id="main-parts-bulk-stars" class="stars" role="group"
                     aria-label="Set stars for selected parts"></span>
             </span>
-            <button type="button" id="main-parts-bulk-add" class="btn" disabled>Add to collection</button>
+            <button type="button" id="main-parts-bulk-add" class="btn" disabled>Add to container</button>
           </div>
           <div class="table-wrap">
             <table class="data" id="main-parts" hidden>
@@ -76,7 +78,50 @@
     </section>
 
     <section data-panel="collection" hidden>
-      <p class="muted">Collection — empty.</p>
+      <div class="collection-toolbar">
+        <input type="search" id="collection-search" class="collection-search"
+               placeholder="Search parts by number, name, color, category or tag"
+               aria-label="Search the part collection">
+        <span id="collection-count" class="muted"></span>
+      </div>
+      <div id="collection-drawers" class="drawer-cards"></div>
+      <p id="collection-msg" class="muted">Type a part number, name, color, or category to find the drawers that contain matching parts.</p>
+    </section>
+
+    <section data-panel="storage" hidden>
+      <div class="storage-toolbar">
+        <button type="button" id="storage-add" class="btn">Add storage</button>
+        <input type="search" id="storage-filter" placeholder="Filter storages"
+               aria-label="Filter storages">
+        <span id="storage-count" class="muted"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="data" id="part-storage">
+          <thead>
+            <tr>
+              <th class="sortable" data-key="id">Id</th>
+              <th class="sortable" data-key="model">Model</th>
+              <th class="sortable" data-key="drawersCount">Drawers</th>
+              <th class="sortable" data-key="location">Location</th>
+              <th class="sortable" data-key="description">Description</th>
+              <th class="sortable" data-key="rowCount">Rules</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="storage-msg" class="muted"></p>
+    </section>
+
+    <section data-panel="drawers" hidden>
+      <div class="storage-toolbar">
+        <input type="search" id="drawers-filter" placeholder="Filter drawers by storage or drawer"
+               aria-label="Filter drawers">
+        <span id="drawers-count" class="muted"></span>
+      </div>
+      <div id="drawer-cards" class="drawer-cards"></div>
+      <p id="drawers-msg" class="muted"></p>
     </section>
 
     <section data-panel="pab-purchases" hidden>
@@ -203,6 +248,61 @@
     </form>
   </div>
 
+  <div id="storage-modal" class="modal" hidden>
+    <form id="storage-form">
+      <h2 id="storage-title">Add part storage</h2>
+      <input type="hidden" id="storage-original-id">
+      <label>Id
+        <input id="storage-id" required>
+      </label>
+      <label>Model
+        <input id="storage-model" placeholder="IKEA Alex, Really Useful Box 9L…">
+      </label>
+      <label>Drawers count
+        <input id="storage-drawers" type="number" min="0" step="1" value="0" required>
+      </label>
+      <label>Location
+        <input id="storage-location" placeholder="Attic, Shelf 2, Desk…">
+      </label>
+      <label>Description
+        <input id="storage-description" placeholder="What this storage is supposed to contain">
+      </label>
+      <p id="storage-form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="storage-cancel" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="collection-rule-modal" class="modal" hidden>
+    <form id="collection-rule-form">
+      <h2 id="collection-rule-title">Add drawer content</h2>
+      <input type="hidden" id="collection-rule-index">
+      <label>Storage
+        <select id="collection-rule-storage" required></select>
+      </label>
+      <label>Drawer
+        <input id="collection-rule-drawer" placeholder="A">
+      </label>
+      <label>Parts
+        <input id="collection-rule-parts" placeholder="3001;3002;§Bricks;#castle" required>
+      </label>
+      <label>Colors
+        <input id="collection-rule-colors" placeholder="5;7;Any;Other;Decorated" required>
+      </label>
+      <label>Amount
+        <input id="collection-rule-amount" placeholder="250, 100s, many…" required>
+      </label>
+      <p class="muted">Parts are separated by semicolons: a part number, <code>§Category</code>, or <code>#tag</code>. Colors accept one or several ids, <code>Any</code>, <code>Other</code>, or <code>Decorated</code>.</p>
+      <p id="collection-rule-form-msg" class="warning"></p>
+      <div class="form-actions">
+        <button type="button" id="collection-rule-cancel" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  </div>
+
   <div id="main-part-alternates-modal" class="modal" hidden>
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="main-part-alternates-title">
       <div class="modal-head">
@@ -236,6 +336,7 @@
   <script src="js/color.js"></script>
   <script src="js/modules/part-info.js"></script>
   <script src="js/modules/partscollection-shared.js"></script>
+  <script src="js/modules/partscollection-storage.js"></script>
   <script src="js/modules/partscollection-brickowl.js"></script>
   <script src="js/modules/partscollection-pab.js"></script>
   <script src="js/modules/partscollection-explorer.js"></script>

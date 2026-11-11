@@ -38,14 +38,18 @@
       return;
     }
     BrickTools.BrickOwlShared.markSortedHeader('#bo-orders', sortState.orders);
+    const active = BrickTools.getActiveContainer();
     BrickTools.BrickOwlShared.sortRows(orders, sortState.orders).forEach(function(o) {
       const cells = [o.OrderTime, o.StoreName, o.Weight, o.TotalParts, o.TotalLots,
         fmt.money(o.PaidTotal), fmt.money(o.RefundTotal), fmt.money(o.Total)];
       const url = 'https://www.brickowl.com/user/934717/orders/' + encodeURIComponent(o.Id);
-      $tbody.append('<tr class="clickable" data-id="' + esc(o.Id) + '">' +
+      const isActive = active && active.type === 'brickowl'
+        && String(active.orderId) === String(o.Id);
+      $tbody.append('<tr class="clickable' + (isActive ? ' selected' : '') + '" data-id="' + esc(o.Id) + '">' +
         '<td><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(o.Id) + '</a></td>' +
         cells.map(function(v) { return '<td>' + esc(v) + '</td>'; }).join('') +
-        '<td><button type="button" class="btn secondary bo-items" data-id="' + esc(o.Id) + '">Items</button></td>' +
+        '<td><button type="button" class="btn secondary bo-items" data-id="' + esc(o.Id) + '">Items</button>' +
+        ' <button type="button" class="btn secondary bo-set-active" data-id="' + esc(o.Id) + '">Set active</button></td>' +
         '</tr>');
     });
   }
@@ -159,6 +163,28 @@
     // Items button click
     $('#bo-orders').on('click', '.bo-items', function() {
       showItems($(this).attr('data-id'));
+    });
+
+    // Set active container
+    $('#bo-orders').on('click', '.bo-set-active', function() {
+      const id = String($(this).attr('data-id') || '');
+      const order = BrickTools.BrickOwlShared.getOrders().find(function(o) {
+        return String(o.Id) === id;
+      });
+      BrickTools.setActiveContainer({
+        type: 'brickowl',
+        orderId: id,
+        detail: order ? [order.OrderTime, order.StoreName].filter(Boolean).join(' · ') : ''
+      });
+      renderOrders();
+      BrickTools.BrickOwlShared.report('#bo-update-msg',
+        'Active container set to BrickOwl order ' + id + '.');
+    });
+
+    $(document).on('bricktools:active-container-changed', function() {
+      if (BrickTools.BrickOwlShared.getOrders().length) {
+        renderOrders();
+      }
     });
 
     // Order select change

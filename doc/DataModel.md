@@ -714,6 +714,95 @@ Tracks inventory of parts in owned sets.
 
 ---
 
+### Part Collection
+
+The part collection records where the physical parts are stored. It is independent of `data.bt.SetInventory`: the set inventory lists the parts expected in owned sets, while the part collection lists the parts that are actually available and where to find them.
+
+#### `data.bt.PartStorage`
+
+A physical storage unit that can hold parts: a piece of furniture, a box, a cabinet, a set of drawers, etc.
+
+**Storage**: `data/bt/part_storage.csv`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Id | string (PK) | Unique and stable identifier of the storage (for example `A`, `BOX-1`, `ALEX-2`). Case-sensitive. |
+| Model | string | Model or commercial name of the storage unit (for example `Really Useful Box 9L`, `IKEA Alex`). |
+| DrawersCount | integer | Number of drawers or compartments that can contain parts. `0` (default) when the storage is a single compartment. |
+| Location | string | Physical location of the storage (for example `Attic`, `Shelf 2`, `Desk`). |
+| Description | string | Short description of the parts the storage is supposed to contain. Optional. |
+
+**Notes:**
+- `Id` must be unique and must not change while `data.bt.PartCollection` rows reference it.
+- Drawers are labelled freely in `data.bt.PartCollection.Drawer`, typically with a case-sensitive letter. `DrawersCount` tells the interface how many drawer labels to propose; it is not a hard constraint when reading the file.
+- When `DrawersCount` is `0`, `data.bt.PartCollection.Drawer` must be empty.
+
+**Relationships:**
+- `data.bt.PartCollection.StorageId` = `data.bt.PartStorage.Id`
+
+#### `data.bt.PartCollection`
+
+Each row declares that a set of parts, in a set of colors, is stored in a given drawer of a storage, with an amount. A row is a **rule**, not a single physical part: it may cover many part numbers through a category or a tag. When the same part is stored in several storages or drawers, it appears in several rows.
+
+**Storage**: `data/bt/part_collection.csv`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Parts | string | Semicolon-separated list of part selectors. See **Parts selectors** below. |
+| Colors | string | Color condition. See **Colors** below. |
+| StorageId | string (FK) | Storage that holds the parts (references `data.bt.PartStorage.Id`). |
+| Drawer | string | Drawer of the storage. Empty when the storage has no drawer; otherwise typically a case-sensitive letter (`A`, `B`, ...). |
+| Amount | string | Quantity of parts in the drawer. Either a whole number (`250`) or an approximate, free-text quantity (`10s`, `50s`, `100s`, `many`). |
+
+**Primary Key:** `(StorageId, Drawer, Parts, Colors)`. Token order and surrounding spaces are ignored when comparing two values.
+
+**Parts selectors:**
+
+A `Parts` value is a semicolon-separated list of tokens; spaces around tokens are ignored. Each token is one of:
+
+| Token | Matches |
+|-------|---------|
+| `<PartNumber>` | The exact LEGO part number in `data.re.parts.part_num` (for example `3001`). |
+| `§<Category>` | Every part in a part category. `<Category>` is matched against `data.bt.PartCategories.Name` (case-insensitive) or a numeric category id. |
+| `#<Tag>` | Every part carrying the free-text tag `<Tag>` (case-insensitive). Tags are free-text BrickTools metadata and are not validated against a reference table; until a tag data source exists, tags are matched against the part name and number. |
+
+A part matches the row when at least one token matches. For example, `3001;3002;§Bricks;#castle` covers parts `3001` and `3002`, every part in the `Bricks` category, and every part tagged `castle`.
+
+**Colors:**
+
+A `Colors` value is one of:
+
+| Value | Matches |
+|-------|---------|
+| `<ColorId>` | The LEGO color with that ID (references `data.re.colors.id`). |
+| `<ColorId>;<ColorId>;...` | Any of the listed LEGO colors. |
+| `Any` | Any color, including decorated parts. |
+| `Other` | Any non-decorated color that is not explicitly listed in another `PartCollection` row that matches the same part. |
+| `Decorated` | Parts with a decoration (print or pattern), regardless of their base color. |
+
+**Notes:**
+- `Parts`, `Colors`, `StorageId`, and `Amount` are required; `Drawer` is the only optional field.
+- A row matches a physical part when the part matches the `Parts` selectors **and** its color matches the `Colors` condition.
+- `Any`, `Other`, and `Decorated` are case-insensitive keywords. A numeric value is always a color ID, and spaces around semicolon-separated values are ignored.
+- The primary key prevents two rows from describing the same parts and colors in the same drawer. If the same parts are stored in several drawers, use one row per drawer.
+- `Other` and `Decorated` are catch-all conditions; use them with care so that a part is not matched by several rows unintentionally.
+- An `Amount` made only of digits is an exact count; any other value is an approximate label.
+
+**Relationships:**
+- `data.bt.PartCollection.StorageId` = `data.bt.PartStorage.Id`
+- `data.bt.PartCollection.Drawer` is a drawer of the storage identified by `StorageId`
+- A numeric `Parts` token = `data.re.parts.part_num`
+- A `§` token = `data.bt.PartCategories.Id` or `data.bt.PartCategories.Name`
+- A numeric `Colors` token = `data.re.colors.id`
+
+**Example:**
+
+| Parts | Colors | StorageId | Drawer | Amount |
+|-------|--------|-----------|--------|--------|
+| `3001;3002` | `5;7` | `A` | `A` | `250` |
+| `§Bricks` | `Any` | `A` | `B` | `100s` |
+| `#castle` | `Other` | `BOX-1` | | `many` |
+
 ## BrickOwl Data
 
 BrickOwl provides a public API at [https://www.brickowl.com/api_docs](https://www.brickowl.com/api_docs)
@@ -752,7 +841,7 @@ Represents an item in a BrickOwl order.
 | BOID | string | boid | BrickOwl item identifier |
 | DesignIds | string | ids.*[type=design_id] | Comma-separated list of DesignIds |
 | ItemNumbers | string | ids.*[type=item_no] | Comma-separated list of ItemNumbers |
-| Condition | string | condition | Condition of the item |
+| Condition | string | condition | Condition of the item. Locally added lines use `Added`. |
 | Name | string | name | Item name |
 | Type | string | type | Item type |
 | Weight | integer | weight | Weight in grams |
@@ -763,6 +852,8 @@ Represents an item in a BrickOwl order.
 | Quantity | decimal | Calculated | Net quantity (ordered_quantity - refunded_quantity) |
 | ItemPrice | decimal | base_price | Price per item in euros |
 | TotalPrice | decimal | Calculated | Total price (base_price * net quantity) in euros |
+
+Rows created locally by the "Add to container" action use an empty `BOID`, `Condition = Added`, and a zero price. They are stored in the same file and are downloaded again only if BrickOwl returns them.
 
 ---
 

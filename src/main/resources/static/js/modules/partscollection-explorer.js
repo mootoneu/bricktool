@@ -353,20 +353,44 @@
   }
 
   /**
-   * Add parts to the collection. The collection is not implemented yet; this is the single
-   * entry point used by the row button and the bulk action.
+   * Add parts to the active container. The active container is a part storage, a storage
+   * drawer, a Pick-a-Brick purchase, or a BrickOwl order, chosen from the parts collection
+   * page and shown in the application header.
    * @param {string[]} partNumbers - Part numbers to add
    */
-  function addPartsToCollection(partNumbers) {
+  function addPartsToContainer(partNumbers) {
     const numbers = (partNumbers || []).filter(function (partNumber) {
       return String(partNumber == null ? '' : partNumber).trim() !== '';
     });
     if (numbers.length === 0) {
       return;
     }
-    // TODO: call the collection API once it is available.
+    const container = BrickTools.getActiveContainer();
+    if (!container) {
+      BrickTools.PartsCollectionShared.report('#part-explorer-msg',
+        'No active container. Set one from the Collection, Part storage, or Storage drawers tab.');
+      return;
+    }
+    const label = BrickTools.activeContainerLabel(container);
+    $('#main-parts-bulk-add').prop('disabled', true);
     BrickTools.PartsCollectionShared.report('#part-explorer-msg',
-      'Add to collection is not available yet.');
+      'Adding ' + numbers.length + (numbers.length === 1 ? ' part' : ' parts')
+        + ' to ' + label + '…');
+    BrickTools.addToActiveContainer(numbers)
+      .done(function (result) {
+        const added = result && typeof result.added === 'number' ? result.added : numbers.length;
+        BrickTools.PartsCollectionShared.report('#part-explorer-msg',
+          'Added ' + added + (added === 1 ? ' part' : ' parts') + ' to ' + label + '.');
+        if (selectedPartNumbers.size > 0) {
+          clearSelection();
+        }
+      })
+      .fail(function (xhr) {
+        BrickTools.PartsCollectionShared.report('#part-explorer-msg', BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        updateSelectionUi();
+      });
   }
 
   // ============================================================================
@@ -494,7 +518,7 @@
       $row.append(starCell(part));
 
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary add-to-collection">Add to collection</button>')
+      $actions.append($('<button type="button" class="btn secondary add-to-container">Add to container</button>')
         .attr('data-part-number', part.partNumber));
       $row.append($actions);
       $tbody.append($row);
@@ -752,7 +776,7 @@
     });
 
     $('#main-parts-bulk-add').on('click', function () {
-      addPartsToCollection(Array.from(selectedPartNumbers));
+      addPartsToContainer(Array.from(selectedPartNumbers));
     });
 
     $('#main-parts thead').on('click', 'th[data-key]', function () {
@@ -769,9 +793,9 @@
       }
     });
 
-    // Add to collection handler
-    $('#main-parts').on('click', '.add-to-collection', function () {
-      addPartsToCollection([$(this).attr('data-part-number')]);
+    // Add to container handler
+    $('#main-parts').on('click', '.add-to-container', function () {
+      addPartsToContainer([$(this).attr('data-part-number')]);
     });
 
     // Alternates handler

@@ -96,6 +96,62 @@ public class BrickOwlService {
   }
 
   /**
+   * Adds a locally-created part line to a BrickOwl order. The line is marked with the
+   * {@code Added} condition so it can be distinguished from downloaded order items. When the
+   * same part and color are already present, their quantities are incremented instead.
+   */
+  public synchronized void addPart(String orderId, String partNumber, String name, Integer colorId,
+                                   String colorName) throws IOException {
+    String key = orderId == null ? "" : orderId.trim();
+    if (key.isEmpty()) {
+      throw new IllegalArgumentException("BrickOwl order id is required");
+    }
+    boolean known = Csv.read(ordersFile).stream()
+        .anyMatch(order -> key.equals(order.get("Id")));
+    if (!known) {
+      throw new IllegalArgumentException("Unknown BrickOwl order id " + key);
+    }
+    String number = partNumber == null ? "" : partNumber.trim();
+    if (number.isEmpty()) {
+      throw new IllegalArgumentException("Part number is required");
+    }
+    String color = colorId == null ? "" : String.valueOf(colorId);
+    List<Map<String, String>> rows = new ArrayList<>(Csv.read(itemsFile));
+    for (Map<String, String> row : rows) {
+      if (key.equals(value(row, "OrderId"))
+          && number.equals(value(row, "DesignIds"))
+          && color.equals(value(row, "ColorId"))
+          && "Added".equalsIgnoreCase(value(row, "Condition"))) {
+        double quantity = num(row.get("Quantity")) + 1;
+        row.put("OrderedQuantity", String.valueOf(quantity));
+        row.put("Quantity", String.valueOf(quantity));
+        row.put("TotalPrice", "0");
+        Csv.write(itemsFile, ITEM_HEADERS, rows);
+        return;
+      }
+    }
+
+    Map<String, String> row = new LinkedHashMap<>();
+    row.put("OrderId", key);
+    row.put("BOID", "");
+    row.put("DesignIds", number);
+    row.put("ItemNumbers", "");
+    row.put("Condition", "Added");
+    row.put("Name", name == null ? "" : name);
+    row.put("Type", "Part");
+    row.put("Weight", "0");
+    row.put("ColorId", color);
+    row.put("ColorName", colorName == null ? "" : colorName);
+    row.put("OrderedQuantity", "1");
+    row.put("RefundQuantity", "0");
+    row.put("Quantity", "1");
+    row.put("ItemPrice", "0");
+    row.put("TotalPrice", "0");
+    rows.add(row);
+    Csv.write(itemsFile, ITEM_HEADERS, rows);
+  }
+
+  /**
    * Groups every order item by brick/color/condition across all orders, so the
    * same part ordered several times is shown once with its orders and total quantity.
    */

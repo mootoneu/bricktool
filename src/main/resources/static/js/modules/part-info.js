@@ -62,7 +62,7 @@
               '<div id="part-info-category" class="part-info-category"></div>' +
               '<div id="part-info-stars" class="part-info-stars"></div>' +
               '<div>' +
-                '<button type="button" id="part-info-add" class="btn">Add to collection</button>' +
+                '<button type="button" id="part-info-add" class="btn">Add to container</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -80,6 +80,7 @@
       }
     });
     $modal.on('click', '.modal-close', close);
+    $modal.on('click', '#part-info-add', addToContainer);
     $(document).on('keydown', function (event) {
       if (event.key === 'Escape' && $modal && !$modal.prop('hidden')) {
         close();
@@ -281,6 +282,34 @@
       .fail(function (xhr) {
         $('#part-info-msg').text(BrickTools.errorOf(xhr));
         $('#part-info-stars .star').prop('disabled', false);
+      });
+  }
+
+  function addToContainer() {
+    if (!info) {
+      return;
+    }
+    const partNumber = info.partNumber;
+    const container = BrickTools.getActiveContainer();
+    if (!container) {
+      $('#part-info-msg').text(
+        'No active container. Set one from the Parts Collection page.');
+      return;
+    }
+    const label = BrickTools.activeContainerLabel(container);
+    $('#part-info-add').prop('disabled', true);
+    $('#part-info-msg').text('Adding part ' + partNumber + ' to ' + label + '…');
+    BrickTools.addToActiveContainer([partNumber])
+      .done(function (result) {
+        const added = result && typeof result.added === 'number' ? result.added : 1;
+        $('#part-info-msg').text('Added ' + added + (added === 1 ? ' part' : ' parts')
+          + ' to ' + label + '.');
+      })
+      .fail(function (xhr) {
+        $('#part-info-msg').text(BrickTools.errorOf(xhr));
+      })
+      .always(function () {
+        $('#part-info-add').prop('disabled', false);
       });
   }
 

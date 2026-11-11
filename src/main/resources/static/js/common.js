@@ -11,6 +11,7 @@
 
   const LAST_PAGE_KEY = 'bricktools.lastPage';
   const TAB_KEY_PREFIX = 'bricktools.tab.';
+  const ACTIVE_CONTAINER_KEY = 'bricktools.activeContainer';
 
   function storageGet(key) {
     try {
@@ -110,6 +111,162 @@
     });
   }
 
+  // ============================================================================
+  // Active container
+  // ============================================================================
+
+  function getActiveContainer() {
+    const raw = storageGet(ACTIVE_CONTAINER_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      const container = JSON.parse(raw);
+      return container && container.type ? container : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function activeContainerLabel(container) {
+    if (!container) {
+      return '';
+    }
+    switch (container.type) {
+      case 'storage':
+        return 'Storage ' + (container.storageId || '');
+      case 'drawer':
+        return 'Storage ' + (container.storageId || '') + ' · Drawer '
+          + (container.drawer === '' || container.drawer == null ? '—' : container.drawer);
+      case 'pab':
+        return 'PaB purchase #' + (container.purchaseId == null ? '' : container.purchaseId);
+      case 'brickowl':
+        return 'BrickOwl order ' + (container.orderId || '');
+      default:
+        return container.label || container.type;
+    }
+  }
+
+  function activeContainerDetail(container) {
+    if (!container) {
+      return '';
+    }
+    if (container.type === 'drawer' || container.type === 'storage') {
+      return [container.storageModel, container.storageLocation].filter(Boolean).join(' · ');
+    }
+    return container.detail || '';
+  }
+
+  function drawerListOf(container) {
+    return container && Array.isArray(container.drawers) ? container.drawers : [];
+  }
+
+  function stepActiveDrawer(direction) {
+    const container = getActiveContainer();
+    if (!container || container.type !== 'drawer') {
+      return;
+    }
+    const drawers = drawerListOf(container);
+    const index = drawers.findIndex(function (drawer) {
+      return String(drawer.storageId) === String(container.storageId)
+        && String(drawer.drawer) === String(container.drawer);
+    });
+    const next = index + direction;
+    if (index < 0 || next < 0 || next >= drawers.length) {
+      return;
+    }
+    const target = drawers[next];
+    setActiveContainer({
+      type: 'drawer',
+      storageId: target.storageId,
+      storageModel: target.storageModel,
+      storageLocation: target.storageLocation,
+      drawer: target.drawer,
+      drawers: drawers
+    });
+  }
+
+  function renderActiveContainer() {
+    const $host = $('#app-header .active-container');
+    if (!$host.length) {
+      return;
+    }
+    const container = getActiveContainer();
+    $host.empty();
+    if (!container) {
+      $host.append($('<span class="active-container-empty"></span>')
+        .text('No active container'));
+      return;
+    }
+    const drawers = drawerListOf(container);
+    const index = drawers.findIndex(function (drawer) {
+      return String(drawer.storageId) === String(container.storageId)
+        && String(drawer.drawer) === String(container.drawer);
+    });
+    const label = activeContainerLabel(container);
+    const detail = activeContainerDetail(container);
+
+    if (container.type === 'drawer' && drawers.length > 1) {
+      $host.append($('<button type="button" class="active-container-nav active-container-prev"></button>')
+        .attr('title', 'Previous drawer')
+        .attr('aria-label', 'Previous drawer')
+        .prop('disabled', index <= 0)
+        .html('&#8249;'));
+    }
+    const $label = $('<span class="active-container-label"></span>')
+      .text(label)
+      .attr('title', [label, detail].filter(Boolean).join(' — '));
+    $host.append($label);
+    if (container.type === 'drawer' && drawers.length > 1) {
+      $host.append($('<button type="button" class="active-container-nav active-container-next"></button>')
+        .attr('title', 'Next drawer')
+        .attr('aria-label', 'Next drawer')
+        .prop('disabled', index < 0 || index >= drawers.length - 1)
+        .html('&#8250;'));
+    }
+    $host.append($('<button type="button" class="active-container-clear"></button>')
+      .attr('title', 'Clear active container')
+      .attr('aria-label', 'Clear active container')
+      .html('&times;'));
+  }
+
+  function setActiveContainer(container) {
+    if (container) {
+      storageSet(ACTIVE_CONTAINER_KEY, JSON.stringify(container));
+    } else {
+      storageSet(ACTIVE_CONTAINER_KEY, '');
+    }
+    renderActiveContainer();
+    $(document).trigger('bricktools:active-container-changed', [container || null]);
+  }
+
+  function addToActiveContainer(partNumbers) {
+    const container = getActiveContainer();
+    const numbers = (partNumbers || []).filter(function (partNumber) {
+      return String(partNumber == null ? '' : partNumber).trim() !== '';
+    });
+    if (!container) {
+      return $.Deferred().reject({
+        responseJSON: { error: 'No active container. Set one from the Parts Collection page.' }
+      }).promise();
+    }
+    if (numbers.length === 0) {
+      return $.Deferred().reject({
+        responseJSON: { error: 'No part selected.' }
+      }).promise();
+    }
+    return api('POST', '/part-collection/add', {
+      type: container.type,
+      storageId: container.storageId,
+      drawer: container.drawer,
+      purchaseId: container.purchaseId,
+      orderId: container.orderId,
+      partNumbers: numbers
+    }).done(function (result) {
+      $(document).trigger('bricktools:container-parts-added', [container, result]);
+    });
+  }
+
   function initHeader(activeId) {
     if (activeId) {
       const page = NAV.find(n => n.id === activeId);
@@ -131,11 +288,22 @@
     $('#app-header').html(
       '<a class="brand" href="index.html?home=1">Brick Tools</a>' +
       '<nav>' + links + '</nav>' +
+      '<div class="active-container" id="active-container"></div>' +
       '<div class="notifications">' +
       '<button type="button" class="bell" title="Notifications">&#128276;<span class="badge" hidden></span></button>' +
       '<div class="dropdown" hidden></div>' +
       '</div>'
     );
+
+    $('#app-header').on('click', '.active-container-prev', function () {
+      stepActiveDrawer(-1);
+    });
+    $('#app-header').on('click', '.active-container-next', function () {
+      stepActiveDrawer(1);
+    });
+    $('#app-header').on('click', '.active-container-clear', function () {
+      setActiveContainer(null);
+    });
 
     $('#app-header .bell').on('click', function (e) {
       e.stopPropagation();
@@ -145,6 +313,7 @@
       $('#app-header .dropdown').prop('hidden', true);
     });
 
+    renderActiveContainer();
     loadNotifications();
     setInterval(loadNotifications, 5 * 60 * 1000);
   }
@@ -307,6 +476,7 @@
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs,
     getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName,
-    partImageCell, firstCommaValue, itemImageUrls, partImageUrls
+    partImageCell, firstCommaValue, itemImageUrls, partImageUrls,
+    getActiveContainer, setActiveContainer, addToActiveContainer, activeContainerLabel
   };
 })(window, jQuery);
