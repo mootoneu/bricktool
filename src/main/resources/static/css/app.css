@@ -449,6 +449,7 @@ table.data tbody tr.highlight { background: #fef3c7; transition: background-colo
 .drawer-card.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30, 64, 175, .18); }
 .drawer-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .drawer-card-title { margin: 0; font-size: 1rem; }
+.drawer-card-title::first-letter { font-family: "Aurebesh"; }
 .drawer-card-sub { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
 .drawer-card-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .drawer-card-actions .btn { padding: 4px 8px; font-size: .78rem; }
@@ -480,3 +481,4 @@ table.data tbody tr.highlight { background: #fef3c7; transition: background-colo
 .collection-toolbar input[type="search"] { flex: 1 1 320px; max-width: 520px; }
 .storage-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .storage-toolbar input[type="search"] { flex: 1 1 240px; max-width: 360px; }
+.storage-id { font-family: "Aurebesh"; }

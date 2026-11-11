@@ -116,7 +116,7 @@ Actions:
 - **Edit** opens the storage form.
 - **Set active** makes the storage the active container.
 
-The **Add storage** button opens the same form for a new storage. The form asks for the id, model, drawer count, location, and description. The id cannot be changed after creation. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
+The **Add storage** button opens the same form for a new storage. The form asks for the id, model, drawer count, location, and description. The id cannot be changed after creation. The drawer count is between `0` and `52`; drawers are named `a`–`z` for the first 26 and `A`–`Z` for the next 26. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
 
 **Endpoints:**
 
@@ -129,7 +129,7 @@ The **Add storage** button opens the same form for a new storage. The form asks 
 Shows one card per drawer of every storage, including empty drawers.
 
 - Each card shows the storage id, the drawer label, and the storage model and location.
-- The drawer label is generated from `DrawersCount` (`A`, `B`, …, `Z`, `AA`, …). Extra labels found in the collection rows are also shown.
+- The drawer label is generated from `DrawersCount`: `a`–`z` for the first 26 drawers, then `A`–`Z` for the next 26, up to 52. Extra labels found in the collection rows are also shown.
 - Each content rule of the drawer is displayed with its amount, part images, category chips (`§Category`), tag chips (`#tag`), and color chips. Part images open the part information modal.
 - **Add content** opens the content form prefilled with the storage and drawer.
 - **Edit** and **Delete** change or remove a content rule.
@@ -137,6 +137,7 @@ Shows one card per drawer of every storage, including empty drawers.
 
 The content form asks for the storage, drawer, parts, colors, and amount:
 
+- **Drawer** is empty for a storage without drawers, or for parts not assigned to a specific drawer. Otherwise it must be one of the storage's labels (`a`–`z`, then `A`–`Z`).
 - **Parts** is a semicolon-separated list of `<PartNumber>`, `§<Category>` (numeric id or case-insensitive name), and `#<Tag>` (matched against the part name and number).
 - **Colors** is a semicolon-separated list of color ids, `Any`, `Other` (parts not explicitly listed elsewhere), or `Decorated` (printed or patterned parts).
 - **Amount** is free text (for example `250`, `100s`, or `many`).

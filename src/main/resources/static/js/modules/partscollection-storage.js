@@ -138,7 +138,7 @@
       const isActive = active && active.type === 'storage'
         && String(active.storageId) === String(storage.id);
       const $row = $('<tr></tr>').toggleClass('selected', Boolean(isActive));
-      $row.append($('<td></td>').text(storage.id || ''));
+      $row.append($('<td class="storage-id"></td>').text(storage.id || ''));
       $row.append($('<td></td>').text(storage.model || ''));
       $row.append($('<td></td>').text(fmt.number(storage.drawersCount || 0)));
       $row.append($('<td></td>').text(storage.location || ''));
@@ -229,7 +229,7 @@
       const $head = $('<div class="drawer-card-head"></div>');
       const $titles = $('<div></div>');
       $titles.append($('<h3 class="drawer-card-title"></h3>').text(
-        'Storage ' + (card.storageId || '') + ' · Drawer ' + (card.drawer || '—')));
+        (card.storageId || '') + ' · ' + (card.drawer || '—')));
       const sub = [card.storageModel, card.storageLocation].filter(Boolean).join(' · ');
       if (sub) {
         $titles.append($('<p class="drawer-card-sub"></p>').text(sub));

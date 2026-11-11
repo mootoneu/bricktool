@@ -103,13 +103,13 @@ class PartStorageServiceTest {
   @Test
   void collectionRowsResolvePartCategoryAndColorChips() throws IOException {
     service.createStorage(new PartStorageRequest("A", "Cabinet", 2, "", ""));
-    service.createCollectionRow(new PartCollectionRequest("3001;§Plates", "5;Any", "A", "A", "10"));
+    service.createCollectionRow(new PartCollectionRequest("3001;§Plates", "5;Any", "A", "a", "10"));
 
     List<Map<String, Object>> drawers = service.drawers("");
 
     assertThat(drawers).hasSize(2);
     Map<String, Object> drawer = drawers.get(0);
-    assertThat(drawer).containsEntry("storageId", "A").containsEntry("drawer", "A");
+    assertThat(drawer).containsEntry("storageId", "A").containsEntry("drawer", "a");
     List<Map<String, Object>> rows = cast(drawer.get("rows"));
     assertThat(rows).hasSize(1);
     assertThat(rows.get(0)).containsEntry("parts", "3001;§Plates")
@@ -122,10 +122,10 @@ class PartStorageServiceTest {
   @Test
   void drawersCanBeSearchedByPartNumberNameColorAndCategory() throws IOException {
     service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
-    service.createCollectionRow(new PartCollectionRequest("§Plates", "Any", "A", "A", "10"));
-    service.createCollectionRow(new PartCollectionRequest("3001", "5", "A", "A", "2"));
+    service.createCollectionRow(new PartCollectionRequest("§Plates", "Any", "A", "a", "10"));
+    service.createCollectionRow(new PartCollectionRequest("3001", "5", "A", "a", "2"));
 
-    assertThat(service.drawers("3001")).extracting("drawer").containsExactly("A");
+    assertThat(service.drawers("3001")).extracting("drawer").containsExactly("a");
     assertThat(cast(service.drawers("3001").get(0).get("matchedParts")))
         .extracting("partNumber").contains("3001");
     assertThat(cast(service.drawers("Plate 1 x 2").get(0).get("matchedParts")))
@@ -138,11 +138,46 @@ class PartStorageServiceTest {
   }
 
   @Test
+  void drawerLabelsUseLowercaseThenUppercaseAndStopAt52() throws IOException {
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", ""));
+
+    List<String> labels = service.drawers("").stream()
+        .map(drawer -> (String) drawer.get("drawer"))
+        .toList();
+
+    assertThat(labels).hasSize(52);
+    assertThat(labels.get(0)).isEqualTo("a");
+    assertThat(labels.get(25)).isEqualTo("z");
+    assertThat(labels.get(26)).isEqualTo("A");
+    assertThat(labels.get(51)).isEqualTo("Z");
+  }
+
+  @Test
+  void drawerLabelsAreValidatedAndLimitedTo52() throws IOException {
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", ""));
+
+    assertThatThrownBy(() -> service.createStorage(
+        new PartStorageRequest("B", "Cabinet", 53, "", "")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("52");
+    assertThatThrownBy(() -> service.createCollectionRow(
+        new PartCollectionRequest("3001", "Any", "A", "AA", "1")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not valid");
+    assertThatThrownBy(() -> service.addParts("A", "AA", List.of("3001")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not valid");
+
+    service.createCollectionRow(new PartCollectionRequest("3001", "Any", "A", "A", "1"));
+    assertThat(service.drawers("3001")).extracting("drawer").containsExactly("A");
+  }
+
+  @Test
   void addPartsCreatesAndIncrementsRows() throws IOException {
     service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
 
-    assertThat(service.addParts("A", "A", List.of("3001", "3002"))).isEqualTo(2);
-    assertThat(service.addParts("A", "A", List.of("3001"))).isEqualTo(1);
+    assertThat(service.addParts("A", "a", List.of("3001", "3002"))).isEqualTo(2);
+    assertThat(service.addParts("A", "a", List.of("3001"))).isEqualTo(1);
 
     List<Map<String, Object>> rows = service.collectionRows();
     assertThat(rows).hasSize(2);
@@ -177,9 +212,9 @@ class PartStorageServiceTest {
   @Test
   void collectionRowsCanBeUpdatedAndDeleted() throws IOException {
     service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
-    service.createCollectionRow(new PartCollectionRequest("3001", "Any", "A", "A", "1"));
+    service.createCollectionRow(new PartCollectionRequest("3001", "Any", "A", "a", "1"));
 
-    service.updateCollectionRow(0, new PartCollectionRequest("3002", "5", "A", "A", "4"));
+    service.updateCollectionRow(0, new PartCollectionRequest("3002", "5", "A", "a", "4"));
 
     assertThat(service.collectionRows().get(0))
         .containsEntry("parts", "3002")

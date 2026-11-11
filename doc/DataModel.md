@@ -728,14 +728,14 @@ A physical storage unit that can hold parts: a piece of furniture, a box, a cabi
 |-------|------|-------------|
 | Id | string (PK) | Unique and stable identifier of the storage (for example `A`, `BOX-1`, `ALEX-2`). Case-sensitive. |
 | Model | string | Model or commercial name of the storage unit (for example `Really Useful Box 9L`, `IKEA Alex`). |
-| DrawersCount | integer | Number of drawers or compartments that can contain parts. `0` (default) when the storage is a single compartment. |
+| DrawersCount | integer | Number of drawers or compartments that can contain parts, between `0` and `52`. `0` (default) when the storage is a single compartment. |
 | Location | string | Physical location of the storage (for example `Attic`, `Shelf 2`, `Desk`). |
 | Description | string | Short description of the parts the storage is supposed to contain. Optional. |
 
 **Notes:**
 - `Id` must be unique and must not change while `data.bt.PartCollection` rows reference it.
-- Drawers are labelled freely in `data.bt.PartCollection.Drawer`, typically with a case-sensitive letter. `DrawersCount` tells the interface how many drawer labels to propose; it is not a hard constraint when reading the file.
-- When `DrawersCount` is `0`, `data.bt.PartCollection.Drawer` must be empty.
+- Drawers are named `a`–`z` for the first 26 drawers and `A`–`Z` for the next 26. A storage has at most 52 drawers.
+- `data.bt.PartCollection.Drawer` must be empty when `DrawersCount` is `0`. When `DrawersCount` is greater than `0`, it must be empty (parts not assigned to a specific drawer) or one of the generated labels.
 
 **Relationships:**
 - `data.bt.PartCollection.StorageId` = `data.bt.PartStorage.Id`
@@ -751,7 +751,7 @@ Each row declares that a set of parts, in a set of colors, is stored in a given 
 | Parts | string | Semicolon-separated list of part selectors. See **Parts selectors** below. |
 | Colors | string | Color condition. See **Colors** below. |
 | StorageId | string (FK) | Storage that holds the parts (references `data.bt.PartStorage.Id`). |
-| Drawer | string | Drawer of the storage. Empty when the storage has no drawer; otherwise typically a case-sensitive letter (`A`, `B`, ...). |
+| Drawer | string | Drawer of the storage. Empty when the storage has no drawer or the parts are not assigned to a drawer; otherwise one of the storage's labels (`a`–`z` for the first 26 drawers, then `A`–`Z` for the next 26). |
 | Amount | string | Quantity of parts in the drawer. Either a whole number (`250`) or an approximate, free-text quantity (`10s`, `50s`, `100s`, `many`). |
 
 **Primary Key:** `(StorageId, Drawer, Parts, Colors)`. Token order and surrounding spaces are ignored when comparing two values.

@@ -30,6 +30,7 @@ public class PartStorageService {
       List.of("Parts", "Colors", "StorageId", "Drawer", "Amount");
   private static final int MATCH_LIMIT = 3000;
   private static final int DRAWER_MATCH_LIMIT = 200;
+  private static final int MAX_DRAWERS = 52;
 
   private final Path storageFile;
   private final Path collectionFile;
@@ -212,11 +213,7 @@ public class PartStorageService {
     Catalog data = catalog();
     Map<String, String> storage = requireStorage(storageId);
     String drawerValue = clean(drawer);
-    if (toInt(storage.get("DrawersCount")) == null || toInt(storage.get("DrawersCount")) <= 0) {
-      if (!drawerValue.isEmpty()) {
-        throw new IllegalArgumentException("Storage " + clean(storage.get("Id")) + " has no drawer");
-      }
-    }
+    validateDrawer(storage, drawerValue);
 
     List<String> numbers = cleanPartNumbers(partNumbers);
     if (numbers.isEmpty()) {
@@ -665,10 +662,42 @@ public class PartStorageService {
     throw new IllegalArgumentException("Unknown storage id " + key);
   }
 
+  /**
+   * A storage with drawers accepts one of its generated labels, or an empty drawer for parts
+   * that are not assigned to a specific drawer. A storage without drawers only accepts the
+   * empty drawer.
+   */
+  private static void validateDrawer(Map<String, String> storage, String drawer) {
+    String storageId = clean(storage.get("Id"));
+    Integer count = toInt(storage.get("DrawersCount"));
+    if (count == null || count <= 0) {
+      if (!drawer.isEmpty()) {
+        throw new IllegalArgumentException("Storage " + storageId + " has no drawer");
+      }
+      return;
+    }
+    if (!drawer.isEmpty() && !validDrawerLabels(count).contains(drawer)) {
+      throw new IllegalArgumentException("Drawer " + drawer + " is not valid for storage " + storageId
+          + "; use a-z for the first 26 drawers and A-Z for the next 26");
+    }
+  }
+
+  private static Set<String> validDrawerLabels(int count) {
+    Set<String> labels = new LinkedHashSet<>();
+    int limit = Math.min(count, MAX_DRAWERS);
+    for (int i = 0; i < limit; i++) {
+      labels.add(drawerLabel(i));
+    }
+    return labels;
+  }
+
   private static Map<String, String> toStorageRow(String id, PartStorageRequest request) {
     int drawers = request == null || request.drawersCount() == null ? 0 : request.drawersCount();
     if (drawers < 0) {
       throw new IllegalArgumentException("Drawers count must not be negative");
+    }
+    if (drawers > MAX_DRAWERS) {
+      throw new IllegalArgumentException("Drawers count must not exceed " + MAX_DRAWERS);
     }
     Map<String, String> row = new LinkedHashMap<>();
     row.put("Id", id);
@@ -698,10 +727,7 @@ public class PartStorageService {
       throw new IllegalArgumentException("Amount is required");
     }
     Map<String, String> storage = requireStorage(storageId);
-    if (toInt(storage.get("DrawersCount")) != null && toInt(storage.get("DrawersCount")) == 0
-        && !drawer.isEmpty()) {
-      throw new IllegalArgumentException("Storage " + clean(storage.get("Id")) + " has no drawer");
-    }
+    validateDrawer(storage, drawer);
     Map<String, String> row = new LinkedHashMap<>();
     row.put("Parts", parts);
     row.put("Colors", colors);
@@ -753,7 +779,8 @@ public class PartStorageService {
     LinkedHashSet<String> labels = new LinkedHashSet<>();
     Integer count = toInt(storage.get("DrawersCount"));
     if (count != null && count > 0) {
-      for (int i = 0; i < count; i++) {
+      int limit = Math.min(count, MAX_DRAWERS);
+      for (int i = 0; i < limit; i++) {
         labels.add(drawerLabel(i));
       }
     } else {
@@ -769,14 +796,13 @@ public class PartStorageService {
   }
 
   private static String drawerLabel(int index) {
-    StringBuilder label = new StringBuilder();
-    int value = index + 1;
-    while (value > 0) {
-      int remainder = (value - 1) % 26;
-      label.insert(0, (char) ('A' + remainder));
-      value = (value - 1) / 26;
+    if (index < 0 || index >= MAX_DRAWERS) {
+      throw new IllegalArgumentException("Drawer index out of range: " + index);
     }
-    return label.toString();
+    if (index < 26) {
+      return String.valueOf((char) ('a' + index));
+    }
+    return String.valueOf((char) ('A' + index - 26));
   }
 
   private static List<String> cleanPartNumbers(List<String> partNumbers) {

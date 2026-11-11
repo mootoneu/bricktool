@@ -89,7 +89,7 @@ class PartStorageApiTest {
 
     mvc.perform(post("/api/part-collection").contentType(MediaType.APPLICATION_JSON)
             .content("{\"parts\":\"3001;§Bricks\",\"colors\":\"5;Any\",\"storageId\":\"A\","
-                + "\"drawer\":\"A\",\"amount\":\"10\"}"))
+                + "\"drawer\":\"a\",\"amount\":\"10\"}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.index").value(0))
         .andExpect(jsonPath("$.parts").value("3001;§Bricks"));
@@ -97,14 +97,14 @@ class PartStorageApiTest {
     mvc.perform(get("/api/part-collection/drawers"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].storageId").value("A"))
-        .andExpect(jsonPath("$[0].drawer").value("A"))
+        .andExpect(jsonPath("$[0].drawer").value("a"))
         .andExpect(jsonPath("$[0].rows[0].amount").value("10"))
         .andExpect(jsonPath("$[0].rows[0].partChips[0].partNumber").value("3001"))
         .andExpect(jsonPath("$[0].rows[0].categoryChips[0].name").value("Bricks"));
 
     mvc.perform(get("/api/part-collection/drawers").param("query", "Red"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].drawer").value("A"))
+        .andExpect(jsonPath("$[0].drawer").value("a"))
         .andExpect(jsonPath("$[0].matchedParts[0].partNumber").value("3001"));
 
     mvc.perform(get("/api/part-collection/drawers").param("query", "missing"))
@@ -119,7 +119,7 @@ class PartStorageApiTest {
         .andExpect(status().isCreated());
 
     mvc.perform(post("/api/part-collection/add").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"type\":\"drawer\",\"storageId\":\"B\",\"drawer\":\"A\","
+            .content("{\"type\":\"drawer\",\"storageId\":\"B\",\"drawer\":\"a\","
                 + "\"partNumbers\":[\"3001\",\"3002\"]}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.added").value(2));
@@ -161,6 +161,18 @@ class PartStorageApiTest {
 
   @Test
   void invalidContainerRequestsAreRejected() throws Exception {
+    mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"TooMany\",\"drawersCount\":53}"))
+        .andExpect(status().isBadRequest());
+
+    mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"C\",\"drawersCount\":2}"))
+        .andExpect(status().isCreated());
+    mvc.perform(post("/api/part-collection").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"parts\":\"3001\",\"colors\":\"Any\",\"storageId\":\"C\","
+                + "\"drawer\":\"AA\",\"amount\":\"1\"}"))
+        .andExpect(status().isBadRequest());
+
     mvc.perform(post("/api/part-collection/add").contentType(MediaType.APPLICATION_JSON)
             .content("{\"type\":\"drawer\",\"storageId\":\"missing\",\"partNumbers\":[\"3001\"]}"))
         .andExpect(status().isBadRequest());

@@ -259,8 +259,9 @@
         <input id="storage-model" placeholder="IKEA Alex, Really Useful Box 9L…">
       </label>
       <label>Drawers count
-        <input id="storage-drawers" type="number" min="0" step="1" value="0" required>
+        <input id="storage-drawers" type="number" min="0" max="52" step="1" value="0" required>
       </label>
+      <p class="muted">Between 0 and 52. Drawers are named <code>a</code>–<code>z</code> for the first 26, then <code>A</code>–<code>Z</code>.</p>
       <label>Location
         <input id="storage-location" placeholder="Attic, Shelf 2, Desk…">
       </label>
@@ -283,7 +284,7 @@
         <select id="collection-rule-storage" required></select>
       </label>
       <label>Drawer
-        <input id="collection-rule-drawer" placeholder="A">
+        <input id="collection-rule-drawer" placeholder="a">
       </label>
       <label>Parts
         <input id="collection-rule-parts" placeholder="3001;3002;§Bricks;#castle" required>
@@ -294,7 +295,7 @@
       <label>Amount
         <input id="collection-rule-amount" placeholder="250, 100s, many…" required>
       </label>
-      <p class="muted">Parts are separated by semicolons: a part number, <code>§Category</code>, or <code>#tag</code>. Colors accept one or several ids, <code>Any</code>, <code>Other</code>, or <code>Decorated</code>.</p>
+      <p class="muted">Parts are separated by semicolons: a part number, <code>§Category</code>, or <code>#tag</code>. Colors accept one or several ids, <code>Any</code>, <code>Other</code>, or <code>Decorated</code>. Drawers are labelled <code>a</code>–<code>z</code> for the first 26, then <code>A</code>–<code>Z</code> for the next 26.</p>
       <p id="collection-rule-form-msg" class="warning"></p>
       <div class="form-actions">
         <button type="button" id="collection-rule-cancel" class="btn secondary">Cancel</button>

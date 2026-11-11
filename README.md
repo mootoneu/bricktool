@@ -20,6 +20,7 @@ The building process is to define the data model (as most CSV files already exis
   - [Application Stack](#application-stack)
   - [Table of Contents](#table-of-contents)
   - [Application Features](#application-features)
+    - [Highlights](#highlights)
   - [Documentation](#documentation)
   - [API Documentation](#api-documentation)
   - [Data Model](#data-model)
