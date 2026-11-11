@@ -99,6 +99,7 @@
         <table class="data" id="part-storage">
           <thead>
             <tr>
+              <th class="sortable" data-key="order">Order</th>
               <th class="sortable" data-key="id">Id</th>
               <th class="sortable" data-key="model">Model</th>
               <th class="sortable" data-key="drawersCount">Drawers</th>
@@ -116,7 +117,9 @@
 
     <section data-panel="drawers" hidden>
       <div class="storage-toolbar">
-        <input type="search" id="drawers-filter" placeholder="Filter drawers by storage or drawer"
+        <label for="drawers-storage">Storage</label>
+        <select id="drawers-storage" aria-label="Storage whose drawers are shown"></select>
+        <input type="search" id="drawers-filter" placeholder="Filter drawers"
                aria-label="Filter drawers">
         <span id="drawers-count" class="muted"></span>
       </div>
@@ -255,6 +258,9 @@
       <label>Id
         <input id="storage-id" required>
       </label>
+      <label>Order
+        <input id="storage-order" type="number" step="1" value="0">
+      </label>
       <label>Model
         <input id="storage-model" placeholder="IKEA Alex, Really Useful Box 9L…">
       </label>
@@ -289,13 +295,35 @@
       <label>Parts
         <input id="collection-rule-parts" placeholder="3001;3002;§Bricks;#castle" required>
       </label>
+      <div class="rule-helper">
+        <div class="rule-search">
+          <input type="search" id="collection-rule-part-search" autocomplete="off"
+                 placeholder="Search a part number or name…" aria-label="Search a part to add">
+          <div id="collection-rule-part-results" class="rule-suggestions" hidden></div>
+        </div>
+        <div class="rule-helper-row">
+          <select id="collection-rule-category" aria-label="Part category to add"></select>
+          <button type="button" id="collection-rule-add-category" class="btn secondary">Add category</button>
+        </div>
+        <div id="collection-rule-part-tokens" class="rule-tokens"></div>
+      </div>
       <label>Colors
         <input id="collection-rule-colors" placeholder="5;7;Any;Other;Decorated" required>
       </label>
+      <div class="rule-helper">
+        <div class="rule-helper-row">
+          <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Any">Any</button>
+          <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Other">Other</button>
+          <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Decorated">Decorated</button>
+          <button type="button" id="collection-rule-add-color" class="btn secondary">Add color…</button>
+        </div>
+        <div id="collection-rule-color-tokens" class="rule-tokens"></div>
+      </div>
       <label>Amount
         <input id="collection-rule-amount" placeholder="250, 100s, many…" required>
       </label>
       <p class="muted">Parts are separated by semicolons: a part number, <code>§Category</code>, or <code>#tag</code>. Colors accept one or several ids, <code>Any</code>, <code>Other</code>, or <code>Decorated</code>. Drawers are labelled <code>a</code>–<code>z</code> for the first 26, then <code>A</code>–<code>Z</code> for the next 26.</p>
+      <p id="collection-rule-helper-msg" class="warning"></p>
       <p id="collection-rule-form-msg" class="warning"></p>
       <div class="form-actions">
         <button type="button" id="collection-rule-cancel" class="btn secondary">Cancel</button>

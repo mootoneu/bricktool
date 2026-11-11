@@ -55,54 +55,81 @@ class PartStorageServiceTest {
   @Test
   void createStorageWritesTheFileAndListsTheStorage() throws IOException {
     Map<String, Object> created = service.createStorage(
-        new PartStorageRequest("A", "IKEA Alex", 6, "Desk", "Bricks"));
+        new PartStorageRequest("A", "IKEA Alex", 6, "Desk", "Bricks", 2));
 
     assertThat(created)
         .containsEntry("id", "A")
         .containsEntry("model", "IKEA Alex")
         .containsEntry("drawersCount", 6)
         .containsEntry("location", "Desk")
-        .containsEntry("description", "Bricks");
+        .containsEntry("description", "Bricks")
+        .containsEntry("order", 2);
     assertThat(Files.readString(dir.resolve("bt/part_storage.csv")))
-        .startsWith("Id,Model,DrawersCount,Location,Description")
-        .contains("A,IKEA Alex,6,Desk,Bricks");
+        .startsWith("Id,Model,DrawersCount,Location,Description,Order")
+        .contains("A,IKEA Alex,6,Desk,Bricks,2");
     assertThat(service.storages()).hasSize(1);
   }
 
   @Test
   void updateStorageChangesTheStorage() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Box", 0, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Box", 0, "", "", 0));
 
-    service.updateStorage("A", new PartStorageRequest("A", "Cabinet", 4, "Attic", "Plates"));
+    service.updateStorage("A", new PartStorageRequest("A", "Cabinet", 4, "Attic", "Plates", 3));
 
     assertThat(service.storages().get(0))
         .containsEntry("id", "A")
         .containsEntry("model", "Cabinet")
         .containsEntry("drawersCount", 4)
         .containsEntry("location", "Attic")
-        .containsEntry("description", "Plates");
+        .containsEntry("description", "Plates")
+        .containsEntry("order", 3);
+  }
+
+  @Test
+  void storagesAreSortedByOrderThenId() throws IOException {
+    service.createStorage(new PartStorageRequest("Z", "Box", 0, "", "", 5));
+    service.createStorage(new PartStorageRequest("B", "Box", 0, "", "", 1));
+    service.createStorage(new PartStorageRequest("A", "Box", 0, "", "", 1));
+
+    assertThat(service.storages()).extracting("id").containsExactly("A", "B", "Z");
+    assertThat(service.storages()).extracting("order").containsExactly(1, 1, 5);
+  }
+
+  @Test
+  void storagesWithoutOrderColumnDefaultToZero() throws IOException {
+    Files.writeString(dir.resolve("bt/part_storage.csv"),
+        "Id,Model,DrawersCount,Location,Description\n"
+            + "A,Box,0,,\n");
+
+    assertThat(service.storages().get(0)).containsEntry("order", 0);
+
+    service.updateStorage("A", new PartStorageRequest("A", "Cabinet", 2, "", "", null));
+
+    assertThat(Files.readString(dir.resolve("bt/part_storage.csv")))
+        .startsWith("Id,Model,DrawersCount,Location,Description,Order")
+        .contains("A,Cabinet,2,,,0");
   }
 
   @Test
   void storageValidationRejectsInvalidValues() throws IOException {
-    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("", "Box", 0, "", "")))
+    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("", "Box", 0, "", "", 0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("id");
-    service.createStorage(new PartStorageRequest("A", "Box", 0, "", ""));
-    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("A", "Box", 0, "", "")))
+    service.createStorage(new PartStorageRequest("A", "Box", 0, "", "", 0));
+    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("A", "Box", 0, "", "", 0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("already exists");
-    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("B", "Box", -1, "", "")))
+    assertThatThrownBy(() -> service.createStorage(new PartStorageRequest("B", "Box", -1, "", "", 0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("negative");
-    assertThatThrownBy(() -> service.updateStorage("Z", new PartStorageRequest("Z", "Box", 0, "", "")))
+    assertThatThrownBy(() -> service.updateStorage("Z", new PartStorageRequest("Z", "Box", 0, "", "", 0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Unknown storage");
   }
 
   @Test
   void collectionRowsResolvePartCategoryAndColorChips() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 2, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 2, "", "", 0));
     service.createCollectionRow(new PartCollectionRequest("3001;§Plates", "5;Any", "A", "a", "10"));
 
     List<Map<String, Object>> drawers = service.drawers("");
@@ -121,7 +148,7 @@ class PartStorageServiceTest {
 
   @Test
   void drawersCanBeSearchedByPartNumberNameColorAndCategory() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", "", 0));
     service.createCollectionRow(new PartCollectionRequest("§Plates", "Any", "A", "a", "10"));
     service.createCollectionRow(new PartCollectionRequest("3001", "5", "A", "a", "2"));
 
@@ -139,7 +166,7 @@ class PartStorageServiceTest {
 
   @Test
   void drawerLabelsUseLowercaseThenUppercaseAndStopAt52() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", "", 0));
 
     List<String> labels = service.drawers("").stream()
         .map(drawer -> (String) drawer.get("drawer"))
@@ -154,10 +181,10 @@ class PartStorageServiceTest {
 
   @Test
   void drawerLabelsAreValidatedAndLimitedTo52() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 52, "", "", 0));
 
     assertThatThrownBy(() -> service.createStorage(
-        new PartStorageRequest("B", "Cabinet", 53, "", "")))
+        new PartStorageRequest("B", "Cabinet", 53, "", "", 0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("52");
     assertThatThrownBy(() -> service.createCollectionRow(
@@ -174,7 +201,7 @@ class PartStorageServiceTest {
 
   @Test
   void addPartsCreatesAndIncrementsRows() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", "", 0));
 
     assertThat(service.addParts("A", "a", List.of("3001", "3002"))).isEqualTo(2);
     assertThat(service.addParts("A", "a", List.of("3001"))).isEqualTo(1);
@@ -188,7 +215,7 @@ class PartStorageServiceTest {
 
   @Test
   void collectionValidationRejectsInvalidRows() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Box", 0, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Box", 0, "", "", 0));
     assertThatThrownBy(() -> service.createCollectionRow(
         new PartCollectionRequest("", "Any", "A", "", "1")))
         .isInstanceOf(IllegalArgumentException.class)
@@ -211,7 +238,7 @@ class PartStorageServiceTest {
 
   @Test
   void collectionRowsCanBeUpdatedAndDeleted() throws IOException {
-    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", ""));
+    service.createStorage(new PartStorageRequest("A", "Cabinet", 1, "", "", 0));
     service.createCollectionRow(new PartCollectionRequest("3001", "Any", "A", "a", "1"));
 
     service.updateCollectionRow(0, new PartCollectionRequest("3002", "5", "A", "a", "4"));

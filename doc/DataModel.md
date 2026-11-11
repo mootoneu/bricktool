@@ -731,9 +731,11 @@ A physical storage unit that can hold parts: a piece of furniture, a box, a cabi
 | DrawersCount | integer | Number of drawers or compartments that can contain parts, between `0` and `52`. `0` (default) when the storage is a single compartment. |
 | Location | string | Physical location of the storage (for example `Attic`, `Shelf 2`, `Desk`). |
 | Description | string | Short description of the parts the storage is supposed to contain. Optional. |
+| Order | integer | Sort position of the storage in lists. Defaults to `0` when absent. Lower values come first; storages with the same order are sorted by `Id`. |
 
 **Notes:**
 - `Id` must be unique and must not change while `data.bt.PartCollection` rows reference it.
+- Files written before the `Order` column existed are read with an order of `0`; the column is added on the next save.
 - Drawers are named `a`–`z` for the first 26 drawers and `A`–`Z` for the next 26. A storage has at most 52 drawers.
 - `data.bt.PartCollection.Drawer` must be empty when `DrawersCount` is `0`. When `DrawersCount` is greater than `0`, it must be empty (parts not assigned to a specific drawer) or one of the generated labels.
 

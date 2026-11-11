@@ -104,6 +104,7 @@ Lists the physical part storages stored in `data/bt/part_storage.csv`.
 
 | Column | Source |
 | ------ | ------ |
+| Order | `Order` |
 | Id | `Id` |
 | Model | `Model` (for example "IKEA Alex") |
 | Drawers | `DrawersCount` |
@@ -111,12 +112,15 @@ Lists the physical part storages stored in `data/bt/part_storage.csv`.
 | Description | `Description` |
 | Rules | Number of part collection rows attached to the storage |
 
+The table is sorted by **Order** ascending by default; storages with the same order are sorted by id. Click a column header to sort by another column.
+
 Actions:
 
+- **View** opens the **Storage drawers** tab filtered to the storage.
 - **Edit** opens the storage form.
 - **Set active** makes the storage the active container.
 
-The **Add storage** button opens the same form for a new storage. The form asks for the id, model, drawer count, location, and description. The id cannot be changed after creation. The drawer count is between `0` and `52`; drawers are named `a`–`z` for the first 26 and `A`–`Z` for the next 26. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
+The **Add storage** button opens the same form for a new storage. The form asks for the id, order, model, drawer count, location, and description. The id cannot be changed after creation. The drawer count is between `0` and `52`; drawers are named `a`–`z` for the first 26 and `A`–`Z` for the next 26. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
 
 **Endpoints:**
 
@@ -126,7 +130,7 @@ The **Add storage** button opens the same form for a new storage. The form asks 
 
 ## Storage Drawers Tab
 
-Shows one card per drawer of every storage, including empty drawers.
+Shows one card per drawer of the selected storage, including empty drawers. The **Storage** selector lists the part storages; choosing one shows only its drawers.
 
 - Each card shows the storage id, the drawer label, and the storage model and location.
 - The drawer label is generated from `DrawersCount`: `a`–`z` for the first 26 drawers, then `A`–`Z` for the next 26, up to 52. Extra labels found in the collection rows are also shown.
@@ -141,6 +145,13 @@ The content form asks for the storage, drawer, parts, colors, and amount:
 - **Parts** is a semicolon-separated list of `<PartNumber>`, `§<Category>` (numeric id or case-insensitive name), and `#<Tag>` (matched against the part name and number).
 - **Colors** is a semicolon-separated list of color ids, `Any`, `Other` (parts not explicitly listed elsewhere), or `Decorated` (printed or patterned parts).
 - **Amount** is free text (for example `250`, `100s`, or `many`).
+
+The form also helps to build the **Parts** and **Colors** lists. The helper controls only add or remove tokens; the semicolon-separated inputs remain the values that are saved.
+
+- **Part search** searches the main parts by number or name (`GET /api/parts/main-parts/search`). Choosing a result appends its part number. When the text is not a known main part, **Use part number …** checks `GET /api/parts/{partNumber}/info` and appends the number only if the part exists.
+- **Category** is a grouped list of the visible part categories (`GET /api/parts/categories`). **Add category** appends `§<CategoryId>`.
+- **Colors** offers `Any`, `Other`, and `Decorated` buttons and **Add color…**, which opens the color picker. A chosen color appends its numeric id.
+- The chips below each input show the current tokens and a **×** button that removes one token. Category chips show the category name even though the id is saved. Unknown categories, part numbers, and color ids, and `Any` combined with specific color ids, are reported as non-blocking warnings.
 
 A rule is unique per storage, drawer, parts, and colors. When the same part is added several times to the same drawer with `Any` colors, its amount is incremented.
 

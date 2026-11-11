@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class PartStorageService {
 
   private static final List<String> STORAGE_HEADERS =
-      List.of("Id", "Model", "DrawersCount", "Location", "Description");
+      List.of("Id", "Model", "DrawersCount", "Location", "Description", "Order");
   private static final List<String> COLLECTION_HEADERS =
       List.of("Parts", "Colors", "StorageId", "Drawer", "Amount");
   private static final int MATCH_LIMIT = 3000;
@@ -62,7 +62,9 @@ public class PartStorageService {
 
   public synchronized List<Map<String, Object>> storages() throws IOException {
     List<Map<String, String>> rows = loadStorages();
-    rows.sort(Comparator.comparing(row -> clean(row.get("Id")), String.CASE_INSENSITIVE_ORDER));
+    rows.sort(Comparator
+        .comparingInt((Map<String, String> row) -> orderOf(row))
+        .thenComparing(row -> clean(row.get("Id")), String.CASE_INSENSITIVE_ORDER));
     List<Map<String, String>> collection = loadCollection();
     List<Map<String, Object>> result = new ArrayList<>();
     for (Map<String, String> row : rows) {
@@ -85,7 +87,7 @@ public class PartStorageService {
     if (rows.stream().anyMatch(row -> clean(row.get("Id")).equalsIgnoreCase(id))) {
       throw new IllegalArgumentException("Storage id " + id + " already exists");
     }
-    Map<String, String> row = toStorageRow(id, request);
+    Map<String, String> row = toStorageRow(id, request, 0);
     rows.add(row);
     Csv.write(storageFile, STORAGE_HEADERS, rows);
     return storageEntry(row);
@@ -97,7 +99,8 @@ public class PartStorageService {
     List<Map<String, String>> rows = loadStorages();
     for (int i = 0; i < rows.size(); i++) {
       if (clean(rows.get(i).get("Id")).equalsIgnoreCase(key)) {
-        Map<String, String> row = toStorageRow(clean(rows.get(i).get("Id")), request);
+        Map<String, String> row = toStorageRow(clean(rows.get(i).get("Id")), request,
+            orderOf(rows.get(i)));
         rows.set(i, row);
         Csv.write(storageFile, STORAGE_HEADERS, rows);
         return storageEntry(row);
@@ -632,7 +635,19 @@ public class PartStorageService {
   // ============================================================================
 
   private List<Map<String, String>> loadStorages() throws IOException {
-    return load(storageFile);
+    List<Map<String, String>> rows = load(storageFile);
+    for (Map<String, String> row : rows) {
+      // Files written before the Order column existed default to 0.
+      if (clean(row.get("Order")).isEmpty()) {
+        row.put("Order", "0");
+      }
+    }
+    return rows;
+  }
+
+  private static int orderOf(Map<String, String> row) {
+    Integer value = toInt(row.get("Order"));
+    return value == null ? 0 : value;
   }
 
   private List<Map<String, String>> loadCollection() throws IOException {
@@ -691,7 +706,9 @@ public class PartStorageService {
     return labels;
   }
 
-  private static Map<String, String> toStorageRow(String id, PartStorageRequest request) {
+  private static Map<String, String> toStorageRow(String id, PartStorageRequest request,
+                                                  int defaultOrder) {
+    int order = request == null || request.order() == null ? defaultOrder : request.order();
     int drawers = request == null || request.drawersCount() == null ? 0 : request.drawersCount();
     if (drawers < 0) {
       throw new IllegalArgumentException("Drawers count must not be negative");
@@ -705,6 +722,7 @@ public class PartStorageService {
     row.put("DrawersCount", String.valueOf(drawers));
     row.put("Location", clean(request == null ? null : request.location()));
     row.put("Description", clean(request == null ? null : request.description()));
+    row.put("Order", String.valueOf(order));
     return row;
   }
 
@@ -760,6 +778,7 @@ public class PartStorageService {
     entry.put("drawersCount", toInt(row.get("DrawersCount")));
     entry.put("location", clean(row.get("Location")));
     entry.put("description", clean(row.get("Description")));
+    entry.put("order", orderOf(row));
     return entry;
   }
 

@@ -918,7 +918,8 @@ public class ApiController {
   @GetMapping(path = "/part-storage", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(
       summary = "List part storages",
-      description = "Returns every physical part storage stored in data/bt/part_storage.csv."
+      description = "Returns every physical part storage stored in data/bt/part_storage.csv, "
+          + "sorted by Order and then Id."
   )
   public List<Map<String, Object>> partStorages() throws IOException {
     return partStorages.storages();
@@ -938,7 +939,7 @@ public class ApiController {
   @PutMapping(path = "/part-storage/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(
       summary = "Update part storage",
-      description = "Updates the model, drawer count, location, and description of a part storage."
+      description = "Updates the order, model, drawer count, location, and description of a part storage."
   )
   public Map<String, Object> updatePartStorage(@PathVariable String id,
                                                @RequestBody PartStorageRequest request)

@@ -9,17 +9,33 @@
   let storagesLoading = false;
   let storagesLoaded = false;
   let storageCallbacks = [];
-  let storageSort = { key: 'id', dir: 1 };
+  let storageSort = { key: 'order', dir: 1 };
   let storageFilter = '';
 
   let drawerCards = [];
   let drawersLoading = false;
   let drawersLoaded = false;
   let drawersFilter = '';
+  let drawersStorageId = '';
 
   let collectionRequest = 0;
   let collectionTimer = null;
   let collectionCards = [];
+
+  let partSearchRequest = 0;
+  let partSearchTimer = null;
+  let partSearchResults = [];
+  let partSearchActive = -1;
+  let partNameCache = {};
+  let partValidation = {};
+
+  let categoryGroups = null;
+  let categoriesLoading = false;
+  let categoryCallbacks = [];
+
+  let ruleColors = null;
+  let ruleColorsLoading = false;
+  let ruleColorCallbacks = [];
 
   // ============================================================================
   // Public API
@@ -48,6 +64,10 @@
         storagesLoaded = true;
         renderStorages();
         populateStorageSelect();
+        populateDrawersStorageSelect();
+        if (drawersLoaded) {
+          renderDrawers();
+        }
         BrickTools.PartsCollectionShared.report('#storage-msg',
           storages.length === 0 ? 'No part storage stored yet.' : '');
       })
@@ -56,6 +76,10 @@
         storagesLoaded = true;
         renderStorages();
         populateStorageSelect();
+        populateDrawersStorageSelect();
+        if (drawersLoaded) {
+          renderDrawers();
+        }
         BrickTools.PartsCollectionShared.report('#storage-msg', BrickTools.errorOf(xhr));
       })
       .always(function () {
@@ -84,8 +108,6 @@
         drawersLoaded = true;
         renderDrawers();
         syncActiveDrawerList();
-        BrickTools.PartsCollectionShared.report('#drawers-msg',
-          drawerCards.length === 0 ? 'No drawer yet. Add a part storage first.' : '');
       })
       .fail(function (xhr) {
         drawerCards = [];
@@ -128,7 +150,7 @@
       fmt.number(visible.length) + ' of ' + fmt.number(storages.length) + ' storage(s)');
 
     if (visible.length === 0) {
-      $tbody.append('<tr><td colspan="7" class="muted">' +
+      $tbody.append('<tr><td colspan="8" class="muted">' +
         (storages.length === 0 ? 'No part storage yet.' : 'No storage matches the filter.') +
         '</td></tr>');
       return;
@@ -138,6 +160,7 @@
       const isActive = active && active.type === 'storage'
         && String(active.storageId) === String(storage.id);
       const $row = $('<tr></tr>').toggleClass('selected', Boolean(isActive));
+      $row.append($('<td></td>').text(fmt.number(storage.order != null ? storage.order : 0)));
       $row.append($('<td class="storage-id"></td>').text(storage.id || ''));
       $row.append($('<td></td>').text(storage.model || ''));
       $row.append($('<td></td>').text(fmt.number(storage.drawersCount || 0)));
@@ -146,6 +169,8 @@
       $row.append($('<td></td>').text(fmt.number(storage.rowCount || 0)));
 
       const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary storage-view">View</button>')
+        .attr('data-storage-id', storage.id));
       $actions.append($('<button type="button" class="btn secondary storage-edit">Edit</button>')
         .attr('data-storage-id', storage.id));
       $actions.append($('<button type="button" class="btn secondary storage-set-active">Set active</button>')
@@ -167,6 +192,7 @@
     $('#storage-title').text(storage ? 'Edit part storage' : 'Add part storage');
     $('#storage-id').val(storage ? storage.id : '').prop('readonly', Boolean(storage));
     $('#storage-model').val(storage ? storage.model : '');
+    $('#storage-order').val(storage && storage.order != null ? storage.order : 0);
     $('#storage-drawers').val(storage && storage.drawersCount != null ? storage.drawersCount : 0);
     $('#storage-location').val(storage ? storage.location : '');
     $('#storage-description').val(storage ? storage.description : '');
@@ -190,13 +216,31 @@
       'Active container set to storage ' + storage.id + '.');
   }
 
+  function showStorageDrawers(storageId) {
+    drawersStorageId = String(storageId || '');
+    const open = function () {
+      populateDrawersStorageSelect();
+      renderDrawers();
+      $('[data-tab="drawers"]').trigger('click');
+    };
+    if (storagesLoaded) {
+      open();
+    } else {
+      loadStorages(open);
+    }
+  }
+
   // ============================================================================
   // Drawers
   // ============================================================================
 
   function renderDrawers() {
+    const selectedId = String(drawersStorageId || $('#drawers-storage').val() || '');
+    const storageCards = selectedId ? drawerCards.filter(function (card) {
+      return String(card.storageId) === selectedId;
+    }) : [];
     const filter = drawersFilter.trim().toLowerCase();
-    const cards = drawerCards.filter(function (card) {
+    const cards = storageCards.filter(function (card) {
       if (!filter) {
         return true;
       }
@@ -205,13 +249,44 @@
           return String(value || '').toLowerCase().indexOf(filter) !== -1;
         });
     });
-    $('#drawers-count').text(drawerCards.length === 0 ? '' :
-      BrickTools.fmt.number(cards.length) + ' of ' + BrickTools.fmt.number(drawerCards.length)
+    $('#drawers-count').text(storageCards.length === 0 ? '' :
+      BrickTools.fmt.number(cards.length) + ' of ' + BrickTools.fmt.number(storageCards.length)
         + ' drawer(s)');
     renderDrawerCards($('#drawer-cards'), cards, false);
-    if (cards.length === 0 && drawerCards.length > 0) {
+    if (storages.length === 0) {
+      BrickTools.PartsCollectionShared.report('#drawers-msg',
+        'No drawer yet. Add a part storage first.');
+    } else if (!selectedId) {
+      BrickTools.PartsCollectionShared.report('#drawers-msg', 'Select a storage.');
+    } else if (cards.length === 0 && storageCards.length > 0) {
       BrickTools.PartsCollectionShared.report('#drawers-msg', 'No drawer matches the filter.');
+    } else if (storageCards.length === 0) {
+      BrickTools.PartsCollectionShared.report('#drawers-msg', 'No drawer for this storage.');
+    } else {
+      BrickTools.PartsCollectionShared.report('#drawers-msg', '');
     }
+  }
+
+  function populateDrawersStorageSelect() {
+    const $select = $('#drawers-storage');
+    const current = String(drawersStorageId || $select.val() || '');
+    $select.empty();
+    if (storages.length === 0) {
+      drawersStorageId = '';
+      $select.append($('<option></option>').attr('value', '').text('No storage'));
+      $select.prop('disabled', true);
+      return;
+    }
+    $select.prop('disabled', false);
+    storages.forEach(function (storage) {
+      const label = storage.model ? storage.id + ' (' + storage.model + ')' : storage.id;
+      $select.append($('<option></option>').attr('value', storage.id).text(label));
+    });
+    const selected = storages.find(function (storage) {
+      return String(storage.id) === current;
+    });
+    drawersStorageId = selected ? String(selected.id) : String(storages[0].id);
+    $select.val(drawersStorageId);
   }
 
   function renderDrawerCards($host, cards, searching) {
@@ -456,6 +531,506 @@
     }
   }
 
+  // ============================================================================
+  // Drawer content helpers
+  // ============================================================================
+
+  function splitRuleTokens(value) {
+    return String(value == null ? '' : value)
+      .split(';')
+      .map(function (token) { return token.trim(); })
+      .filter(function (token) { return token.length > 0; });
+  }
+
+  function tokenKey(token) {
+    return String(token == null ? '' : token).toLowerCase();
+  }
+
+  function canonicalColorToken(token) {
+    const lower = String(token || '').toLowerCase();
+    if (lower === 'any') {
+      return 'Any';
+    }
+    if (lower === 'other') {
+      return 'Other';
+    }
+    if (lower === 'decorated') {
+      return 'Decorated';
+    }
+    return String(token || '').trim();
+  }
+
+  function uniqueRuleTokens(value, canonicalize) {
+    const seen = {};
+    const result = [];
+    splitRuleTokens(value).forEach(function (token) {
+      const normalized = canonicalize ? canonicalize(token) : token;
+      const key = tokenKey(normalized);
+      if (!normalized || seen[key]) {
+        return;
+      }
+      seen[key] = true;
+      result.push(normalized);
+    });
+    return result;
+  }
+
+  function getRulePartTokens() {
+    return splitRuleTokens($('#collection-rule-parts').val());
+  }
+
+  function setRulePartTokens(tokens) {
+    $('#collection-rule-parts').val(tokens.join(';'));
+    renderRulePartTokens();
+  }
+
+  function addRulePartToken(token) {
+    const value = String(token || '').trim();
+    if (!value) {
+      return;
+    }
+    const tokens = getRulePartTokens();
+    const exists = tokens.some(function (existing) {
+      return tokenKey(existing) === tokenKey(value);
+    });
+    if (!exists) {
+      tokens.push(value);
+      setRulePartTokens(tokens);
+    }
+  }
+
+  function removeRulePartToken(index) {
+    const tokens = getRulePartTokens();
+    if (index < 0 || index >= tokens.length) {
+      return;
+    }
+    tokens.splice(index, 1);
+    setRulePartTokens(tokens);
+  }
+
+  function getRuleColorTokens() {
+    return splitRuleTokens($('#collection-rule-colors').val());
+  }
+
+  function setRuleColorTokens(tokens) {
+    $('#collection-rule-colors').val(tokens.join(';'));
+    renderRuleColorTokens();
+  }
+
+  function addRuleColorToken(token) {
+    const value = canonicalColorToken(token);
+    if (!value) {
+      return;
+    }
+    const tokens = getRuleColorTokens();
+    const exists = tokens.some(function (existing) {
+      return tokenKey(canonicalColorToken(existing)) === tokenKey(value);
+    });
+    if (!exists) {
+      tokens.push(value);
+      setRuleColorTokens(tokens);
+    }
+  }
+
+  function removeRuleColorToken(index) {
+    const tokens = getRuleColorTokens();
+    if (index < 0 || index >= tokens.length) {
+      return;
+    }
+    tokens.splice(index, 1);
+    setRuleColorTokens(tokens);
+  }
+
+  function categoryLookup() {
+    const byId = {};
+    const byName = {};
+    (categoryGroups || []).forEach(function (group) {
+      (group.categories || []).forEach(function (category) {
+        const id = String(category.id);
+        const name = category.name || ('Category ' + id);
+        byId[id] = name;
+        byName[tokenKey(name)] = name;
+      });
+    });
+    return { byId: byId, byName: byName };
+  }
+
+  function findRuleColor(id) {
+    const wanted = String(id);
+    return (ruleColors || []).find(function (color) {
+      return String(color.id) === wanted;
+    }) || null;
+  }
+
+  function ruleTokenRemoveButton(kind, index) {
+    return $('<button type="button" class="rule-token-remove"></button>')
+      .attr('data-token-kind', kind)
+      .attr('data-token-index', index)
+      .attr('aria-label', 'Remove')
+      .text('×');
+  }
+
+  function renderRulePartTokens() {
+    const $host = $('#collection-rule-part-tokens').empty();
+    const tokens = getRulePartTokens();
+    if (tokens.length === 0) {
+      $host.append($('<span class="rule-tokens-empty"></span>')
+        .text('No part, category, or tag yet.'));
+      updateRuleWarnings();
+      return;
+    }
+    const categories = categoryLookup();
+    tokens.forEach(function (token, index) {
+      const $chip = $('<span class="rule-token"></span>');
+      if (token.charAt(0) === '§') {
+        $chip.addClass('category');
+        const value = token.substring(1).trim();
+        const name = categories.byId[value] || categories.byName[tokenKey(value)] || value;
+        $chip.append($('<span></span>').text('§ ' + name));
+        $chip.attr('title', 'Category ' + value);
+      } else if (token.charAt(0) === '#') {
+        $chip.addClass('tag');
+        $chip.append($('<span></span>').text(token));
+        $chip.attr('title', 'Name contains "' + token.substring(1) + '"');
+      } else {
+        const name = partNameCache[tokenKey(token)];
+        $chip.append($('<span></span>').text(token));
+        $chip.attr('title', name ? token + ' · ' + name : 'Part ' + token);
+      }
+      $chip.append(ruleTokenRemoveButton('part', index));
+      $host.append($chip);
+    });
+    updateRuleWarnings();
+  }
+
+  function renderRuleColorTokens() {
+    const $host = $('#collection-rule-color-tokens').empty();
+    const tokens = getRuleColorTokens();
+    if (tokens.length === 0) {
+      $host.append($('<span class="rule-tokens-empty"></span>').text('No color yet.'));
+      updateRuleWarnings();
+      return;
+    }
+    tokens.forEach(function (token, index) {
+      const $chip = $('<span class="rule-token"></span>');
+      const keyword = canonicalColorToken(token);
+      if (keyword === 'Any' || keyword === 'Other' || keyword === 'Decorated') {
+        $chip.addClass('keyword').append($('<span></span>').text(keyword));
+        $chip.attr('title', keyword === 'Any' ? 'Matches every color'
+          : keyword === 'Other' ? 'Matches colors not explicitly listed'
+            : 'Matches decorated parts');
+      } else {
+        const color = findRuleColor(token);
+        if (color) {
+          const hex = BrickTools.PartsCollectionShared.colorHex({ rgb: color.rgb });
+          if (hex) {
+            $chip.append($('<span class="rule-token-swatch"></span>')
+              .css('background-color', hex));
+          }
+          $chip.append($('<span></span>').text(color.name));
+          $chip.attr('title', 'Color ' + color.id + (color.rgb ? ' · #' + color.rgb : ''));
+        } else {
+          $chip.append($('<span></span>').text('Color ' + token));
+        }
+      }
+      $chip.append(ruleTokenRemoveButton('color', index));
+      $host.append($chip);
+    });
+    updateRuleWarnings();
+  }
+
+  function updateRuleWarnings() {
+    const warnings = [];
+    const categories = categoryLookup();
+    const categoriesLoaded = Array.isArray(categoryGroups) && categoryGroups.length > 0;
+    getRulePartTokens().forEach(function (token) {
+      if (token.charAt(0) === '§') {
+        const value = token.substring(1).trim();
+        if (categoriesLoaded && value && !categories.byId[value]
+            && !categories.byName[tokenKey(value)]) {
+          warnings.push('Unknown category "' + value + '".');
+        }
+        return;
+      }
+      if (token.charAt(0) === '#') {
+        return;
+      }
+      if (partValidation[tokenKey(token)] === 'unknown') {
+        warnings.push('Unknown part number "' + token + '".');
+      }
+    });
+
+    let concreteColors = 0;
+    let hasAny = false;
+    getRuleColorTokens().forEach(function (token) {
+      const keyword = canonicalColorToken(token);
+      if (keyword === 'Any' || keyword === 'Other' || keyword === 'Decorated') {
+        hasAny = hasAny || keyword === 'Any';
+        return;
+      }
+      concreteColors += 1;
+      if (ruleColors && !findRuleColor(token)) {
+        warnings.push('Unknown color id "' + token + '".');
+      }
+    });
+    if (hasAny && concreteColors > 0) {
+      warnings.push('Any already matches every color; the specific color ids are redundant.');
+    }
+    $('#collection-rule-helper-msg').text(warnings.join(' '));
+  }
+
+  function validateRuleParts() {
+    getRulePartTokens().forEach(function (token) {
+      if (token.charAt(0) === '§' || token.charAt(0) === '#') {
+        return;
+      }
+      const key = tokenKey(token);
+      if (partValidation[key]) {
+        return;
+      }
+      partValidation[key] = 'checking';
+      BrickTools.api('GET', '/parts/' + encodeURIComponent(token) + '/info')
+        .done(function (info) {
+          partValidation[key] = 'known';
+          if (info && info.name) {
+            partNameCache[key] = info.name;
+          }
+        })
+        .fail(function (xhr) {
+          partValidation[key] = xhr && xhr.status === 404 ? 'unknown' : 'error';
+        })
+        .always(function () {
+          renderRulePartTokens();
+        });
+    });
+  }
+
+  function hideRulePartResults() {
+    partSearchRequest += 1;
+    partSearchResults = [];
+    partSearchActive = -1;
+    $('#collection-rule-part-results').prop('hidden', true).empty();
+  }
+
+  function renderRulePartResults(result, query) {
+    const $host = $('#collection-rule-part-results').empty();
+    partSearchResults = [];
+    partSearchActive = -1;
+    const parts = result && Array.isArray(result.parts) ? result.parts : [];
+    parts.slice(0, 8).forEach(function (part) {
+      const partNumber = String(part.partNumber || '');
+      if (!partNumber) {
+        return;
+      }
+      partNameCache[tokenKey(partNumber)] = part.name || '';
+      partSearchResults.push({ type: 'part', partNumber: partNumber });
+      const $button = $('<button type="button" class="rule-suggestion"></button>')
+        .attr('data-part-number', partNumber);
+      $button.append($('<img alt="">')
+        .attr('src', '/api/parts/' + encodeURIComponent(partNumber) + '/image')
+        .on('error', function () { $(this).remove(); }));
+      const $text = $('<span class="rule-suggestion-text"></span>');
+      $text.append($('<span class="rule-suggestion-number"></span>').text('#' + partNumber));
+      const meta = [part.name, part.categoryName].filter(Boolean).join(' · ');
+      if (meta) {
+        $text.append($('<span class="rule-suggestion-meta"></span>').text(meta));
+      }
+      $button.append($text);
+      $host.append($button);
+    });
+
+    const trimmed = String(query || '').trim();
+    if (trimmed && /^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(trimmed)) {
+      const exists = parts.some(function (part) {
+        return tokenKey(part.partNumber) === tokenKey(trimmed);
+      });
+      if (!exists) {
+        partSearchResults.push({ type: 'number', partNumber: trimmed });
+        $host.append($('<button type="button" class="rule-suggestion rule-suggestion-fallback"></button>')
+          .attr('data-part-number', trimmed)
+          .append($('<span class="rule-suggestion-text"></span>')
+            .append($('<span class="rule-suggestion-number"></span>')
+              .text('Use part number ' + trimmed))));
+      }
+    }
+
+    if (partSearchResults.length === 0) {
+      $host.append($('<p class="rule-suggestion-empty muted"></p>')
+        .text('No matching part. Type a full part number to use it.'));
+    }
+    $host.prop('hidden', false);
+  }
+
+  function searchRuleParts(query) {
+    const value = String(query || '').trim();
+    const request = ++partSearchRequest;
+    if (!value) {
+      hideRulePartResults();
+      return;
+    }
+    BrickTools.api('GET', '/parts/main-parts/search?query=' + encodeURIComponent(value))
+      .done(function (result) {
+        if (request !== partSearchRequest) {
+          return;
+        }
+        renderRulePartResults(result, value);
+      })
+      .fail(function (xhr) {
+        if (request !== partSearchRequest) {
+          return;
+        }
+        partSearchResults = [];
+        partSearchActive = -1;
+        const $host = $('#collection-rule-part-results').empty();
+        $host.append($('<p class="rule-suggestion-empty"></p>')
+          .text(BrickTools.errorOf(xhr)));
+        $host.prop('hidden', false);
+      });
+  }
+
+  function setRulePartActive(index) {
+    const $items = $('#collection-rule-part-results .rule-suggestion');
+    if ($items.length === 0) {
+      return;
+    }
+    partSearchActive = index < 0 ? $items.length - 1 : index % $items.length;
+    $items.removeClass('active').eq(partSearchActive).addClass('active');
+    const node = $items.get(partSearchActive);
+    if (node && node.scrollIntoView) {
+      node.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function chooseRulePart(partNumber) {
+    const value = String(partNumber || '').trim();
+    if (!value) {
+      return;
+    }
+    partValidation[tokenKey(value)] = 'known';
+    addRulePartToken(value);
+    $('#collection-rule-part-search').val('');
+    hideRulePartResults();
+  }
+
+  function useRulePartNumber(partNumber) {
+    const value = String(partNumber || '').trim();
+    if (!value) {
+      return;
+    }
+    const key = tokenKey(value);
+    partValidation[key] = 'checking';
+    BrickTools.api('GET', '/parts/' + encodeURIComponent(value) + '/info')
+      .done(function (info) {
+        partValidation[key] = 'known';
+        if (info && info.name) {
+          partNameCache[key] = info.name;
+        }
+        addRulePartToken(value);
+        $('#collection-rule-part-search').val('');
+        hideRulePartResults();
+      })
+      .fail(function (xhr) {
+        partValidation[key] = xhr && xhr.status === 404 ? 'unknown' : 'error';
+        renderRulePartTokens();
+      });
+  }
+
+  function populateRuleCategorySelect() {
+    const $select = $('#collection-rule-category');
+    const current = $select.val();
+    $select.empty();
+    $select.append($('<option></option>').attr('value', '').text('Select a category…'));
+    if (!Array.isArray(categoryGroups) || categoryGroups.length === 0) {
+      $select.prop('disabled', true);
+      return;
+    }
+    $select.prop('disabled', false);
+    categoryGroups.forEach(function (group) {
+      const $optgroup = $('<optgroup></optgroup>').attr('label', group.group || 'Other');
+      (group.categories || []).forEach(function (category) {
+        const id = String(category.id);
+        const label = category.name ? category.name + ' (' + id + ')' : 'Category ' + id;
+        $optgroup.append($('<option></option>').attr('value', id).text(label));
+      });
+      if ($optgroup.children().length > 0) {
+        $select.append($optgroup);
+      }
+    });
+    if (current) {
+      $select.val(current);
+    }
+  }
+
+  function loadRuleCategories(callback) {
+    if (typeof callback === 'function') {
+      categoryCallbacks.push(callback);
+    }
+    if (Array.isArray(categoryGroups)) {
+      populateRuleCategorySelect();
+      renderRulePartTokens();
+      flushRuleCategoryCallbacks();
+      return;
+    }
+    if (categoriesLoading) {
+      return;
+    }
+    categoriesLoading = true;
+    BrickTools.api('GET', '/parts/categories')
+      .done(function (list) {
+        categoryGroups = Array.isArray(list) ? list : [];
+        populateRuleCategorySelect();
+        renderRulePartTokens();
+      })
+      .fail(function () {
+        categoryGroups = null;
+        populateRuleCategorySelect();
+        renderRulePartTokens();
+      })
+      .always(function () {
+        categoriesLoading = false;
+        flushRuleCategoryCallbacks();
+      });
+  }
+
+  function flushRuleCategoryCallbacks() {
+    const callbacks = categoryCallbacks.slice();
+    categoryCallbacks = [];
+    callbacks.forEach(function (callback) { callback(); });
+  }
+
+  function loadRuleColors(callback) {
+    if (typeof callback === 'function') {
+      ruleColorCallbacks.push(callback);
+    }
+    if (Array.isArray(ruleColors)) {
+      renderRuleColorTokens();
+      flushRuleColorCallbacks();
+      return;
+    }
+    if (ruleColorsLoading) {
+      return;
+    }
+    ruleColorsLoading = true;
+    BrickColor.loadColors()
+      .done(function (colors) {
+        ruleColors = Array.isArray(colors) ? colors : [];
+      })
+      .fail(function () {
+        ruleColors = null;
+      })
+      .always(function () {
+        ruleColorsLoading = false;
+        renderRuleColorTokens();
+        flushRuleColorCallbacks();
+      });
+  }
+
+  function flushRuleColorCallbacks() {
+    const callbacks = ruleColorCallbacks.slice();
+    ruleColorCallbacks = [];
+    callbacks.forEach(function (callback) { callback(); });
+  }
+
   function openRuleForm(row, card) {
     if (!storagesLoaded) {
       loadStorages(function () { openRuleForm(row, card); });
@@ -472,11 +1047,26 @@
     $('#collection-rule-parts').val(row ? row.parts : '');
     $('#collection-rule-colors').val(row ? row.colors : 'Any');
     $('#collection-rule-amount').val(row ? row.amount : '1');
+    $('#collection-rule-part-search').val('');
+    $('#collection-rule-helper-msg').text('');
+    partValidation = {};
+    hideRulePartResults();
+    renderRulePartTokens();
+    renderRuleColorTokens();
+    loadRuleCategories();
+    loadRuleColors();
+    validateRuleParts();
     $('#collection-rule-modal').prop('hidden', false);
     $('#collection-rule-parts').trigger('focus');
   }
 
   function closeRuleForm() {
+    if (partSearchTimer) {
+      clearTimeout(partSearchTimer);
+      partSearchTimer = null;
+    }
+    hideRulePartResults();
+    $('#collection-rule-helper-msg').text('');
     $('#collection-rule-modal').prop('hidden', true);
   }
 
@@ -513,6 +1103,10 @@
       renderStorages();
     });
 
+    $('#part-storage').on('click', '.storage-view', function () {
+      showStorageDrawers($(this).attr('data-storage-id'));
+    });
+
     $('#part-storage').on('click', '.storage-edit', function () {
       const storage = findStorage($(this).attr('data-storage-id'));
       if (storage) {
@@ -537,10 +1131,14 @@
         model: String($('#storage-model').val() || '').trim(),
         drawersCount: parseInt($('#storage-drawers').val(), 10),
         location: String($('#storage-location').val() || '').trim(),
-        description: String($('#storage-description').val() || '').trim()
+        description: String($('#storage-description').val() || '').trim(),
+        order: parseInt($('#storage-order').val(), 10)
       };
       if (isNaN(body.drawersCount)) {
         body.drawersCount = 0;
+      }
+      if (isNaN(body.order)) {
+        body.order = 0;
       }
       const $buttons = $('#storage-form button').prop('disabled', true);
       $('#storage-form-msg').text('Saving…');
@@ -559,6 +1157,11 @@
     });
 
     // Drawers
+    $('#drawers-storage').on('change', function () {
+      drawersStorageId = String($(this).val() || '');
+      renderDrawers();
+    });
+
     $('#drawers-filter').on('input', function () {
       drawersFilter = this.value;
       renderDrawers();
@@ -631,12 +1234,108 @@
     // Drawer content form
     $('#collection-rule-cancel').on('click', closeRuleForm);
 
+    $('#collection-rule-parts').on('input', function () {
+      renderRulePartTokens();
+    }).on('change', validateRuleParts);
+
+    $('#collection-rule-part-search').on('input', function () {
+      const value = this.value;
+      if (partSearchTimer) {
+        clearTimeout(partSearchTimer);
+      }
+      partSearchTimer = setTimeout(function () {
+        partSearchTimer = null;
+        searchRuleParts(value);
+      }, 250);
+    }).on('keydown', function (event) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setRulePartActive(partSearchActive + 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setRulePartActive(partSearchActive - 1);
+      } else if (event.key === 'Enter') {
+        if (partSearchResults.length > 0) {
+          event.preventDefault();
+          const index = partSearchActive >= 0 ? partSearchActive : 0;
+          const item = partSearchResults[index];
+          if (item.type === 'number') {
+            useRulePartNumber(item.partNumber);
+          } else {
+            chooseRulePart(item.partNumber);
+          }
+        }
+      } else if (event.key === 'Escape') {
+        event.stopPropagation();
+        hideRulePartResults();
+      }
+    }).on('blur', function () {
+      setTimeout(hideRulePartResults, 150);
+    });
+
+    $('#collection-rule-part-results').on('click', '.rule-suggestion', function () {
+      const partNumber = $(this).attr('data-part-number');
+      if ($(this).hasClass('rule-suggestion-fallback')) {
+        useRulePartNumber(partNumber);
+      } else {
+        chooseRulePart(partNumber);
+      }
+    });
+
+    $('#collection-rule-add-category').on('click', function () {
+      const categoryId = String($('#collection-rule-category').val() || '');
+      if (!categoryId) {
+        $('#collection-rule-helper-msg').text('Select a category first.');
+        return;
+      }
+      addRulePartToken('§' + categoryId);
+    });
+
+    $('#collection-rule-part-tokens').on('click', '.rule-token-remove', function () {
+      removeRulePartToken(Number($(this).attr('data-token-index')));
+    });
+
+    $('#collection-rule-colors').on('input', function () {
+      renderRuleColorTokens();
+    });
+
+    $('#collection-rule-modal').on('click', '.rule-color-keyword', function () {
+      addRuleColorToken($(this).attr('data-color-keyword'));
+    });
+
+    $('#collection-rule-add-color').on('click', function () {
+      if (!window.BrickColor) {
+        return;
+      }
+      BrickColor.openColorPicker(null, function (color) {
+        addRuleColorToken(color.id);
+      });
+    });
+
+    $('#collection-rule-color-tokens').on('click', '.rule-token-remove', function () {
+      removeRuleColorToken(Number($(this).attr('data-token-index')));
+    });
+
     $('#collection-rule-form').on('submit', function (event) {
       event.preventDefault();
       const index = String($('#collection-rule-index').val() || '');
+      const parts = uniqueRuleTokens($('#collection-rule-parts').val());
+      const colors = uniqueRuleTokens($('#collection-rule-colors').val(), canonicalColorToken);
+      if (parts.length === 0) {
+        $('#collection-rule-form-msg').text('Add at least one part, category, or tag.');
+        return;
+      }
+      if (colors.length === 0) {
+        $('#collection-rule-form-msg').text('Add at least one color.');
+        return;
+      }
+      $('#collection-rule-parts').val(parts.join(';'));
+      $('#collection-rule-colors').val(colors.join(';'));
+      renderRulePartTokens();
+      renderRuleColorTokens();
       const body = {
-        parts: String($('#collection-rule-parts').val() || '').trim(),
-        colors: String($('#collection-rule-colors').val() || '').trim(),
+        parts: parts.join(';'),
+        colors: colors.join(';'),
         storageId: String($('#collection-rule-storage').val() || ''),
         drawer: String($('#collection-rule-drawer').val() || '').trim(),
         amount: String($('#collection-rule-amount').val() || '').trim()
@@ -670,6 +1369,10 @@
     });
     $(document).on('keydown', function (event) {
       if (event.key !== 'Escape') {
+        return;
+      }
+      const $picker = $('#color-picker-modal');
+      if ($picker.length && !$picker.prop('hidden')) {
         return;
       }
       if (!$('#storage-modal').prop('hidden')) {

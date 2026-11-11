@@ -402,6 +402,6 @@
   }
 
   window.BrickColor = {
-    getColor, getLegoColorId, openColorInfo, openColorPicker
+    getColor, getLegoColorId, loadColors, openColorInfo, openColorPicker
   };
 })(window, jQuery);

@@ -78,10 +78,11 @@ class PartStorageApiTest {
   void storagesAndCollectionRowsCanBeCreatedAndSearched() throws Exception {
     mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
             .content("{\"id\":\"A\",\"model\":\"Cabinet\",\"drawersCount\":2,"
-                + "\"location\":\"Desk\",\"description\":\"Bricks\"}"))
+                + "\"location\":\"Desk\",\"description\":\"Bricks\",\"order\":7}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value("A"))
-        .andExpect(jsonPath("$.drawersCount").value(2));
+        .andExpect(jsonPath("$.drawersCount").value(2))
+        .andExpect(jsonPath("$.order").value(7));
 
     mvc.perform(get("/api/part-storage"))
         .andExpect(status().isOk())
@@ -110,6 +111,25 @@ class PartStorageApiTest {
     mvc.perform(get("/api/part-collection/drawers").param("query", "missing"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isEmpty());
+  }
+
+  @Test
+  void storagesAreListedByOrder() throws Exception {
+    mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"Z\",\"order\":9}"))
+        .andExpect(status().isCreated());
+    mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"B\",\"order\":1}"))
+        .andExpect(status().isCreated());
+    mvc.perform(post("/api/part-storage").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"A\",\"order\":1}"))
+        .andExpect(status().isCreated());
+
+    mvc.perform(get("/api/part-storage"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value("A"))
+        .andExpect(jsonPath("$[1].id").value("B"))
+        .andExpect(jsonPath("$[2].id").value("Z"));
   }
 
   @Test
