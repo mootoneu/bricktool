@@ -393,6 +393,19 @@
       });
   }
 
+  /**
+   * Show a part in the Collection tab by filling its search field and running the search.
+   * @param {string} partNumber - The part number to search for
+   */
+  function searchPartInCollection(partNumber) {
+    const value = String(partNumber == null ? '' : partNumber).trim();
+    if (!value) {
+      return;
+    }
+    $('[data-tab="collection"]').trigger('click');
+    $('#collection-search').val(value).trigger('input').trigger('focus');
+  }
+
   // ============================================================================
   // Render functions
   // ============================================================================
@@ -518,6 +531,9 @@
       $row.append(starCell(part));
 
       const $actions = $('<td class="row-actions"></td>');
+      $actions.append($('<button type="button" class="btn secondary search-collection">Search</button>')
+        .attr('data-part-number', part.partNumber)
+        .attr('title', 'Search this part in the Collection tab'));
       $actions.append($('<button type="button" class="btn secondary add-to-container">Add to container</button>')
         .attr('data-part-number', part.partNumber));
       $row.append($actions);
@@ -791,6 +807,11 @@
       if (partNumber && !isNaN(stars)) {
         saveMainPartStars(partNumber, stars);
       }
+    });
+
+    // Search this part in the Collection tab
+    $('#main-parts').on('click', '.search-collection', function () {
+      searchPartInCollection($(this).attr('data-part-number'));
     });
 
     // Add to container handler

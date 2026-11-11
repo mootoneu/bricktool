@@ -61,7 +61,7 @@ The explorer is split into a category tree on the left and a main-parts table on
 | Material | |
 | Has alternates | "View" button opens the alternates modal |
 | Stars | 0 to 5, editable; 0 means hidden |
-| | "Add to container" button |
+| | "Search" and "Add to container" buttons |
 
 Filters:
 
@@ -70,6 +70,11 @@ Filters:
 - The count shows "X of Y parts", or "X of Y parts matching ..." in the Search category.
 
 The table is sortable; the default sort is by stars, descending.
+
+**Row actions:**
+
+- **Search** opens the **Collection** tab, fills its search field with the part number, and runs the collection search.
+- **Add to container** sends the part to the active container.
 
 **Star rating:** clicking a star saves it with `PUT /api/parts/main-parts/{partNumber}/stars` and the body `{ "stars": 3 }`. The change is reflected immediately.
 
