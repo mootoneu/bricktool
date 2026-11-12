@@ -43,14 +43,14 @@
           </div>
           <div id="main-parts-selection" class="selection-toolbar" hidden>
             <span id="main-parts-selected-count" class="muted">0 parts selected</span>
-            <button type="button" id="main-parts-select-all" class="btn secondary">Select all visible</button>
-            <button type="button" id="main-parts-clear-selection" class="btn secondary">Clear selection</button>
+            <button type="button" id="main-parts-select-all" class="btn secondary" data-icon="selectAll">Select all visible</button>
+            <button type="button" id="main-parts-clear-selection" class="btn secondary" data-icon="clear">Clear selection</button>
             <span class="selection-stars">
               <span class="muted">Set stars</span>
               <span id="main-parts-bulk-stars" class="stars" role="group"
                     aria-label="Set stars for selected parts"></span>
             </span>
-            <button type="button" id="main-parts-bulk-add" class="btn" disabled>Add to container</button>
+            <button type="button" id="main-parts-bulk-add" class="btn" data-icon="add" disabled>Add to container</button>
           </div>
           <div class="table-wrap">
             <table class="data" id="main-parts" hidden>
@@ -90,7 +90,7 @@
 
     <section data-panel="storage" hidden>
       <div class="storage-toolbar">
-        <button type="button" id="storage-add" class="btn">Add storage</button>
+        <button type="button" id="storage-add" class="btn" data-icon="add">Add storage</button>
         <input type="search" id="storage-filter" placeholder="Filter storages"
                aria-label="Filter storages">
         <span id="storage-count" class="muted"></span>
@@ -129,7 +129,7 @@
 
     <section data-panel="pab-purchases" hidden>
       <div class="toolbar">
-        <button type="button" id="pab-purchase-add" class="btn">Add new purchase</button>
+        <button type="button" id="pab-purchase-add" class="btn" data-icon="add">Add new purchase</button>
       </div>
       <div class="table-wrap">
         <table class="data" id="pab-purchases">
@@ -154,13 +154,13 @@
       <div class="toolbar">
         <div class="purchase-selector" role="group" aria-label="PaB purchase">
           <label for="pab-parts-purchase">Purchase</label>
-          <button type="button" id="pab-parts-prev" class="btn secondary"
-                  title="Previous purchase" aria-label="Previous purchase">&#8249;</button>
+          <button type="button" id="pab-parts-prev" class="btn secondary icon-only"
+                  title="Previous purchase" aria-label="Previous purchase" data-icon="chevronLeft"></button>
           <select id="pab-parts-purchase"></select>
-          <button type="button" id="pab-parts-next" class="btn secondary"
-                  title="Next purchase" aria-label="Next purchase">&#8250;</button>
+          <button type="button" id="pab-parts-next" class="btn secondary icon-only"
+                  title="Next purchase" aria-label="Next purchase" data-icon="chevronRight"></button>
         </div>
-        <button type="button" id="pab-part-add" class="btn" disabled>Add part</button>
+        <button type="button" id="pab-part-add" class="btn" data-icon="add" disabled>Add part</button>
       </div>
       <div class="table-wrap">
         <table class="data" id="pab-parts">
@@ -224,8 +224,8 @@
       </label>
       <p id="pab-purchase-form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="pab-purchase-cancel" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="pab-purchase-cancel" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>
@@ -245,8 +245,8 @@
       </label>
       <p id="pab-part-form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="pab-part-cancel" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="pab-part-cancel" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>
@@ -276,8 +276,8 @@
       </label>
       <p id="storage-form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="storage-cancel" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="storage-cancel" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>
@@ -303,7 +303,7 @@
         </div>
         <div class="rule-helper-row">
           <select id="collection-rule-category" aria-label="Part category to add"></select>
-          <button type="button" id="collection-rule-add-category" class="btn secondary">Add category</button>
+          <button type="button" id="collection-rule-add-category" class="btn secondary" data-icon="add">Add category</button>
         </div>
         <div id="collection-rule-part-tokens" class="rule-tokens"></div>
       </div>
@@ -315,7 +315,7 @@
           <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Any">Any</button>
           <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Other">Other</button>
           <button type="button" class="btn secondary rule-color-keyword" data-color-keyword="Decorated">Decorated</button>
-          <button type="button" id="collection-rule-add-color" class="btn secondary">Add color…</button>
+          <button type="button" id="collection-rule-add-color" class="btn secondary" data-icon="palette">Add color…</button>
         </div>
         <div id="collection-rule-color-tokens" class="rule-tokens"></div>
       </div>
@@ -326,8 +326,8 @@
       <p id="collection-rule-helper-msg" class="warning"></p>
       <p id="collection-rule-form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="collection-rule-cancel" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="collection-rule-cancel" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>
@@ -336,7 +336,7 @@
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="main-part-alternates-title">
       <div class="modal-head">
         <h2 id="main-part-alternates-title">Alternates</h2>
-        <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        <button type="button" class="modal-close icon-only" aria-label="Close" data-icon="close"></button>
       </div>
       <p id="main-part-alternates-sub" class="modal-sub"></p>
       <div class="table-wrap">

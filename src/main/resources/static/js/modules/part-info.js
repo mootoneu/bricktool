@@ -53,7 +53,7 @@
           'aria-labelledby="part-info-title">' +
           '<div class="modal-head">' +
             '<h2 id="part-info-title">Part</h2>' +
-            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+            '<button type="button" class="modal-close icon-only" aria-label="Close">' + BrickTools.icon('close') + '</button>' +
           '</div>' +
           '<p id="part-info-sub" class="modal-sub"></p>' +
           '<div class="part-info-top">' +
@@ -62,7 +62,7 @@
               '<div id="part-info-category" class="part-info-category"></div>' +
               '<div id="part-info-stars" class="part-info-stars"></div>' +
               '<div>' +
-                '<button type="button" id="part-info-add" class="btn">Add to container</button>' +
+                '<button type="button" id="part-info-add" class="btn">' + BrickTools.icon('add') + ' Add to container</button>' +
               '</div>' +
             '</div>' +
           '</div>' +

@@ -59,9 +59,9 @@ The explorer is split into a category tree on the left and a main-parts table on
 | Name | |
 | Category | Shown only in the Search category |
 | Material | |
-| Has alternates | "View" button opens the alternates modal |
+| Has alternates | View icon button opens the alternates modal |
 | Stars | 0 to 5, editable; 0 means hidden |
-| | "Search" and "Add to container" buttons |
+| | Search and Add to container icon buttons |
 
 Filters:
 
@@ -87,7 +87,7 @@ The table is sortable; the default sort is by stars, descending.
 
 Selecting or clearing a part updates the header checkbox, which is indeterminate when only some visible parts are selected. The selection is kept when sorting or filtering, but it is cleared when the selected category changes (including when a new cross-category search runs).
 
-**Alternates modal:** opens from the "View" button and calls `GET /api/parts/main-parts/{partNumber}/alternates`. It shows the relation type, the child part (number, name, category id, material), and the parent part (number and name). The modal closes with the close button, a click outside, or Escape.
+**Alternates modal:** opens from the View icon button and calls `GET /api/parts/main-parts/{partNumber}/alternates`. It shows the relation type, the child part (number, name, category id, material), and the parent part (number and name). The modal closes with the close icon button, a click outside, or Escape.
 
 **Navigation from the part information modal:** a part can be opened directly with `partscollection.html?explorerCategory=<id>&explorerPart=<number>#explorer`. The page selects the category, expands its group, loads the parts, scrolls to the part, and highlights it. If the part is hidden by the current filters, the filters are cleared so the part becomes visible. The query parameters are removed from the URL after the navigation.
 
@@ -98,7 +98,7 @@ The tab searches the part collection and shows the storage drawers that contain 
 - The search field matches the part number, part name, color name or id, category name or id, and free-text tags. It is case-insensitive and searches after a short delay; pressing Enter searches immediately.
 - Results are one card per matching drawer. Each card shows the storage id and drawer label, the storage model and location, and the parts that match the search.
 - When a drawer contains several matching parts, up to 200 are shown.
-- Each result card has **Set active** (sets the drawer as the active container) and **Add content** (opens the drawer content form). The content rules shown on the card can be edited or deleted in place.
+- Each result card has **Set active** (sets the drawer as the active container) and **Add content** (opens the drawer content form) icon buttons. The content rules shown on the card can be edited or deleted in place with icon buttons.
 - Setting a drawer active loads the drawer list, so the header navigation can move through the drawers of the storage.
 - When nothing matches, a message explains that no drawer contains a matching part.
 - The search is exposed by `GET /api/part-collection/drawers?query=`.
@@ -121,9 +121,9 @@ The table is sorted by **Order** ascending by default; storages with the same or
 
 Actions:
 
-- **View** opens the **Storage drawers** tab filtered to the storage.
-- **Edit** opens the storage form.
-- **Set active** makes the storage the active container.
+- **View** (eye icon) opens the **Storage drawers** tab filtered to the storage.
+- **Edit** (pencil icon) opens the storage form.
+- **Set active** (check icon) makes the storage the active container.
 
 The **Add storage** button opens the same form for a new storage. The form asks for the id, order, model, drawer count, location, and description. The id cannot be changed after creation. The drawer count is between `0` and `52`; drawers are named `a`–`z` for the first 26 and `A`–`Z` for the next 26. A storage with a drawer count of `0` has no drawers and can only be used as a whole container.
 
@@ -141,8 +141,8 @@ Shows one card per drawer of the selected storage, including empty drawers. The 
 - The drawer label is generated from `DrawersCount`: `a`–`z` for the first 26 drawers, then `A`–`Z` for the next 26, up to 52. Extra labels found in the collection rows are also shown.
 - Each content rule of the drawer is displayed with its amount, part images, category chips (`§Category`), tag chips (`#tag`), and color chips. Part images open the part information modal.
 - **Add content** opens the content form prefilled with the storage and drawer.
-- **Edit** and **Delete** change or remove a content rule.
-- **Set active** makes the drawer the active container. The header then shows Previous and Next buttons to move through the drawers of the storage.
+- **Edit** and **Delete** icon buttons change or remove a content rule.
+- **Set active** makes the drawer the active container. The header then shows Previous and Next icon buttons to move through the drawers of the storage.
 
 The content form asks for the storage, drawer, parts, colors, and amount:
 
@@ -156,7 +156,7 @@ The form also helps to build the **Parts** and **Colors** lists. The helper cont
 - **Part search** searches the main parts by number or name (`GET /api/parts/main-parts/search`). Choosing a result appends its part number. When the text is not a known main part, **Use part number …** checks `GET /api/parts/{partNumber}/info` and appends the number only if the part exists.
 - **Category** is a grouped list of the visible part categories (`GET /api/parts/categories`). **Add category** appends `§<CategoryId>`.
 - **Colors** offers `Any`, `Other`, and `Decorated` buttons and **Add color…**, which opens the color picker. A chosen color appends its numeric id.
-- The chips below each input show the current tokens and a **×** button that removes one token. Category chips show the category name even though the id is saved. Unknown categories, part numbers, and color ids, and `Any` combined with specific color ids, are reported as non-blocking warnings.
+- The chips below each input show the current tokens and a close icon button that removes one token. Category chips show the category name even though the id is saved. Unknown categories, part numbers, and color ids, and `Any` combined with specific color ids, are reported as non-blocking warnings.
 
 A rule is unique per storage, drawer, parts, and colors. When the same part is added several times to the same drawer with `Any` colors, its amount is incremented.
 
@@ -187,8 +187,8 @@ Lists the Pick-a-Brick purchases stored in `data.bt.PaBPurchases`.
 Actions:
 
 - **Parts** opens the PaB Parts tab for that purchase.
-- **Edit** opens the purchase form.
-- **Set active** makes the purchase the active container; parts added with "Add to container" use the part's default color.
+- **Edit** (pencil icon) opens the purchase form.
+- **Set active** (check icon) makes the purchase the active container; parts added with the Add to container action use the part's default color.
 
 The **Add new purchase** button opens a form with the purchase date (defaults to today), box quantity, minifigure quantity, and price. The same form is used to edit an existing purchase.
 
@@ -248,7 +248,7 @@ Clicking a part image in the Part explorer, the BrickOwl parts and order items t
 - Part name.
 - Category chip with the category name; clicking it opens the Part explorer tab, expands the matching category group, selects the category, and highlights the part.
 - Star rating (editable for main parts, read-only otherwise).
-- "Add to container" button: adds the part to the active container. When no container is active, the modal asks the user to set one from the Parts Collection page.
+- Add to container icon button: adds the part to the active container. When no container is active, the modal asks the user to set one from the Parts Collection page.
 - Available colors: every `PartNumber/ColorId` pair of `data.bt.PartColorUrl` is shown as a colored chip. The color currently used for the part image is highlighted; clicking another chip makes it the default image color.
 
 The default color is stored in `data/bt/part_default_color.csv` and is used by `GET /api/parts/{partNumber}/image` when no `colorId` is given. When the part has no stored default, or the stored color is no longer available, the lowest available color is used.

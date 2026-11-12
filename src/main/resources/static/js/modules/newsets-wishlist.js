@@ -192,15 +192,14 @@
       
       // Action buttons
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary wishlist-open">Open</button>')
-        .attr('data-set-number', entry.setNumber)
-        .attr('title', 'Open set ' + (entry.setNumber || '') + ' on external websites'));
-      $actions.append($('<button type="button" class="btn secondary wishlist-buy">Buy</button>')
-        .attr('data-wishlist-id', entry.id)
-        .attr('title', 'Buy this set'));
-      $actions.append($('<button type="button" class="btn secondary wishlist-edit">Edit</button>')
+      $actions.append(BrickTools.iconButton('open', 'Open set ' + (entry.setNumber || '') + ' on external websites',
+        'secondary wishlist-open')
+        .attr('data-set-number', entry.setNumber));
+      $actions.append(BrickTools.iconButton('buy', 'Buy this set', 'secondary wishlist-buy')
         .attr('data-wishlist-id', entry.id));
-      $actions.append($('<button type="button" class="btn secondary wishlist-delete">Delete</button>')
+      $actions.append(BrickTools.iconButton('edit', 'Edit wishlist entry', 'secondary wishlist-edit')
+        .attr('data-wishlist-id', entry.id));
+      $actions.append(BrickTools.iconButton('delete', 'Delete wishlist entry', 'danger wishlist-delete')
         .attr('data-wishlist-id', entry.id));
       $tr.append($actions);
       

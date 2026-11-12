@@ -191,7 +191,8 @@
       .addClass(entry ? 'secondary' : '')
       .attr('data-set-number', set.setNumber)
       .attr('data-set-name', set.name || set.setNumber)
-      .text(entry ? 'Remove from wishlist' : 'Save to wishlist'));
+      .html(BrickTools.icon(entry ? 'delete' : 'add') + ' ' +
+        (entry ? 'Remove from wishlist' : 'Save to wishlist')));
     $body.append($footer);
 
     $card.append($body);
@@ -396,7 +397,7 @@
         BrickTools.api('DELETE', '/wishlist/' + encodeURIComponent(entry.id))
           .done(function() {
             wishlistBySet.delete(setNumber);
-            $button.removeClass('secondary').text('Save to wishlist');
+            $button.removeClass('secondary').html(BrickTools.icon('add') + ' Save to wishlist');
             renderSets();
             BrickTools.NewSetsWishlist.renderWishlist();
           })
@@ -412,7 +413,7 @@
         })
           .done(function(newEntry) {
             wishlistBySet.set(setNumber, newEntry);
-            $button.addClass('secondary').text('Remove from wishlist');
+            $button.addClass('secondary').html(BrickTools.icon('delete') + ' Remove from wishlist');
             renderSets();
             BrickTools.NewSetsWishlist.renderWishlist();
           })

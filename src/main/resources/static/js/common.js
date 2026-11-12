@@ -60,6 +60,93 @@
     return $('<span>').text(value == null ? '' : String(value)).html();
   }
 
+  // ============================================================================
+  // Icons
+  // ============================================================================
+
+  // Inline, stroke-based icons. Keeping them in one place avoids an icon
+  // dependency and lets static markup and dynamic rows share the same shapes.
+  const ICONS = {
+    add: '<path d="M12 5v14M5 12h14"/>',
+    edit: '<path d="M4 20h4L20 8l-4-4L4 16v4z"/><path d="M14 6l4 4"/>',
+    delete: '<path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>',
+    view: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>',
+    search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>',
+    active: '<circle cx="12" cy="12" r="8"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    open: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 13v6H5V6h6"/>',
+    buy: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.4 11h11.2L21 7H6"/>',
+    inventory: '<path d="M4 5h16v4H4z"/><path d="M6 9v10h12V9"/><path d="M10 13h4"/>',
+    parts: '<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',
+    save: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4"/><path d="M8 20v-6h8v6"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    sync: '<path d="M20 7A8 8 0 0 0 6 5.5L4 8"/><path d="M4 3v5h5"/><path d="M4 17a8 8 0 0 0 14 1.5L20 16"/><path d="M20 21v-5h-5"/>',
+    reset: '<path d="M4 10a8 8 0 1 1 1.5 6"/><path d="M4 5v5h5"/>',
+    download: '<path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M5 19h14"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="M21 16l-5-5L6 20"/>',
+    archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9"/><path d="M10 13h4"/>',
+    generate: '<path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+    external: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 13v6H5V6h6"/>',
+    chevronLeft: '<path d="M15 5l-7 7 7 7"/>',
+    chevronRight: '<path d="M9 5l7 7-7 7"/>',
+    selectAll: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/>',
+    clear: '<path d="M4 6h16"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 10l4 6M14 10l-4 6"/>',
+    check: '<path d="M5 12l4.5 4.5L19 7"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2 0-1.5 1-2 2.5-2H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+    price: '<path d="M20 12l-8 8-8-8V4h8z"/><circle cx="8" cy="8" r="1.4"/>',
+    bell: '<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/>'
+  };
+
+  /**
+   * Returns the inline SVG markup of an icon, or an empty string when the name
+   * is unknown.
+   */
+  function icon(name) {
+    const paths = ICONS[name];
+    if (!paths) {
+      return '';
+    }
+    return '<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" ' +
+      'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths + '</svg>';
+  }
+
+  /**
+   * Builds an icon-only button with a tooltip and an accessible label.
+   */
+  function iconButton(name, label, extraClass) {
+    return $('<button type="button"></button>')
+      .addClass('btn icon-btn ' + (extraClass || 'secondary'))
+      .attr('title', label)
+      .attr('aria-label', label)
+      .html(icon(name));
+  }
+
+  /**
+   * Adds icons to elements marked with `data-icon`. Icon-only elements receive
+   * the icon as their content; other elements get it before their label.
+   * Calling this again is harmless, so dynamically inserted markup can use it.
+   */
+  function decorateIcons(root) {
+    $(root || document).find('[data-icon]').each(function () {
+      const $el = $(this);
+      if ($el.children('svg.icon').length) {
+        return;
+      }
+      const markup = icon($el.attr('data-icon'));
+      if (!markup) {
+        return;
+      }
+      if ($el.hasClass('icon-only')) {
+        $el.html(markup);
+        if (!$el.attr('aria-label') && $el.attr('title')) {
+          $el.attr('aria-label', $el.attr('title'));
+        }
+      } else {
+        $el.prepend(markup + ' ');
+      }
+    });
+  }
+
   function hue(value) {
     let hash = 0;
     for (const ch of value) {
@@ -211,7 +298,7 @@
         .attr('title', 'Previous drawer')
         .attr('aria-label', 'Previous drawer')
         .prop('disabled', index <= 0)
-        .html('&#8249;'));
+        .html(icon('chevronLeft')));
     }
     const $label = $('<span class="active-container-label"></span>')
       .text(label)
@@ -222,12 +309,12 @@
         .attr('title', 'Next drawer')
         .attr('aria-label', 'Next drawer')
         .prop('disabled', index < 0 || index >= drawers.length - 1)
-        .html('&#8250;'));
+        .html(icon('chevronRight')));
     }
     $host.append($('<button type="button" class="active-container-clear"></button>')
       .attr('title', 'Clear active container')
       .attr('aria-label', 'Clear active container')
-      .html('&times;'));
+      .html(icon('close')));
   }
 
   function setActiveContainer(container) {
@@ -286,11 +373,13 @@
     ).join('');
 
     $('#app-header').html(
-      '<a class="brand" href="index.html?home=1">Brick Tools</a>' +
+      '<a class="brand" href="index.html?home=1">' +
+      '<span class="brand-mark" aria-hidden="true"></span>Brick Tools</a>' +
       '<nav>' + links + '</nav>' +
       '<div class="active-container" id="active-container"></div>' +
       '<div class="notifications">' +
-      '<button type="button" class="bell" title="Notifications">&#128276;<span class="badge" hidden></span></button>' +
+      '<button type="button" class="bell" title="Notifications" aria-label="Notifications">' +
+      icon('bell') + '<span class="badge" hidden></span></button>' +
       '<div class="dropdown" hidden></div>' +
       '</div>'
     );
@@ -473,10 +562,15 @@
     return urls;
   }
 
+  $(function () {
+    decorateIcons(document);
+  });
+
   window.BrickTools = {
     api, errorOf, esc, fmt, tag, initHeader, initTabs,
     getCookie, setCookie, rememberedOption, today, readableText, getPartNameFromBOName,
     partImageCell, firstCommaValue, itemImageUrls, partImageUrls,
-    getActiveContainer, setActiveContainer, addToActiveContainer, activeContainerLabel
+    getActiveContainer, setActiveContainer, addToActiveContainer, activeContainerLabel,
+    icon, iconButton, decorateIcons
   };
 })(window, jQuery);

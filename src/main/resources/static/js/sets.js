@@ -141,7 +141,7 @@
         '<div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="set-sites-title">' +
           '<div class="modal-head">' +
             '<h2 id="set-sites-title">Set</h2>' +
-            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+            '<button type="button" class="modal-close icon-only" aria-label="Close">' + window.BrickTools.icon('close') + '</button>' +
           '</div>' +
           '<div class="set-sites-detail">' +
             '<div id="set-sites-image" class="set-sites-image"></div>' +
@@ -246,7 +246,8 @@
       return;
     }
     const $button = $('<button type="button" class="btn"></button>')
-      .text(siteContext.entry ? 'Buy' : 'Save to wishlist');
+      .html(window.BrickTools.icon(siteContext.entry ? 'buy' : 'add') + ' ' +
+        (siteContext.entry ? 'Buy' : 'Save to wishlist'));
     $button.on('click', siteContext.entry ? buySet : saveSetToWishlist);
     $actions.append($button);
   }
@@ -392,11 +393,6 @@
     }
   ];
 
-  const SYNC_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M13.5 6A5.5 5.5 0 0 0 3.2 4.6L2 6"></path><path d="M2 2.5V6h3.5"></path>' +
-    '<path d="M2.5 10A5.5 5.5 0 0 0 12.8 11.4L14 10"></path><path d="M14 13.5V10h-3.5"></path></svg>';
-
   let $priceModal = null;
 
   function closePriceSources() {
@@ -414,7 +410,7 @@
         '<div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="price-sources-title">' +
           '<div class="modal-head">' +
             '<h2 id="price-sources-title">Official price</h2>' +
-            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+            '<button type="button" class="modal-close icon-only" aria-label="Close">' + window.BrickTools.icon('close') + '</button>' +
           '</div>' +
           '<p class="modal-sub">Choose a website to fetch the official Lego price from.</p>' +
           '<div id="price-sources-list"></div>' +
@@ -475,7 +471,7 @@
     return $('<button type="button" class="btn secondary icon-btn"></button>')
       .attr('title', 'Fetch official price')
       .attr('aria-label', 'Fetch official price')
-      .html(SYNC_ICON)
+      .html(window.BrickTools.icon('sync'))
       .on('click', function () { openPriceSources(setNumber, onFetched); });
   }
 

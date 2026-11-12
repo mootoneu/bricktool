@@ -13,7 +13,7 @@
   <main class="container">
     <div class="toolbar">
       <h1>Sets purchases</h1>
-      <button id="add-purchase" class="btn" type="button">Add purchase</button>
+      <button id="add-purchase" class="btn" type="button" data-icon="add">Add purchase</button>
     </div>
     <p id="purchases-msg" class="warning"></p>
 
@@ -81,7 +81,7 @@
         <label>Owner <select id="filter-owner"><option value="">All</option></select></label>
         <label class="filter-check"><span><input type="checkbox" id="filter-owned"> Hide not owned</span></label>
         <div class="filter-actions">
-          <button type="button" id="filter-reset" class="btn secondary">Reset filters</button>
+          <button type="button" id="filter-reset" class="btn secondary" data-icon="reset">Reset filters</button>
         </div>
       </div>
       <p id="filter-summary" class="muted"></p>
@@ -98,11 +98,11 @@
       <div id="ps-filters" class="filters">
         <label>Purchase year
           <span class="year-selector" role="group" aria-label="Purchase year">
-            <button type="button" id="ps-year-prev" class="btn secondary" title="Previous year"
-              aria-label="Previous year">&#8249;</button>
+            <button type="button" id="ps-year-prev" class="btn secondary icon-only" title="Previous year"
+              aria-label="Previous year" data-icon="chevronLeft"></button>
             <select id="ps-year-value" class="year-selector-value" aria-label="Purchase year"></select>
-            <button type="button" id="ps-year-next" class="btn secondary" title="Next year"
-              aria-label="Next year">&#8250;</button>
+            <button type="button" id="ps-year-next" class="btn secondary icon-only" title="Next year"
+              aria-label="Next year" data-icon="chevronRight"></button>
           </span>
         </label>
         <label>Name <input id="ps-name" type="search" placeholder="Contains…" autocomplete="off"></label>
@@ -110,7 +110,7 @@
         <label>Official price min <input id="ps-price-min" type="number" min="0" step="0.01" placeholder="Min"></label>
         <label>Official price max <input id="ps-price-max" type="number" min="0" step="0.01" placeholder="Max"></label>
         <div class="filter-actions">
-          <button type="button" id="ps-reset" class="btn secondary">Reset filters</button>
+          <button type="button" id="ps-reset" class="btn secondary" data-icon="reset">Reset filters</button>
         </div>
       </div>
       <p id="ps-summary" class="muted"></p>
@@ -123,9 +123,9 @@
         <label>Search <input id="set-inventory-search" type="search" placeholder="Part number, name, color…" autocomplete="off"></label>
         <label class="filter-check"><span><input type="checkbox" id="set-inventory-hide-complete"> Hide complete parts</span></label>
         <div class="filter-actions">
-          <button type="button" id="set-inventory-clear" class="btn secondary">Clear actual</button>
-          <button type="button" id="set-inventory-fill" class="btn secondary">Set actual = expected</button>
-          <button type="button" id="set-inventory-delete" class="btn danger">Delete inventory</button>
+          <button type="button" id="set-inventory-clear" class="btn secondary" data-icon="clear">Clear actual</button>
+          <button type="button" id="set-inventory-fill" class="btn secondary" data-icon="check">Set actual = expected</button>
+          <button type="button" id="set-inventory-delete" class="btn danger" data-icon="delete">Delete inventory</button>
         </div>
       </div>
       <p id="set-inventory-msg" class="warning"></p>
@@ -168,8 +168,8 @@
       <label>Reason <input id="f-reason"></label>
       <p id="form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="cancel-form" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="cancel-form" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>

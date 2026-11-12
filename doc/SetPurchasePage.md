@@ -95,8 +95,8 @@ This tab shows the list of all purchases made by the user. Each row represents a
 | Complete | `1 - (PartMissings / num_parts)` | % |
 | Owned? | `data.bt.PurchasedSet.Owned` | Checkbox |
 | Reason | `data.bt.PurchasedSet.Reason` | |
-| Sites | | "Open" button showing the external websites |
-| | | "Inventory" and "Edit" actions |
+| Sites | | Open icon button showing the external websites |
+| | | Inventory and Edit icon actions |
 
 All columns except Image, Sites, and the actions are sortable. When an official price is missing, the cell shows a sync button that opens the official price dialog, which currently offers Brickonomics as the source.
 
@@ -104,7 +104,7 @@ All columns except Image, Sites, and the actions are sortable. When an official 
 
 ### Add and Edit a Purchase
 
-The "Add purchase" button, or the "Edit" row action, opens the purchase form:
+The "Add purchase" button, or the Edit row action, opens the purchase form:
 
 | Field | Notes |
 | ----- | ----- |
@@ -122,9 +122,9 @@ The vendor, buyer, and owner are remembered in cookies and proposed the next tim
 
 ### Sites Column
 
-The "Open" button opens a modal showing the set name, image, theme, number, parts, official price, and year, followed by:
+The Open icon button opens a modal showing the set name, image, theme, number, parts, official price, and year, followed by:
 
-- A "Save to wishlist" or "Buy" button. Saving adds the set to the wishlist; buying records a purchase and removes the set from the wishlist when it was wishlisted.
+- A "Save to wishlist" or "Buy" button with an icon. Saving adds the set to the wishlist; buying records a purchase and removes the set from the wishlist when it was wishlisted.
 - External website links: LEGO, LEGO instructions, Rebrickable, BrickLink, BrickOwl, BrickWatch, Brickonomics, Amazon, Fnac, and CDiscount. Each website is a clickable image that opens the set page in a new tab.
 - A link to open the set in the Set Inventory tab.
 

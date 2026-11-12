@@ -32,7 +32,7 @@ The building process is to define the data model (as most CSV files already exis
 
 ## Application Features
 
-All pages share a common header with links to every feature page, the active page highlighted, and a notification bell. The last visited feature page is restored when the application is opened. See [Common Features](./doc/CommonFeatures.md) for the shared behaviour.
+All pages share a common header with links to every feature page, the active page highlighted, and a notification bell. The interface uses a LEGO-inspired palette, and actions use accessible icon buttons with tooltips. The last visited feature page is restored when the application is opened. See [Common Features](./doc/CommonFeatures.md) for the shared behaviour.
 
 | Page | What it does |
 | ---- | ------------ |
@@ -55,7 +55,7 @@ All pages share a common header with links to every feature page, the active pag
 
 Detailed documentation lives in `doc/`:
 
-- [Common Features](./doc/CommonFeatures.md) - header, navigation, tabs, active container, formatting, API access, tables, part images, colors, and remembered form values.
+- [Common Features](./doc/CommonFeatures.md) - header, navigation, tabs, visual style and icons, active container, formatting, API access, tables, part images, colors, and remembered form values.
 - [Sets Purchase Page](./doc/SetPurchasePage.md) - statistics, purchases, sets, and set inventory tabs.
 - [BrickOwl Page](./doc/BrickOwlPage.md) - statistics, update, orders, and order items tabs.
 - [Parts Collection Page](./doc/PartsCollectionPage.md) - part explorer, part storages and drawers, collection search, Pick-a-Brick, BrickOwl parts, and the part information modal.

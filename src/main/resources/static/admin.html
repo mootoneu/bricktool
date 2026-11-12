@@ -17,7 +17,7 @@
       <h2>Rebrickable update</h2>
       <p>Last download: <strong id="rb-last">never</strong></p>
       <p id="rb-stale" class="warning" hidden>The Rebrickable data is older than a month. Please update it.</p>
-      <button id="rb-update" class="btn" type="button">Update data</button>
+      <button id="rb-update" class="btn" type="button" data-icon="sync">Update data</button>
       <p id="rb-msg" class="message"></p>
     </section>
 
@@ -25,8 +25,8 @@
       <h2>BrickWatch official price</h2>
       <form id="bw-form">
         <input id="bw-set" placeholder="Set number, e.g. 75192" required>
-        <button class="btn" type="submit">Fetch official price</button>
-        <button id="bw-brickonomics" class="btn" type="button">Fetch price with brickonomics</button>
+        <button class="btn" type="submit" data-icon="price">Fetch official price</button>
+        <button id="bw-brickonomics" class="btn" type="button" data-icon="price">Fetch price with brickonomics</button>
       </form>
       <p id="bw-result" class="message"></p>
     </section>
@@ -34,34 +34,34 @@
     <section class="card" id="setimg">
       <h2>Set images</h2>
       <p class="muted">Downloads the missing picture of every purchased set from Rebrickable. One download is made per second.</p>
-      <button id="img-backfill" class="btn" type="button">Download missing images</button>
+      <button id="img-backfill" class="btn" type="button" data-icon="download">Download missing images</button>
       <p id="img-status" class="message"></p>
     </section>
 
     <section class="card" id="backup">
       <h2>Data backup</h2>
       <p class="muted">Copies the purchases, wishlist, official prices, BrickOwl orders, theme settings, people and vendors into a zip file in data/backups. The 3 most recent backups are kept.</p>
-      <button id="backup-create" class="btn" type="button">Back up now</button>
+      <button id="backup-create" class="btn" type="button" data-icon="archive">Back up now</button>
       <p id="backup-msg" class="message"></p>
       <ul id="backup-list" class="muted"></ul>
     </section>
     <section class="card" id="mainparts">
       <h2>Main parts</h2>
       <p class="muted">Generates or updates data/bt/main_parts.csv from the Rebrickable parts and the Brick Tools part categories. Parts of hidden categories and child parts are excluded; existing star ratings are kept.</p>
-      <button id="mainparts-generate" class="btn" type="button">Generate / update MainParts</button>
+      <button id="mainparts-generate" class="btn" type="button" data-icon="generate">Generate / update MainParts</button>
       <p id="mainparts-msg" class="message"></p>
     </section>
     <section class="card" id="partcolorurl">
       <h2>Part color URLs</h2>
       <p class="muted">Generates or updates data/bt/part_color_url.csv from the Rebrickable inventory parts. Only the first inventory row of each part/color pair with an image URL is kept; rows without an image URL are skipped.</p>
-      <button id="partcolorurl-generate" class="btn" type="button">Generate / update PartColorUrl</button>
+      <button id="partcolorurl-generate" class="btn" type="button" data-icon="generate">Generate / update PartColorUrl</button>
       <p id="partcolorurl-msg" class="message"></p>
     </section>
     <section class="card" id="api-docs">
       <h2>API Documentation</h2>
       <p class="muted">Explore all API endpoints and data models:</p>
-      <a href="/swagger-ui/index.html" class="btn btn-outline-info" target="_blank">Swagger UI</a>
-      <a href="/v3/api-docs" class="btn btn-outline-secondary" target="_blank">OpenAPI Spec</a>
+      <a href="/swagger-ui/index.html" class="btn btn-outline-info" target="_blank" data-icon="external">Swagger UI</a>
+      <a href="/v3/api-docs" class="btn btn-outline-secondary" target="_blank" data-icon="external">OpenAPI Spec</a>
     </section>
   </main>
 

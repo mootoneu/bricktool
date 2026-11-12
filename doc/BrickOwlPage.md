@@ -38,7 +38,7 @@ The tab presents information computed from `data.bo.Order` and `data.bo.OrderIte
 
 ## Update Tab
 
-The "Update from BrickOwl" button fetches the orders that are more recent than the last stored one, together with their items. The operation may take a while.
+The "Update from BrickOwl" button (sync icon) fetches the orders that are more recent than the last stored one, together with their items. The operation may take a while.
 
 - While it runs, the button is disabled and the message "Updating from BrickOwl, this may take a while..." is shown.
 - On completion, the message reports the number of new orders and the total number of stored orders.
@@ -70,9 +70,9 @@ The table lists the stored orders. All columns are sortable:
 | Paid | `data.bo.Order.PaidTotal` | € |
 | Refund | `data.bo.Order.RefundTotal` | € |
 | Total | `data.bo.Order.Total` | € (paid minus refund) |
-| Actions | | "Items" and "Set active" buttons |
+| Actions | | Items and Set active icon buttons |
 
-Clicking the "Items" button, or anywhere on a row outside a link or button, opens the Order items tab for that order. **Set active** makes the order the active container; parts added with "Add to container" are written to `data/bo/order_items.csv` as local lines with the `Added` condition and the part's default color. Adding the same part and color again increments its quantity.
+Clicking the Items icon button, or anywhere on a row outside a link or button, opens the Order items tab for that order. **Set active** makes the order the active container; parts added with the Add to container action are written to `data/bo/order_items.csv` as local lines with the `Added` condition and the part's default color. Adding the same part and color again increments its quantity.
 
 **Endpoint:** `GET /api/brickowl/orders`
 

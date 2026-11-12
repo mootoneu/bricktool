@@ -179,11 +179,14 @@
       $row.append($('<td></td>').text(fmt.number(purchase.totalParts || 0)));
 
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary pab-parts-open">Parts</button>')
+      $actions.append(BrickTools.iconButton('parts', 'Open parts of PaB purchase #' + (purchase.id == null ? '' : purchase.id),
+        'secondary pab-parts-open')
         .attr('data-pab-purchase-id', purchase.id));
-      $actions.append($('<button type="button" class="btn secondary pab-purchase-edit">Edit</button>')
+      $actions.append(BrickTools.iconButton('edit', 'Edit PaB purchase #' + (purchase.id == null ? '' : purchase.id),
+        'secondary pab-purchase-edit')
         .attr('data-pab-purchase-id', purchase.id));
-      $actions.append($('<button type="button" class="btn secondary pab-purchase-set-active">Set active</button>')
+      $actions.append(BrickTools.iconButton('active', 'Set PaB purchase #' + (purchase.id == null ? '' : purchase.id) + ' as active',
+        'secondary pab-purchase-set-active')
         .attr('data-pab-purchase-id', purchase.id));
       $row.append($actions);
       $tbody.append($row);
@@ -222,7 +225,8 @@
       $row.append($('<td></td>').text(part.quantity == null ? '' : fmt.number(part.quantity)));
 
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary pab-part-edit">Edit</button>')
+      $actions.append(BrickTools.iconButton('edit', 'Edit PaB part ' + (part.partNumber || ''),
+        'secondary pab-part-edit')
         .attr('data-pab-part-id', part.id));
       $row.append($actions);
       $tbody.append($row);

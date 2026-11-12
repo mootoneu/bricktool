@@ -524,17 +524,19 @@
 
       const $alternates = $('<td></td>');
       if (part.hasAlternates) {
-        $alternates.append($('<button type="button" class="btn secondary main-part-alternates">View</button>')
+        $alternates.append(BrickTools.iconButton('view', 'View alternates for ' + (part.partNumber || ''),
+          'secondary main-part-alternates')
           .attr('data-part-number', part.partNumber));
       }
       $row.append($alternates);
       $row.append(starCell(part));
 
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary search-collection">Search</button>')
-        .attr('data-part-number', part.partNumber)
-        .attr('title', 'Search this part in the Collection tab'));
-      $actions.append($('<button type="button" class="btn secondary add-to-container">Add to container</button>')
+      $actions.append(BrickTools.iconButton('search', 'Search this part in the Collection tab',
+        'secondary search-collection')
+        .attr('data-part-number', part.partNumber));
+      $actions.append(BrickTools.iconButton('add', 'Add ' + (part.partNumber || '') + ' to the active container',
+        'secondary add-to-container')
         .attr('data-part-number', part.partNumber));
       $row.append($actions);
       $tbody.append($row);

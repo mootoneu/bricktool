@@ -169,11 +169,11 @@
       $row.append($('<td></td>').text(fmt.number(storage.rowCount || 0)));
 
       const $actions = $('<td class="row-actions"></td>');
-      $actions.append($('<button type="button" class="btn secondary storage-view">View</button>')
+      $actions.append(BrickTools.iconButton('view', 'View storage ' + (storage.id || ''), 'secondary storage-view')
         .attr('data-storage-id', storage.id));
-      $actions.append($('<button type="button" class="btn secondary storage-edit">Edit</button>')
+      $actions.append(BrickTools.iconButton('edit', 'Edit storage ' + (storage.id || ''), 'secondary storage-edit')
         .attr('data-storage-id', storage.id));
-      $actions.append($('<button type="button" class="btn secondary storage-set-active">Set active</button>')
+      $actions.append(BrickTools.iconButton('active', 'Set storage ' + (storage.id || '') + ' as active', 'secondary storage-set-active')
         .attr('data-storage-id', storage.id));
       $row.append($actions);
       $tbody.append($row);
@@ -312,10 +312,10 @@
       $head.append($titles);
 
       const $actions = $('<div class="drawer-card-actions"></div>');
-      $actions.append($('<button type="button" class="btn secondary drawer-add-content">Add content</button>')
+      $actions.append(BrickTools.iconButton('add', 'Add content to drawer ' + (card.drawer || ''), 'secondary drawer-add-content')
         .attr('data-storage-id', card.storageId)
         .attr('data-drawer', card.drawer));
-      $actions.append($('<button type="button" class="btn secondary drawer-set-active">Set active</button>')
+      $actions.append(BrickTools.iconButton('active', 'Set drawer ' + (card.drawer || '') + ' as active', 'secondary drawer-set-active')
         .attr('data-storage-id', card.storageId)
         .attr('data-drawer', card.drawer));
       $head.append($actions);
@@ -348,11 +348,11 @@
     const $head = $('<div class="drawer-rule-head"></div>');
     $head.append($('<span class="drawer-amount"></span>').text('Amount: ' + (row.amount || '—')));
     const $actions = $('<div class="drawer-rule-actions"></div>');
-    $actions.append($('<button type="button" class="btn secondary drawer-rule-edit">Edit</button>')
+    $actions.append(BrickTools.iconButton('edit', 'Edit content rule', 'secondary drawer-rule-edit')
       .attr('data-index', row.index)
       .attr('data-storage-id', card.storageId)
       .attr('data-drawer', card.drawer));
-    $actions.append($('<button type="button" class="btn danger drawer-rule-delete">Delete</button>')
+    $actions.append(BrickTools.iconButton('delete', 'Delete content rule', 'danger drawer-rule-delete')
       .attr('data-index', row.index));
     $head.append($actions);
     $rule.append($head);
@@ -667,7 +667,7 @@
       .attr('data-token-kind', kind)
       .attr('data-token-index', index)
       .attr('aria-label', 'Remove')
-      .text('×');
+      .html(BrickTools.icon('close'));
   }
 
   function renderRulePartTokens() {

@@ -23,7 +23,7 @@ The New Sets page (`newsets.html`) presents recently released sets and a shared 
 
 ## Common Features
 
-- A year selector with previous and next buttons at the top of the page.
+- A year selector with previous and next icon buttons at the top of the page.
 - Clicking the selected year opens a descending list of years from the current (or selected) year down to 1970.
 - Active filters are kept when the year changes.
 - Themes whose `hidden` column is true in `data/bt/themes.csv` are excluded from the catalogue.
@@ -50,7 +50,7 @@ All sets of the selected year as cards with:
 - Total parts.
 - Official price (with a button to fetch it when missing).
 - Theme chip.
-- Button to add or remove the set from the wishlist.
+- Button to add or remove the set from the wishlist (add or delete icon).
 
 **Filters:**
 

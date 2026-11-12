@@ -14,11 +14,11 @@
     <div class="toolbar">
       <h1>New sets</h1>
       <div id="newsets-year" class="year-selector" role="group" aria-label="Release year">
-        <button type="button" id="newsets-year-prev" class="btn secondary" title="Previous year"
-          aria-label="Previous year">&#8249;</button>
+        <button type="button" id="newsets-year-prev" class="btn secondary icon-only" title="Previous year"
+          aria-label="Previous year" data-icon="chevronLeft"></button>
         <select id="newsets-year-value" class="year-selector-value" aria-label="Release year"></select>
-        <button type="button" id="newsets-year-next" class="btn secondary" title="Next year"
-          aria-label="Next year">&#8250;</button>
+        <button type="button" id="newsets-year-next" class="btn secondary icon-only" title="Next year"
+          aria-label="Next year" data-icon="chevronRight"></button>
       </div>
     </div>
     <p id="newsets-msg" class="warning"></p>
@@ -47,7 +47,7 @@
         <label class="filter-check"><span><input type="checkbox" id="ns-purchased" checked> Purchased</span></label>
         <label class="filter-check"><span><input type="checkbox" id="ns-wishlisted" checked> Wishlisted</span></label>
         <div class="filter-actions">
-          <button type="button" id="ns-reset" class="btn secondary">Reset filters</button>
+          <button type="button" id="ns-reset" class="btn secondary" data-icon="reset">Reset filters</button>
         </div>
       </div>
       <p id="set-summary" class="muted"></p>
@@ -64,7 +64,7 @@
         <label>Official price min <input id="wl-price-min" type="number" min="0" step="0.01" placeholder="Min"></label>
         <label>Official price max <input id="wl-price-max" type="number" min="0" step="0.01" placeholder="Max"></label>
         <div class="filter-actions">
-          <button type="button" id="wl-reset" class="btn secondary">Reset filters</button>
+          <button type="button" id="wl-reset" class="btn secondary" data-icon="reset">Reset filters</button>
         </div>
       </div>
       <p id="wishlist-summary" class="muted"></p>
@@ -105,8 +105,8 @@
       <label>Wishlist date (yyyy/MM/dd) <input id="wishlist-date" pattern="\d{4}/\d{2}/\d{2}" required></label>
       <p id="wishlist-form-msg" class="warning"></p>
       <div class="form-actions">
-        <button type="button" id="wishlist-cancel" class="btn secondary">Cancel</button>
-        <button type="submit" class="btn">Save</button>
+        <button type="button" id="wishlist-cancel" class="btn secondary" data-icon="close">Cancel</button>
+        <button type="submit" class="btn" data-icon="save">Save</button>
       </div>
     </form>
   </div>

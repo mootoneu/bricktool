@@ -48,8 +48,10 @@
       $tbody.append('<tr class="clickable' + (isActive ? ' selected' : '') + '" data-id="' + esc(o.Id) + '">' +
         '<td><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(o.Id) + '</a></td>' +
         cells.map(function(v) { return '<td>' + esc(v) + '</td>'; }).join('') +
-        '<td><button type="button" class="btn secondary bo-items" data-id="' + esc(o.Id) + '">Items</button>' +
-        ' <button type="button" class="btn secondary bo-set-active" data-id="' + esc(o.Id) + '">Set active</button></td>' +
+        '<td><button type="button" class="btn secondary icon-btn bo-items" data-id="' + esc(o.Id) +
+          '" title="Order items" aria-label="Order items">' + BrickTools.icon('parts') + '</button>' +
+        ' <button type="button" class="btn secondary icon-btn bo-set-active" data-id="' + esc(o.Id) +
+          '" title="Set active order" aria-label="Set active order">' + BrickTools.icon('active') + '</button></td>' +
         '</tr>');
     });
   }

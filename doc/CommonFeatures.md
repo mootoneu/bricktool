@@ -9,6 +9,7 @@ This document describes the behaviour shared by every page of Brick Tools.
   - [Application Header](#application-header)
   - [Landing Page and Last Page](#landing-page-and-last-page)
   - [Tabs](#tabs)
+  - [Visual Style and Icons](#visual-style-and-icons)
   - [Active Container](#active-container)
   - [Formatting](#formatting)
   - [API Access](#api-access)
@@ -22,9 +23,9 @@ This document describes the behaviour shared by every page of Brick Tools.
 
 `js/common.js` builds the header of every page through `BrickTools.initHeader(activeId)`:
 
-- **Brand** link: returns to `index.html?home=1`.
-- **Navigation**: Sets Purchase, BrickOwl, Parts Collection, New Sets, and Administration. The current page is highlighted.
-- **Notifications**: a bell button with a badge. Clicking it opens a dropdown listing the notifications returned by `GET /api/notifications`. Each notification is a link; when there are none, "No notifications" is shown.
+- **Brand** link: returns to `index.html?home=1` and shows the LEGO-style brick mark.
+- **Navigation**: Sets Purchase, BrickOwl, Parts Collection, New Sets, and Administration. The current page is highlighted with a yellow pill.
+- **Notifications**: a bell icon button with a badge. Clicking it opens a dropdown listing the notifications returned by `GET /api/notifications`. Each notification is a link; when there are none, "No notifications" is shown.
 - Notifications are reloaded every five minutes.
 
 ## Landing Page and Last Page
@@ -43,6 +44,20 @@ The last visited feature page is stored in `localStorage` under `bricktools.last
 - `onChange(name)` is called after a tab is activated. Pages use it to lazy-load the data of the newly visible tab.
 - Deep links such as `purchases.html#list` and `partscollection.html#explorer` work directly.
 
+## Visual Style and Icons
+
+The interface uses a LEGO-inspired palette defined in `css/app.css`:
+
+- LEGO yellow for primary actions, LEGO blue for links, focus rings, and selected states, red for destructive actions, near-black text, and a light gray background.
+- Cards, tables, modals, and inputs share rounded corners and soft shadows.
+
+`js/common.js` provides a small inline SVG icon system, so no icon dependency is required:
+
+- `BrickTools.icon(name)` returns the SVG markup of an icon. Names include `add`, `edit`, `delete`, `view`, `search`, `active`, `open`, `buy`, `inventory`, `parts`, `save`, `close`, `sync`, `reset`, `download`, `image`, `archive`, `generate`, `external`, `chevronLeft`, `chevronRight`, `selectAll`, `clear`, `check`, `palette`, `price`, and `bell`.
+- `BrickTools.iconButton(name, label, extraClass)` builds an icon-only button with a tooltip and an `aria-label`, for compact table row actions.
+- `BrickTools.decorateIcons(root)` adds the icon named by `data-icon` to static markup. Elements with the `icon-only` class receive the icon as their content; other elements get it before their label. It runs automatically on page load, and can be called again for dynamically inserted markup.
+- Primary toolbar and form actions combine an icon with a text label. Compact row actions are icon-only and always expose their meaning through the tooltip and accessible label.
+
 ## Active Container
 
 A container is where parts are added. Four container types are supported:
@@ -55,9 +70,9 @@ A container is where parts are added. Four container types are supported:
 The active container is stored client-side in `localStorage` under `bricktools.activeContainer`. It is shown in the application header, left of the notifications widget, and is shared by every page.
 
 - Each container view has a **Set active** button: the Part storage table, the Storage drawers cards, the Collection search results, the PaB purchases table, and the BrickOwl orders table.
-- When the active container is a storage drawer, the header shows **Previous** and **Next** buttons that move through the drawers of the same storage.
-- The **×** button clears the active container.
-- "Add to container" buttons in the Part explorer, the selection toolbar, and the Part information modal send the selected part or parts to the active container. When no container is active, a message asks the user to set one first.
+- When the active container is a storage drawer, the header shows Previous and Next icon buttons that move through the drawers of the same storage.
+- The close icon button clears the active container.
+- "Add to container" actions in the Part explorer, the selection toolbar, and the Part information modal send the selected part or parts to the active container. Row actions use an add icon with a tooltip. When no container is active, a message asks the user to set one first.
 - The header label and the helpers are exposed by `js/common.js`: `BrickTools.getActiveContainer()`, `BrickTools.setActiveContainer(container)`, `BrickTools.activeContainerLabel(container)`, and `BrickTools.addToActiveContainer(partNumbers)`.
 - Setting the active container triggers `bricktools:active-container-changed` on `document`; adding parts triggers `bricktools:container-parts-added`. Modules listen to these events to refresh their tables.
 
@@ -91,7 +106,7 @@ Data tables follow the same conventions:
 - A `th.sortable[data-key]` header sorts the table. The sort direction is shown with the `sort-asc` or `sort-desc` class.
 - Sorting compares numbers numerically and text with `localeCompare(..., { numeric: true })`, so `2` comes before `10`.
 - Empty results show a single muted row explaining why (no data or no match).
-- Row actions are placed in the last column (`actions-col` / `row-actions`).
+- Row actions are placed in the last column (`actions-col` / `row-actions`). They are compact icon-only buttons with a tooltip and an accessible label.
 
 ## People, Vendors, and Tags
 

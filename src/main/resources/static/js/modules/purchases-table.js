@@ -82,8 +82,8 @@
         const $td = $('<td></td>');
         const value = p[c.key];
         if (c.links) {
-          $td.append($('<button type="button" class="btn secondary">Open</button>')
-            .attr('title', 'Open set ' + (p.setNumber || '') + ' on external websites')
+          $td.append(BrickTools.iconButton('open', 'Open set ' + (p.setNumber || '') + ' on external websites',
+            'secondary')
             .on('click', function() { BrickSets.openSetSites(p.setNumber, p); }));
         } else if (c.image) {
           if (value) {
@@ -139,12 +139,11 @@
       });
       const $actions = $('<td class="row-actions"></td>');
       $actions.append(
-        $('<button type="button" class="btn secondary">Inventory</button>')
-          .attr('title', 'Open set ' + (p.setNumber || '') + ' in Set Inventory')
+        BrickTools.iconButton('inventory', 'Open set ' + (p.setNumber || '') + ' in Set Inventory', 'secondary')
           .on('click', function() { BrickTools.PurchasesInventory.openSetInventory(p.setNumber); })
       );
       $actions.append(
-        $('<button type="button" class="btn secondary">Edit</button>').on('click', function() { openForm(p); })
+        BrickTools.iconButton('edit', 'Edit purchase', 'secondary').on('click', function() { openForm(p); })
       );
       $tr.append($actions);
       $tbody.append($tr);

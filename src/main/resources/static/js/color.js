@@ -157,7 +157,7 @@
         '<div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="color-info-title">' +
           '<div class="modal-head">' +
             '<h2 id="color-info-title">Color</h2>' +
-            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+            '<button type="button" class="modal-close icon-only" aria-label="Close">' + window.BrickTools.icon('close') + '</button>' +
           '</div>' +
           '<div id="color-info-content" class="color-modal-content"></div>' +
         '</div>' +
@@ -265,7 +265,7 @@
         '<div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="color-picker-title">' +
           '<div class="modal-head">' +
             '<h2 id="color-picker-title">Select a color</h2>' +
-            '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+            '<button type="button" class="modal-close icon-only" aria-label="Close">' + window.BrickTools.icon('close') + '</button>' +
           '</div>' +
           '<p class="modal-sub">Pick the color to use.</p>' +
           '<div id="color-picker-current" class="color-picker-current"></div>' +
@@ -274,8 +274,10 @@
           '<div id="color-picker-list" class="color-picker-list"></div>' +
           '<p id="color-picker-msg" class="message"></p>' +
           '<div class="color-modal-actions">' +
-            '<button type="button" id="color-picker-cancel" class="btn secondary">Cancel</button>' +
-            '<button type="button" id="color-picker-select" class="btn" disabled>Select</button>' +
+            '<button type="button" id="color-picker-cancel" class="btn secondary">' +
+              window.BrickTools.icon('close') + ' Cancel</button>' +
+            '<button type="button" id="color-picker-select" class="btn" disabled>' +
+              window.BrickTools.icon('check') + ' Select</button>' +
           '</div>' +
         '</div>' +
       '</div>'
