@@ -177,7 +177,6 @@ Lists the Pick-a-Brick purchases stored in `data.bt.PaBPurchases`.
 
 | Column | Source |
 | ------ | ------ |
-| Id | `Id` |
 | Purchase date | `PurchaseDate` (yyyy/MM/dd) |
 | Box quantity | `BoxQuantity` |
 | Minifig quantity | `MinifigQuantity` |
@@ -205,7 +204,7 @@ Shows the parts of the selected PaB purchase.
 - The **Purchase** selector lists every PaB purchase as `date (#id)`. It is disabled when no purchase exists.
 - The **Previous** and **Next** buttons move the selection by one purchase in the selector order and load its parts. They are disabled at the first and last purchase, and both are disabled when no purchase exists.
 - **Add part** opens the part form for the selected purchase.
-- The table shows: image, Id, purchase Id, part number, part name, category, color chip, quantity, and an Edit action.
+- The table shows: category, image, quantity, part name, color chip, part number, and an Edit action.
 - The color chip is clickable and opens the color information modal.
 - The part image uses the purchased color and opens the part information modal when clicked.
 
@@ -226,14 +225,13 @@ The tab gathers the BrickOwl items purchased across all orders. It shows one row
 | Column | Notes |
 | ------ | ----- |
 | Image | Part/color image with fallbacks; clicking opens the part information modal |
-| Type | Part, minifig, set, etc. |
+| Total quantity | Summed quantity over all those orders |
 | Name | Cleaned to remove "LEGO", the color name, and trailing part numbers |
 | Color | Clickable color chip |
-| Design ids | Comma-separated |
-| Item numbers | Comma-separated |
 | Condition | |
 | Orders | List of orders containing the part; each order id links to the BrickOwl order page |
-| Total quantity | Summed quantity over all those orders |
+| Design Ids | Comma-separated |
+| Item Numbers | Comma-separated |
 
 Columns are sortable. The Orders column sorts by the number of orders containing the part.
 

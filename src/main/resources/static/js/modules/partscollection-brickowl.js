@@ -40,7 +40,7 @@
     const $tbody = $('#bo-parts-collection tbody').empty();
     BrickTools.PartsCollectionShared.markSortedHeader('#bo-parts-collection', sortState);
     if (parts.length === 0) {
-      $tbody.append('<tr><td colspan="9" class="muted">No BrickOwl order items yet. ' +
+      $tbody.append('<tr><td colspan="8" class="muted">No BrickOwl order items yet. ' +
         'Run an update from the <a href="brickowl.html#update">BrickOwl page</a>.</td></tr>');
       return;
     }
@@ -50,14 +50,13 @@
       $row.append(BrickTools.partImageCell(
         BrickTools.partImageUrls(part.itemNumbers, part.designIds), name,
         BrickTools.firstCommaValue(part.designIds)));
-      $row.append($('<td></td>').text(part.type || ''));
+      $row.append($('<td></td>').text(fmt.number(part.totalQuantity)));
       $row.append($('<td></td>').text(name));
       $row.append(BrickTools.PartsCollectionShared.renderColorCell(part));
-      $row.append($('<td></td>').text(part.designIds || ''));
-      $row.append($('<td></td>').text(part.itemNumbers || ''));
       $row.append($('<td></td>').text(part.condition || ''));
       $row.append(BrickTools.PartsCollectionShared.renderOrdersCell(part.orders));
-      $row.append($('<td></td>').text(fmt.number(part.totalQuantity)));
+      $row.append($('<td></td>').text(part.designIds || ''));
+      $row.append($('<td></td>').text(part.itemNumbers || ''));
       $tbody.append($row);
     });
   }
@@ -70,7 +69,7 @@
     parts = [];
     const $tbody = $('#bo-parts-collection tbody').empty();
     $tbody.append($('<tr></tr>').append(
-      $('<td colspan="9" class="muted"></td>').text('Unable to load BrickOwl parts.')));
+      $('<td colspan="8" class="muted"></td>').text('Unable to load BrickOwl parts.')));
     BrickTools.PartsCollectionShared.report('#bo-parts-msg', BrickTools.errorOf(xhr));
   }
 

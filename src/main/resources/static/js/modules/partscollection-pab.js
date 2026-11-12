@@ -52,7 +52,7 @@
         populatePabPurchaseSelect();
         const $tbody = $('#pab-purchases tbody').empty();
         $tbody.append($('<tr></tr>').append(
-          $('<td colspan="7" class="muted"></td>').text('Unable to load PaB purchases.')));
+          $('<td colspan="6" class="muted"></td>').text('Unable to load PaB purchases.')));
         BrickTools.PartsCollectionShared.report('#pab-purchases-msg', BrickTools.errorOf(xhr));
       })
       .always(function () {
@@ -163,7 +163,7 @@
     const fmt = BrickTools.fmt;
     const $tbody = $('#pab-purchases tbody').empty();
     if (pabPurchases.length === 0) {
-      $tbody.append('<tr><td colspan="7" class="muted">No PaB purchases yet.</td></tr>');
+      $tbody.append('<tr><td colspan="6" class="muted">No PaB purchases yet.</td></tr>');
       return;
     }
     pabPurchases.forEach(function (purchase) {
@@ -171,7 +171,6 @@
       const isActive = active && active.type === 'pab'
         && String(active.purchaseId) === String(purchase.id);
       const $row = $('<tr></tr>').toggleClass('selected', Boolean(isActive));
-      $row.append($('<td></td>').text(purchase.id == null ? '' : purchase.id));
       $row.append($('<td></td>').text(purchase.purchaseDate || ''));
       $row.append($('<td></td>').text(purchase.boxQuantity == null ? '' : fmt.number(purchase.boxQuantity)));
       $row.append($('<td></td>').text(purchase.minifigQuantity == null ? '' : fmt.number(purchase.minifigQuantity)));
@@ -200,11 +199,11 @@
     const fmt = BrickTools.fmt;
     const $tbody = $('#pab-parts tbody').empty();
     if (!selectedPabPurchaseId) {
-      $tbody.append('<tr><td colspan="9" class="muted">No PaB purchase selected.</td></tr>');
+      $tbody.append('<tr><td colspan="7" class="muted">No PaB purchase selected.</td></tr>');
       return;
     }
     if (pabParts.length === 0) {
-      $tbody.append('<tr><td colspan="9" class="muted">No parts for this purchase yet.</td></tr>');
+      $tbody.append('<tr><td colspan="7" class="muted">No parts for this purchase yet.</td></tr>');
       return;
     }
     pabParts.forEach(function (part) {
@@ -214,15 +213,13 @@
           (part.partColorId == null || part.partColorId === ''
             ? '' : '?colorId=' + encodeURIComponent(part.partColorId))
         : '';
+      $row.append($('<td></td>').text(part.partCategory || ''));
       $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber,
         part.partNumber));
-      $row.append($('<td></td>').text(part.id == null ? '' : part.id));
-      $row.append($('<td></td>').text(part.paBPurchaseId == null ? '' : part.paBPurchaseId));
-      $row.append($('<td></td>').text(part.partNumber || ''));
-      $row.append($('<td></td>').text(part.partName || ''));
-      $row.append($('<td></td>').text(part.partCategory || ''));
-      $row.append($('<td></td>').append(pabColorChip(part)));
       $row.append($('<td></td>').text(part.quantity == null ? '' : fmt.number(part.quantity)));
+      $row.append($('<td></td>').text(part.partName || ''));
+      $row.append($('<td></td>').append(pabColorChip(part)));
+      $row.append($('<td></td>').text(part.partNumber || ''));
 
       const $actions = $('<td class="row-actions"></td>');
       $actions.append(BrickTools.iconButton('edit', 'Edit PaB part ' + (part.partNumber || ''),
