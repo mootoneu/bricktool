@@ -10,4 +10,5 @@ bricktools:
     min-delay-ms: 1000
   brickowl:
     base-url: https://api.brickowl.com/v1
-    api-key: cdf4a99905abb474c20d2d3693bcbdb2e8f3e39fd12b1b2add524d3e296d14b9
+    # Never commit the key. Set it in the environment that runs the application.
+    api-key: ${BRICKOWL_API_KEY:}

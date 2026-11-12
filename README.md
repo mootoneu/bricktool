@@ -125,7 +125,23 @@ Configuration is in `src/main/resources/application.yml`:
 - `bricktools.data-dir` - CSV data directory (default `./data`).
 - `bricktools.rebrickable.download-url` - Rebrickable download archive.
 - `bricktools.brickwatch.base-url` and `min-delay-ms` - BrickWatch scraping settings.
-- `bricktools.brickowl.base-url` and `api-key` - BrickOwl API settings.
+- `bricktools.brickowl.base-url` and `api-key` - BrickOwl API settings. The key is read from the `BRICKOWL_API_KEY` environment variable and is never stored in the repository.
+
+Secrets are not committed. Provide the BrickOwl API key through the environment before starting the application:
+
+```bash
+# Linux/macOS
+export BRICKOWL_API_KEY="your-key"
+mvn spring-boot:run
+```
+
+```powershell
+# Windows PowerShell
+$env:BRICKOWL_API_KEY = "your-key"
+mvn spring-boot:run
+```
+
+Alternatively, IDEs and deployment platforms can set `BRICKOWL_API_KEY` in their run/deployment configuration. When the variable is missing, the application still starts, but BrickOwl updates are rejected with an explicit configuration error.
 
 ## Development
 
