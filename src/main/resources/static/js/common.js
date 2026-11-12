@@ -221,14 +221,14 @@
     }
     switch (container.type) {
       case 'storage':
-        return 'Storage ' + (container.storageId || '');
+        return (container.storageId || '');
       case 'drawer':
-        return 'Storage ' + (container.storageId || '') + ' · Drawer '
+        return (container.storageId || '') + '·'
           + (container.drawer === '' || container.drawer == null ? '—' : container.drawer);
       case 'pab':
-        return 'PaB purchase #' + (container.purchaseId == null ? '' : container.purchaseId);
+        return 'PaB' + (container.purchaseId == null ? '' : container.purchaseId);
       case 'brickowl':
-        return 'BrickOwl order ' + (container.orderId || '');
+        return 'BO' + (container.orderId || '');
       default:
         return container.label || container.type;
     }
@@ -383,6 +383,17 @@
       '<div class="dropdown" hidden></div>' +
       '</div>'
     );
+
+    // On narrow screens the navigation scrolls horizontally. Keep the active
+    // page visible instead of leaving it outside the initial viewport.
+    const $activeLink = $('#app-header nav a.active');
+    if ($activeLink.length) {
+      const nav = $activeLink[0].parentElement;
+      const navRect = nav.getBoundingClientRect();
+      const linkRect = $activeLink[0].getBoundingClientRect();
+      nav.scrollLeft = Math.max(0,
+        nav.scrollLeft + linkRect.left - navRect.left - (nav.clientWidth - linkRect.width) / 2);
+    }
 
     $('#app-header').on('click', '.active-container-prev', function () {
       stepActiveDrawer(-1);

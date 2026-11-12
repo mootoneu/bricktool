@@ -72,9 +72,12 @@
    * @param {boolean} showXAxis - Whether to show X axis
    */
   function drawYearBars(el, data, metric, showXAxis) {
-    const width = 960;
+    // Match the SVG coordinate system to the available card width so labels
+    // keep a readable size on phones instead of being scaled down from 960px.
+    const width = Math.max(320, Math.floor(el.clientWidth || 960));
     const height = 170;
-    const margin = { top: 26, right: 16, bottom: showXAxis ? 34 : 12, left: 74 };
+    const compact = width < 560;
+    const margin = { top: 26, right: compact ? 10 : 16, bottom: showXAxis ? 34 : 12, left: compact ? 46 : 74 };
     const value = function(d) { return Number(d[metric.key]) || 0; };
     const x = d3.scaleBand()
       .domain(data.map(function(d) { return d.year; }))
