@@ -544,6 +544,13 @@ table.data tbody tr.highlight { background: #fef3c7; transition: background-colo
 .drawer-empty { margin: 0; color: var(--muted); font-size: .85rem; }
 .collection-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .collection-toolbar input[type="search"] { flex: 1 1 320px; max-width: 520px; }
+.collection-results { margin-top: 22px; }
+.collection-results h2 {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 10px; font-size: 1.05rem;
+}
+.collection-results h2 .muted { font-size: .85rem; font-weight: 400; }
+.collection-results .table-wrap { margin-top: 0; }
 .storage-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .storage-toolbar input[type="search"] { flex: 1 1 240px; max-width: 360px; }
 

@@ -32,11 +32,27 @@
     }
   }
 
+  function partRow(part) {
+    const fmt = BrickTools.fmt;
+    const $row = $('<tr></tr>');
+    const name = BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '');
+    $row.append(BrickTools.partImageCell(
+      BrickTools.partImageUrls(part.itemNumbers, part.designIds), name,
+      BrickTools.firstCommaValue(part.designIds)));
+    $row.append($('<td></td>').text(fmt.number(part.totalQuantity)));
+    $row.append($('<td></td>').text(name));
+    $row.append(BrickTools.PartsCollectionShared.renderColorCell(part));
+    $row.append($('<td></td>').text(part.condition || ''));
+    $row.append(BrickTools.PartsCollectionShared.renderOrdersCell(part.orders));
+    $row.append($('<td></td>').text(part.designIds || ''));
+    $row.append($('<td></td>').text(part.itemNumbers || ''));
+    return $row;
+  }
+
   /**
    * Render the BrickOwl parts table
    */
   function renderParts() {
-    const fmt = BrickTools.fmt;
     const $tbody = $('#bo-parts-collection tbody').empty();
     BrickTools.PartsCollectionShared.markSortedHeader('#bo-parts-collection', sortState);
     if (parts.length === 0) {
@@ -45,19 +61,7 @@
       return;
     }
     BrickTools.PartsCollectionShared.sortRows(parts, sortState).forEach(function (part) {
-      const $row = $('<tr></tr>');
-      const name = BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '');
-      $row.append(BrickTools.partImageCell(
-        BrickTools.partImageUrls(part.itemNumbers, part.designIds), name,
-        BrickTools.firstCommaValue(part.designIds)));
-      $row.append($('<td></td>').text(fmt.number(part.totalQuantity)));
-      $row.append($('<td></td>').text(name));
-      $row.append(BrickTools.PartsCollectionShared.renderColorCell(part));
-      $row.append($('<td></td>').text(part.condition || ''));
-      $row.append(BrickTools.PartsCollectionShared.renderOrdersCell(part.orders));
-      $row.append($('<td></td>').text(part.designIds || ''));
-      $row.append($('<td></td>').text(part.itemNumbers || ''));
-      $tbody.append($row);
+      $tbody.append(partRow(part));
     });
   }
 
@@ -136,6 +140,7 @@
     refresh: refresh,
     renderParts: renderParts,
     loadParts: loadParts,
+    partRow: partRow,
     getParts: function() { return parts; },
     getSortState: function() { return sortState; }
   };

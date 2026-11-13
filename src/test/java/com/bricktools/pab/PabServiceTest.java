@@ -148,6 +148,17 @@ class PabServiceTest {
   }
 
   @Test
+  void allPartsReturnsThePartsOfEveryPurchase() throws IOException {
+    int first = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
+    int second = service.create(new PabPurchaseRequest("2026/02/04", 1, 0, BigDecimal.ONE));
+    service.createPart(first, new PabPartRequest("3001", 5, 2));
+    service.createPart(second, new PabPartRequest("3002", 1, 7));
+
+    assertThat(service.allParts()).extracting("partNumber")
+        .containsExactly("3001", "3002");
+  }
+
+  @Test
   void updatePartChangesThePartAndKeepsThePurchase() throws IOException {
     int purchaseId = service.create(new PabPurchaseRequest("2026/02/03", 1, 0, BigDecimal.TEN));
     int partId = service.createPart(purchaseId, new PabPartRequest("3001", 5, 2));

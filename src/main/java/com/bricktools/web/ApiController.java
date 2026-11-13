@@ -661,6 +661,15 @@ public class ApiController {
     return pab.parts(purchaseId);
   }
 
+  @GetMapping(path = "/pab/parts", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "List all PaB parts",
+      description = "Returns every part of every Pick a Brick purchase, with its name, category and color."
+  )
+  public List<Map<String, Object>> pabParts() throws IOException {
+    return pab.allParts();
+  }
+
   @PostMapping(path = "/pab/purchases/{purchaseId}/parts", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(

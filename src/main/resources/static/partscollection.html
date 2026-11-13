@@ -85,7 +85,47 @@
         <span id="collection-count" class="muted"></span>
       </div>
       <div id="collection-drawers" class="drawer-cards"></div>
-      <p id="collection-msg" class="muted">Type a part number, name, color, or category to find the drawers that contain matching parts.</p>
+      <section id="collection-brickowl" class="collection-results" hidden>
+        <h2>BrickOwl parts <span id="collection-brickowl-count" class="muted"></span></h2>
+        <div class="table-wrap">
+          <table class="data" id="collection-brickowl-parts">
+            <thead>
+              <tr>
+                <th class="part-image-col">Image</th>
+                <th>Total quantity</th>
+                <th>Name</th>
+                <th>Color</th>
+                <th>Condition</th>
+                <th>Orders</th>
+                <th>Design Ids</th>
+                <th>Item Numbers</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="collection-brickowl-msg" class="muted"></p>
+      </section>
+      <section id="collection-pab" class="collection-results" hidden>
+        <h2>PaB parts <span id="collection-pab-count" class="muted"></span></h2>
+        <div class="table-wrap">
+          <table class="data" id="collection-pab-parts">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="part-image-col">Image</th>
+                <th>Quantity</th>
+                <th>Part name</th>
+                <th>Color</th>
+                <th>Part number</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="collection-pab-msg" class="muted"></p>
+      </section>
+      <p id="collection-msg" class="muted">Type a part number, name, color, or category to search drawers, BrickOwl parts, and PaB parts.</p>
     </section>
 
     <section data-panel="storage" hidden>

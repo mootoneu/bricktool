@@ -80,14 +80,25 @@ public class PabService {
 
   public synchronized List<Map<String, Object>> parts(int purchaseId) throws IOException {
     requirePurchase(purchaseId);
+    return parts(String.valueOf(purchaseId));
+  }
+
+  /**
+   * Returns every part of every purchase, in the same shape as {@link #parts(int)}. Used by the
+   * collection search to look into the parts bought with Pick a Brick.
+   */
+  public synchronized List<Map<String, Object>> allParts() throws IOException {
+    return parts(null);
+  }
+
+  private List<Map<String, Object>> parts(String purchaseKey) throws IOException {
     Map<String, Map<String, String>> partCatalog = catalog(partsCatalogFile, "part_num");
     Map<String, String> categoryNames = categoryNames();
     Map<String, Map<String, String>> colorCatalog = catalog(colorsCatalogFile, "id");
-    String purchaseKey = String.valueOf(purchaseId);
 
     List<Map<String, Object>> result = new ArrayList<>();
     for (Map<String, String> row : Csv.read(partsFile)) {
-      if (!purchaseKey.equals(clean(row.get("PaBPurchaseId")))) {
+      if (purchaseKey != null && !purchaseKey.equals(clean(row.get("PaBPurchaseId")))) {
         continue;
       }
       String partNumber = clean(row.get("PartNumber"));

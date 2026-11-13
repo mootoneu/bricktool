@@ -93,15 +93,16 @@ Selecting or clearing a part updates the header checkbox, which is indeterminate
 
 ## Collection Tab
 
-The tab searches the part collection and shows the storage drawers that contain matching parts.
+The tab searches the part collection and shows the storage drawers that contain matching parts, as well as matching BrickOwl items and PaB parts.
 
 - The search field matches the part number, part name, color name or id, category name or id, and free-text tags. It is case-insensitive and searches after a short delay; pressing Enter searches immediately.
 - Results are one card per matching drawer. Each card shows the storage id and drawer label, the storage model and location, and the parts that match the search.
 - When a drawer contains several matching parts, up to 200 are shown.
 - Each result card has **Set active** (sets the drawer as the active container) and **Add content** (opens the drawer content form) icon buttons. The content rules shown on the card can be edited or deleted in place with icon buttons.
 - Setting a drawer active loads the drawer list, so the header navigation can move through the drawers of the storage.
-- When nothing matches, a message explains that no drawer contains a matching part.
-- The search is exposed by `GET /api/part-collection/drawers?query=`.
+- Below the drawers, two tables list the matching items from the BrickOwl parts and from the PaB parts. They use the same columns as the corresponding tabs and are hidden when they have no match. PaB quantities are summed per part and color across all purchases.
+- When nothing matches in any source, a message explains that no drawer, BrickOwl part, or PaB part matches the search.
+- The drawer search is exposed by `GET /api/part-collection/drawers?query=`; the other sources are `GET /api/brickowl/parts` and `GET /api/pab/parts`.
 
 ## Part Storage Tab
 
@@ -271,6 +272,7 @@ The modal is implemented once in `js/modules/part-info.js` (`BrickTools.PartInfo
 | `POST /api/pab/purchases` | Create a PaB purchase |
 | `PUT /api/pab/purchases/{id}` | Update a PaB purchase |
 | `GET /api/pab/purchases/{purchaseId}/parts` | List the parts of a PaB purchase |
+| `GET /api/pab/parts` | List the parts of every PaB purchase |
 | `POST /api/pab/purchases/{purchaseId}/parts` | Add a part to a PaB purchase |
 | `PUT /api/pab/parts/{id}` | Update a PaB part |
 | `GET /api/brickowl/parts` | Aggregated BrickOwl parts |

@@ -468,37 +468,194 @@
   // Collection search
   // ============================================================================
 
+  const COLLECTION_PROMPT = 'Type a part number, name, color, or category to search drawers, ' +
+    'BrickOwl parts, and PaB parts.';
+
+  function collectionTokens(value) {
+    return String(value == null ? '' : value)
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(function (token) { return token.length > 0; });
+  }
+
+  function matchesCollectionQuery(values, tokens) {
+    const haystack = values
+      .map(function (value) { return String(value == null ? '' : value); })
+      .join(' ')
+      .toLowerCase();
+    return tokens.every(function (token) { return haystack.indexOf(token) !== -1; });
+  }
+
+  function brickOwlMatches(part, tokens) {
+    return matchesCollectionQuery([
+      part.name,
+      part.boid,
+      part.type,
+      part.colorName,
+      part.colorId,
+      part.condition,
+      part.designIds,
+      part.itemNumbers,
+      BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '')
+    ], tokens);
+  }
+
+  function pabMatches(part, tokens) {
+    return matchesCollectionQuery([
+      part.partNumber,
+      part.partName,
+      part.partCategory,
+      part.colorName,
+      part.partColorId
+    ], tokens);
+  }
+
+  function brickOwlName(part) {
+    return BrickTools.getPartNameFromBOName(part.name || '', part.colorName || '');
+  }
+
+  function sortedBrickOwlParts(list) {
+    const shared = BrickTools.PartsCollectionShared;
+    return list.slice().sort(function (a, b) {
+      return shared.compareValues(brickOwlName(a), brickOwlName(b), 1)
+        || shared.compareValues(a.colorName, b.colorName, 1);
+    });
+  }
+
+  function collapsePabParts(list) {
+    const byPart = new Map();
+    list.forEach(function (part) {
+      const key = String(part.partNumber == null ? '' : part.partNumber) + '\u0000'
+        + String(part.partColorId == null ? '' : part.partColorId);
+      const existing = byPart.get(key);
+      if (!existing) {
+        byPart.set(key, Object.assign({}, part));
+        return;
+      }
+      existing.quantity = (Number(existing.quantity) || 0) + (Number(part.quantity) || 0);
+    });
+    return Array.from(byPart.values());
+  }
+
+  function sortedPabParts(list) {
+    const shared = BrickTools.PartsCollectionShared;
+    return collapsePabParts(list).sort(function (a, b) {
+      return shared.compareValues(a.partName, b.partName, 1)
+        || shared.compareValues(a.partNumber, b.partNumber, 1)
+        || shared.compareValues(a.colorName, b.colorName, 1);
+    });
+  }
+
+  function resetCollectionResults() {
+    $('#collection-drawers').empty();
+    collectionCards = [];
+    $('#collection-count').text('');
+    ['#collection-brickowl', '#collection-pab'].forEach(function (selector) {
+      $(selector).prop('hidden', true);
+    });
+    ['#collection-brickowl-parts', '#collection-pab-parts'].forEach(function (selector) {
+      $(selector + ' tbody').empty();
+    });
+    ['#collection-brickowl-count', '#collection-pab-count',
+      '#collection-brickowl-msg', '#collection-pab-msg'].forEach(function (selector) {
+      $(selector).text('');
+    });
+  }
+
+  function fillCollectionTable(section, table, count, list, rowBuilder) {
+    const $tbody = $(table + ' tbody').empty();
+    $(section).prop('hidden', list.length === 0);
+    $(count).text(list.length === 0 ? '' : BrickTools.fmt.number(list.length) + ' part(s)');
+    list.forEach(function (row) {
+      $tbody.append(rowBuilder(row));
+    });
+  }
+
   function searchCollection(query) {
     const value = String(query == null ? '' : query).trim();
     const request = ++collectionRequest;
-    const $host = $('#collection-drawers').empty();
-    collectionCards = [];
+    resetCollectionResults();
     if (!value) {
-      $('#collection-count').text('');
-      BrickTools.PartsCollectionShared.report('#collection-msg',
-        'Type a part number, name, color, or category to find the drawers that contain matching parts.');
+      BrickTools.PartsCollectionShared.report('#collection-msg', COLLECTION_PROMPT);
       return;
     }
     BrickTools.PartsCollectionShared.report('#collection-msg', 'Searching the part collection…');
-    BrickTools.api('GET', '/part-collection/drawers?query=' + encodeURIComponent(value))
-      .done(function (list) {
-        if (request !== collectionRequest) {
-          return;
-        }
-        const cards = Array.isArray(list) ? list : [];
+
+    const tokens = collectionTokens(value);
+    const drawers = BrickTools.api(
+      'GET', '/part-collection/drawers?query=' + encodeURIComponent(value));
+    const brickOwl = BrickTools.api('GET', '/brickowl/parts');
+    const pab = BrickTools.api('GET', '/pab/parts');
+
+    Promise.allSettled([drawers, brickOwl, pab]).then(function (results) {
+      if (request !== collectionRequest) {
+        return;
+      }
+
+      const drawerResult = results[0];
+      const brickOwlResult = results[1];
+      const pabResult = results[2];
+
+      let drawerCount = 0;
+      if (drawerResult.status === 'fulfilled') {
+        const cards = Array.isArray(drawerResult.value) ? drawerResult.value : [];
         collectionCards = cards;
-        $('#collection-count').text(BrickTools.fmt.number(cards.length) + ' drawer(s)');
-        renderDrawerCards($host, cards, true);
-        BrickTools.PartsCollectionShared.report('#collection-msg',
-          cards.length === 0 ? 'No drawer contains a part matching "' + value + '".' : '');
-      })
-      .fail(function (xhr) {
-        if (request !== collectionRequest) {
-          return;
-        }
-        $('#collection-count').text('');
-        BrickTools.PartsCollectionShared.report('#collection-msg', BrickTools.errorOf(xhr));
-      });
+        drawerCount = cards.length;
+        renderDrawerCards($('#collection-drawers'), cards, true);
+      }
+
+      let brickOwlCount = 0;
+      if (brickOwlResult.status === 'fulfilled') {
+        const list = Array.isArray(brickOwlResult.value) ? brickOwlResult.value : [];
+        const matches = sortedBrickOwlParts(list.filter(function (part) {
+          return brickOwlMatches(part, tokens);
+        }));
+        brickOwlCount = matches.length;
+        fillCollectionTable('#collection-brickowl', '#collection-brickowl-parts',
+          '#collection-brickowl-count', matches,
+          function (part) { return BrickTools.PartsCollectionBrickOwl.partRow(part); });
+      } else {
+        $('#collection-brickowl').prop('hidden', false);
+        BrickTools.PartsCollectionShared.report('#collection-brickowl-msg',
+          'Unable to load BrickOwl parts.');
+      }
+
+      let pabCount = 0;
+      if (pabResult.status === 'fulfilled') {
+        const list = Array.isArray(pabResult.value) ? pabResult.value : [];
+        const matches = sortedPabParts(list.filter(function (part) {
+          return pabMatches(part, tokens);
+        }));
+        pabCount = matches.length;
+        fillCollectionTable('#collection-pab', '#collection-pab-parts',
+          '#collection-pab-count', matches,
+          function (part) { return BrickTools.PartsCollectionPab.partRow(part, false); });
+      } else {
+        $('#collection-pab').prop('hidden', false);
+        BrickTools.PartsCollectionShared.report('#collection-pab-msg',
+          'Unable to load PaB parts.');
+      }
+
+      const counts = [BrickTools.fmt.number(drawerCount) + ' drawer(s)'];
+      if (brickOwlCount > 0) {
+        counts.push(BrickTools.fmt.number(brickOwlCount) + ' BrickOwl part(s)');
+      }
+      if (pabCount > 0) {
+        counts.push(BrickTools.fmt.number(pabCount) + ' PaB part(s)');
+      }
+      $('#collection-count').text(counts.join(' · '));
+
+      const failed = drawerResult.status !== 'fulfilled'
+        || brickOwlResult.status !== 'fulfilled'
+        || pabResult.status !== 'fulfilled';
+      if (drawerCount + brickOwlCount + pabCount === 0) {
+        BrickTools.PartsCollectionShared.report('#collection-msg', failed
+          ? 'The collection could not be fully searched.'
+          : 'No drawer, BrickOwl part, or PaB part matches "' + value + '".');
+      } else {
+        BrickTools.PartsCollectionShared.report('#collection-msg', '');
+      }
+    });
   }
 
   function rerunCollectionSearch() {

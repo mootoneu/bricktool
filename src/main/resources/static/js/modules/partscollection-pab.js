@@ -193,10 +193,41 @@
   }
 
   /**
+   * Build a PaB parts table row.
+   * @param {Object} part - PaB part object
+   * @param {boolean} [withActions] - Whether to append the Edit action cell
+   * @returns {jQuery} Table row
+   */
+  function partRow(part, withActions) {
+    const fmt = BrickTools.fmt;
+    const $row = $('<tr></tr>');
+    const imageUrl = part.partNumber
+      ? '/api/parts/' + encodeURIComponent(part.partNumber) + '/image' +
+        (part.partColorId == null || part.partColorId === ''
+          ? '' : '?colorId=' + encodeURIComponent(part.partColorId))
+      : '';
+    $row.append($('<td></td>').text(part.partCategory || ''));
+    $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber,
+      part.partNumber));
+    $row.append($('<td></td>').text(part.quantity == null ? '' : fmt.number(part.quantity)));
+    $row.append($('<td></td>').text(part.partName || ''));
+    $row.append($('<td></td>').append(pabColorChip(part)));
+    $row.append($('<td></td>').text(part.partNumber || ''));
+
+    if (withActions) {
+      const $actions = $('<td class="row-actions"></td>');
+      $actions.append(BrickTools.iconButton('edit', 'Edit PaB part ' + (part.partNumber || ''),
+        'secondary pab-part-edit')
+        .attr('data-pab-part-id', part.id));
+      $row.append($actions);
+    }
+    return $row;
+  }
+
+  /**
    * Render the PaB parts table
    */
   function renderPabParts() {
-    const fmt = BrickTools.fmt;
     const $tbody = $('#pab-parts tbody').empty();
     if (!selectedPabPurchaseId) {
       $tbody.append('<tr><td colspan="7" class="muted">No PaB purchase selected.</td></tr>');
@@ -207,26 +238,7 @@
       return;
     }
     pabParts.forEach(function (part) {
-      const $row = $('<tr></tr>');
-      const imageUrl = part.partNumber
-        ? '/api/parts/' + encodeURIComponent(part.partNumber) + '/image' +
-          (part.partColorId == null || part.partColorId === ''
-            ? '' : '?colorId=' + encodeURIComponent(part.partColorId))
-        : '';
-      $row.append($('<td></td>').text(part.partCategory || ''));
-      $row.append(BrickTools.partImageCell(imageUrl, part.partName || part.partNumber,
-        part.partNumber));
-      $row.append($('<td></td>').text(part.quantity == null ? '' : fmt.number(part.quantity)));
-      $row.append($('<td></td>').text(part.partName || ''));
-      $row.append($('<td></td>').append(pabColorChip(part)));
-      $row.append($('<td></td>').text(part.partNumber || ''));
-
-      const $actions = $('<td class="row-actions"></td>');
-      $actions.append(BrickTools.iconButton('edit', 'Edit PaB part ' + (part.partNumber || ''),
-        'secondary pab-part-edit')
-        .attr('data-pab-part-id', part.id));
-      $row.append($actions);
-      $tbody.append($row);
+      $tbody.append(partRow(part, true));
     });
   }
 
@@ -482,6 +494,7 @@
     loadPabPurchases: loadPabPurchases,
     loadPabParts: loadPabParts,
     populatePabPurchaseSelect: populatePabPurchaseSelect,
+    partRow: partRow,
     getPabPurchases: function() { return pabPurchases; },
     getPabParts: function() { return pabParts; },
     getSelectedPabPurchaseId: function() { return selectedPabPurchaseId; }
